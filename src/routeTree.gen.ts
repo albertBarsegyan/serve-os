@@ -11,6 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StaffIndexRouteImport } from './routes/staff/index'
+import { Route as StaffKitchenRouteImport } from './routes/staff/kitchen'
+import { Route as CustomerMenuRouteImport } from './routes/customer/menu'
+import { Route as AdminSetupRouteImport } from './routes/admin/setup'
+import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -22,31 +27,98 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffIndexRoute = StaffIndexRouteImport.update({
+  id: '/staff/',
+  path: '/staff/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffKitchenRoute = StaffKitchenRouteImport.update({
+  id: '/staff/kitchen',
+  path: '/staff/kitchen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomerMenuRoute = CustomerMenuRouteImport.update({
+  id: '/customer/menu',
+  path: '/customer/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSetupRoute = AdminSetupRouteImport.update({
+  id: '/admin/setup',
+  path: '/admin/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminOrdersRoute = AdminOrdersRouteImport.update({
+  id: '/admin/orders',
+  path: '/admin/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin/orders': typeof AdminOrdersRoute
+  '/admin/setup': typeof AdminSetupRoute
+  '/customer/menu': typeof CustomerMenuRoute
+  '/staff/kitchen': typeof StaffKitchenRoute
+  '/staff/': typeof StaffIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin/orders': typeof AdminOrdersRoute
+  '/admin/setup': typeof AdminSetupRoute
+  '/customer/menu': typeof CustomerMenuRoute
+  '/staff/kitchen': typeof StaffKitchenRoute
+  '/staff': typeof StaffIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin/orders': typeof AdminOrdersRoute
+  '/admin/setup': typeof AdminSetupRoute
+  '/customer/menu': typeof CustomerMenuRoute
+  '/staff/kitchen': typeof StaffKitchenRoute
+  '/staff/': typeof StaffIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/admin/orders'
+    | '/admin/setup'
+    | '/customer/menu'
+    | '/staff/kitchen'
+    | '/staff/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to:
+    | '/'
+    | '/about'
+    | '/admin/orders'
+    | '/admin/setup'
+    | '/customer/menu'
+    | '/staff/kitchen'
+    | '/staff'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/admin/orders'
+    | '/admin/setup'
+    | '/customer/menu'
+    | '/staff/kitchen'
+    | '/staff/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminSetupRoute: typeof AdminSetupRoute
+  CustomerMenuRoute: typeof CustomerMenuRoute
+  StaffKitchenRoute: typeof StaffKitchenRoute
+  StaffIndexRoute: typeof StaffIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +137,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/': {
+      id: '/staff/'
+      path: '/staff'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof StaffIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/kitchen': {
+      id: '/staff/kitchen'
+      path: '/staff/kitchen'
+      fullPath: '/staff/kitchen'
+      preLoaderRoute: typeof StaffKitchenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer/menu': {
+      id: '/customer/menu'
+      path: '/customer/menu'
+      fullPath: '/customer/menu'
+      preLoaderRoute: typeof CustomerMenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/setup': {
+      id: '/admin/setup'
+      path: '/admin/setup'
+      fullPath: '/admin/setup'
+      preLoaderRoute: typeof AdminSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/orders': {
+      id: '/admin/orders'
+      path: '/admin/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AdminOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AdminOrdersRoute: AdminOrdersRoute,
+  AdminSetupRoute: AdminSetupRoute,
+  CustomerMenuRoute: CustomerMenuRoute,
+  StaffKitchenRoute: StaffKitchenRoute,
+  StaffIndexRoute: StaffIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
