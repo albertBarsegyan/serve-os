@@ -1,11 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import "tw-animate-css";
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-
-/* biome-ignore lint/correctness/noInvalidPositionAtImportRule: <external plugin> */
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 
 :root {
   /* Brand palette */
@@ -76,69 +72,6 @@
   --sidebar-accent-foreground: oklch(0.32 0.15 303);
   --sidebar-border: oklch(0.9 0.025 305);
   --sidebar-ring: oklch(0.45 0.19 328);
-}
-
-.dark {
-  --sea-ink: #f0e8ff;
-  --sea-ink-soft: #b8a8d4;
-  --lagoon: color-mix(in oklab, var(--brand-magenta) 78%, white 22%);
-  --lagoon-deep: color-mix(in oklab, var(--brand-magenta) 92%, white 8%);
-  --palm: color-mix(in oklab, var(--brand-rose) 88%, white 12%);
-  --sand: #140a22;
-  --foam: #0f0818;
-  --surface: color-mix(in oklab, var(--foam) 78%, black 22%);
-  --surface-strong: color-mix(in oklab, var(--foam) 88%, black 12%);
-  --line: color-mix(in oklab, var(--brand-gold) 22%, transparent);
-  --inset-glint: rgba(244, 179, 66, 0.1);
-  --kicker: color-mix(in oklab, var(--brand-gold) 92%, white 8%);
-  --bg-base: #0c0614;
-  --header-bg: color-mix(in oklab, var(--foam) 72%, transparent 28%);
-  --chip-bg: color-mix(in oklab, var(--foam) 88%, transparent 12%);
-  --chip-line: color-mix(in oklab, var(--brand-magenta) 38%, transparent);
-  --link-bg-hover: color-mix(in oklab, var(--brand-deep) 35%, transparent);
-  --hero-a: color-mix(in oklab, var(--brand-magenta) 22%, transparent);
-  --hero-b: color-mix(in oklab, var(--brand-deep) 28%, transparent);
-  --accent-soft: color-mix(in oklab, var(--brand-magenta) 28%, transparent);
-  --accent-soft-hover: color-mix(in oklab, var(--brand-magenta) 38%, transparent);
-  --accent-border: color-mix(in oklab, var(--brand-magenta) 45%, transparent);
-  --shadow-brand: color-mix(in oklab, black 45%, transparent);
-  --selection-bg: color-mix(in oklab, var(--brand-magenta) 35%, transparent);
-  --pill-selected-bg: color-mix(in oklab, var(--brand-magenta) 38%, transparent);
-  --hero-blob: color-mix(in oklab, var(--brand-magenta) 26%, transparent);
-  --hero-blob-alt: color-mix(in oklab, var(--brand-gold) 14%, transparent);
-
-  --background: oklch(0.16 0.06 303);
-  --foreground: oklch(0.97 0.02 303);
-  --card: oklch(0.18 0.055 303);
-  --card-foreground: oklch(0.97 0.02 303);
-  --popover: oklch(0.18 0.055 303);
-  --popover-foreground: oklch(0.97 0.02 303);
-  --primary: oklch(0.82 0.16 85);
-  --primary-foreground: oklch(0.2 0.08 303);
-  --secondary: oklch(0.24 0.05 310);
-  --secondary-foreground: oklch(0.97 0.02 303);
-  --muted: oklch(0.24 0.05 310);
-  --muted-foreground: oklch(0.72 0.06 303);
-  --accent: oklch(0.26 0.06 320);
-  --accent-foreground: oklch(0.97 0.02 303);
-  --destructive: oklch(0.62 0.2 12);
-  --destructive-foreground: oklch(0.99 0.01 303);
-  --border: oklch(0.28 0.06 310);
-  --input: oklch(0.28 0.06 310);
-  --ring: oklch(0.55 0.18 328);
-  --chart-1: oklch(0.55 0.18 303);
-  --chart-2: oklch(0.58 0.2 328);
-  --chart-3: oklch(0.62 0.2 12);
-  --chart-4: oklch(0.82 0.16 85);
-  --chart-5: oklch(0.68 0.14 45);
-  --sidebar: oklch(0.18 0.055 303);
-  --sidebar-foreground: oklch(0.97 0.02 303);
-  --sidebar-primary: oklch(0.82 0.16 85);
-  --sidebar-primary-foreground: oklch(0.2 0.08 303);
-  --sidebar-accent: oklch(0.26 0.06 320);
-  --sidebar-accent-foreground: oklch(0.97 0.02 303);
-  --sidebar-border: oklch(0.28 0.06 310);
-  --sidebar-ring: oklch(0.55 0.18 328);
 }
 
 @theme inline {
@@ -247,17 +180,6 @@ body::after {
     linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(circle at 50% 30%, black, transparent 78%);
-}
-
-a {
-  color: var(--lagoon-deep);
-  text-decoration-color: color-mix(in oklab, var(--brand-magenta) 38%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-
-a:hover {
-  color: var(--brand-deep);
 }
 
 code {
@@ -371,10 +293,25 @@ a {
   animation: rise-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;
     transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
