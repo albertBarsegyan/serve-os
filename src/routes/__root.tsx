@@ -5,6 +5,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { Toaster } from 'sonner'
 import { authApi } from '#/features/auth/api/auth.ts'
 import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
+import { hasAuthToken, initializeAuthToken } from '#/features/auth/lib/utils/auth-token'
 import { getLocale } from '#/paraglide/runtime'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 import { NotFoundPage } from '#/shared/ui/NotFoundPage'
@@ -22,13 +23,20 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async ({ context }) => {
     let authUser = null
 
-    try {
-      authUser = await context.queryClient.ensureQueryData({
-        queryKey: [authQueryKey.ME],
-        queryFn: authApi.me,
-      })
-    } catch {
-      authUser = null
+    // Initialize auth token from cookies on first load
+    initializeAuthToken()
+
+    // Only fetch /me if user has a valid auth token
+    // This prevents unnecessary API calls when user is signed out
+    if (hasAuthToken()) {
+      try {
+        authUser = await context.queryClient.ensureQueryData({
+          queryKey: [authQueryKey.ME],
+          queryFn: authApi.me,
+        })
+      } catch {
+        authUser = null
+      }
     }
 
     // Other redirect strategies are possible; see
