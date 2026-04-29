@@ -10,15 +10,15 @@ import {
 } from 'lucide-react'
 import Footer from '#/components/footer.tsx'
 import Header from '#/components/header.tsx'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 import { Button } from '#/shared/ui/Button'
 import { Card, CardContent } from '#/shared/ui/Card'
+import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
   errorComponent: ({ error }) => <ErrorBoundary error={error} />,
   beforeLoad: ({ context, location }) => {
-    if (!context.authUser && location?.pathname !== '/') throw redirect({ to: '/' })
+    if (context.authUser && location?.pathname !== '/') throw redirect({ to: '/admin/dashboard' })
   },
 })
 

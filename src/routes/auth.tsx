@@ -24,8 +24,9 @@ function AuthErrorComponent({ error }: { error: Error }) {
 export const Route = createFileRoute('/auth')({
   component: AuthLayout,
   errorComponent: AuthErrorComponent,
-  beforeLoad: ({ context }) => {
-    if (context.authUser) throw redirect({ to: '/admin/dashboard' })
+  beforeLoad: ({ context, location }) => {
+    if (context.authUser && location.pathname !== '/admin/dashboard')
+      throw redirect({ to: '/admin/dashboard' })
   },
 })
 

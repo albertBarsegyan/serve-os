@@ -1,6 +1,6 @@
-import { AlertTriangle, Home, RotateCcw } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
-import type React from 'react'
+import { AlertTriangle, Home, RotateCcw } from 'lucide-react'
+
 import { Button } from './Button'
 
 interface ErrorBoundaryProps {
@@ -9,11 +9,7 @@ interface ErrorBoundaryProps {
   isNotFound?: boolean
 }
 
-export function ErrorBoundary({
-  error,
-  reset,
-  isNotFound = false,
-}: ErrorBoundaryProps) {
+export function ErrorBoundary({ error, reset, isNotFound = false }: ErrorBoundaryProps) {
   const navigate = useNavigate()
 
   const handleReset = () => {
@@ -64,20 +60,17 @@ export function ErrorBoundary({
             <AlertTriangle className='h-7 w-7 text-red-600' />
           </div>
 
-          <h1 className='mb-2 text-2xl font-black text-[#2D2D2D]'>
-            Something Went Wrong
-          </h1>
+          <h1 className='mb-2 text-2xl font-black text-[#2D2D2D]'>Something Went Wrong</h1>
 
           <p className='mb-6 text-[#666]'>
-            We encountered an unexpected error. Please try again or contact support if the problem persists.
+            We encountered an unexpected error. Please try again or contact support if the problem
+            persists.
           </p>
 
           {isDev && (
             <div className='mb-6 rounded bg-red-50 p-4 border border-red-200'>
               <p className='mb-2 text-xs font-mono font-bold text-red-700'>Error Details:</p>
-              <p className='mb-3 text-sm font-mono text-red-600 break-words'>
-                {errorMessage}
-              </p>
+              <p className='mb-3 text-sm font-mono text-red-600 break-words'>{errorMessage}</p>
               {errorStack && (
                 <details className='text-xs'>
                   <summary className='cursor-pointer font-bold text-red-700 mb-2'>

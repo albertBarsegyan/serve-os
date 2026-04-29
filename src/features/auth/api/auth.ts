@@ -20,6 +20,8 @@ export const authApi = {
   },
 
   me: async (): Promise<AuthenticatedUser | null> => {
-    return await api.get('auth/me').json()
+    const res = await api.post('auth/me')
+
+    return res.json()
   },
 }
