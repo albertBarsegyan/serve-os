@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 
 function AuthErrorComponent({ error }: { error: Error }) {
@@ -24,10 +24,6 @@ function AuthErrorComponent({ error }: { error: Error }) {
 export const Route = createFileRoute('/auth')({
   component: AuthLayout,
   errorComponent: AuthErrorComponent,
-  beforeLoad: ({ context, location }) => {
-    if (context.authUser && location.pathname !== '/admin/dashboard')
-      throw redirect({ to: '/admin/dashboard' })
-  },
 })
 
 function AuthLayout() {

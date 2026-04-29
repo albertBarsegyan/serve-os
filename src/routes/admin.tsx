@@ -2,7 +2,6 @@ import {
   createFileRoute,
   Link,
   Outlet,
-  redirect,
   useLocation,
   useNavigate,
 } from '@tanstack/react-router'
@@ -46,15 +45,6 @@ function AdminErrorComponent({ error }: { error: Error }) {
 export const Route = createFileRoute('/admin')({
   component: AdminLayout,
   errorComponent: AdminErrorComponent,
-  beforeLoad: ({ context, location }) => {
-    console.log('authUser', context.authUser)
-    if (context.authUser) {
-      if (location.pathname === '/admin')
-        throw redirect({
-          to: '/admin/dashboard',
-        })
-    } else throw redirect({ to: '/' })
-  },
 })
 
 const menuItems = [

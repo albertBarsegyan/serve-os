@@ -177,12 +177,6 @@ if (hasAuthToken()) {
 
 ### Manual Token Management
 
-```typescript
-import { 
-  setAuthToken, 
-  clearAuthToken, 
-  getAuthToken 
-} from '#/features/auth/lib/utils/auth-token'
 
 // After custom auth flow
 setAuthToken(token)

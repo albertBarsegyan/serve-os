@@ -5,7 +5,6 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { Toaster } from 'sonner'
 import { authApi } from '#/features/auth/api/auth.ts'
 import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
-import { getAuthToken } from '#/features/auth/lib/utils/auth-token'
 import { getLocale } from '#/paraglide/runtime'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 import { NotFoundPage } from '#/shared/ui/NotFoundPage'
@@ -24,16 +23,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     let authUser = null
 
     try {
-      // Only call /me if we have a persisted auth token
-      const token = getAuthToken()
-      
-      if (token) {
-        authUser = await context.queryClient.ensureQueryData({
-          queryKey: [authQueryKey.ME],
-          queryFn: authApi.me,
-          staleTime: Infinity,
-        })
-      }
+      authUser = await context.queryClient.ensureQueryData({
+        queryKey: [authQueryKey.ME],
+        queryFn: authApi.me,
+        staleTime: Infinity,
+      })
     } catch (error) {
       console.log('error', error)
       authUser = null
