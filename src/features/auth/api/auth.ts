@@ -16,10 +16,10 @@ export const authApi = {
   },
 
   logout: async (): Promise<void> => {
-    await api.post('auth/logout').json()
+    return await api.post('auth/logout').json()
   },
 
-  me: async (): Promise<AuthenticatedUser> => {
+  me: async (): Promise<AuthenticatedUser | null> => {
     return await api.get('auth/me').json()
   },
 }

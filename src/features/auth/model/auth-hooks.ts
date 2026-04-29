@@ -17,7 +17,7 @@ export function useSignUpMutation() {
   return useMutation({
     mutationFn: authApi.signup,
     onSettled: () => {
-      void queryClient.invalidateQueries()
+      void queryClient.invalidateQueries({ queryKey: [authQueryKey.ME] })
     },
   })
 }
@@ -27,5 +27,17 @@ export const useMe = () => {
     queryKey: [authQueryKey.ME],
     queryFn: authApi.me,
     retry: false,
+  })
+}
+
+export const useLogoutMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: authApi.logout,
+    retry: false,
+    onSuccess: () => {
+      void queryClient.clear()
+    },
   })
 }

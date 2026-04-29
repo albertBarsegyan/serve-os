@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 import { CustomerMenuPage } from '#/pages/customer/menu/ui/customer-menu-page'
 
 type CustomerMenuSearch = {
@@ -20,6 +21,7 @@ export const Route = createFileRoute('/customer/menu')({
 		sessionToken: typeof raw.sessionToken === 'string' ? raw.sessionToken : '',
 	}),
 	component: CustomerMenuRoute,
+	errorComponent: ({ error }) => <ErrorBoundary error={error} />,
 })
 
 function CustomerMenuRoute() {

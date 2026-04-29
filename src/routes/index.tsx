@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import {
   ArrowRight,
   BarChart3,
@@ -10,10 +10,17 @@ import {
 } from 'lucide-react'
 import Footer from '#/components/footer.tsx'
 import Header from '#/components/header.tsx'
+import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 import { Button } from '#/shared/ui/Button'
 import { Card, CardContent } from '#/shared/ui/Card'
 
-export const Route = createFileRoute('/')({ component: LandingPage })
+export const Route = createFileRoute('/')({
+  component: LandingPage,
+  errorComponent: ({ error }) => <ErrorBoundary error={error} />,
+  beforeLoad: ({ context, location }) => {
+    if (!context.authUser && location?.pathname !== '/') throw redirect({ to: '/' })
+  },
+})
 
 function LandingPage() {
   return (

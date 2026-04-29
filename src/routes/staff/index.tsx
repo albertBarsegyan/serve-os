@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 
 export const Route = createFileRoute('/staff/')({
   component: StaffHome,
+  errorComponent: ({ error }) => <ErrorBoundary error={error} />,
 })
 
 function StaffHome() {

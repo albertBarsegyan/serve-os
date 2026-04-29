@@ -21,33 +21,39 @@ import {
   UtensilsCrossed,
 } from 'lucide-react'
 import { useState } from 'react'
-import { authApi } from '#/features/auth/api/auth.ts'
-import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
-import { getQueryContext } from '#/integrations/tanstack-query/root-provider.tsx'
+
+import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
+import { useLogoutMutation } from '#/features/auth/model/auth-hooks.ts'
 import { cn } from '#/lib/utils.ts'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { ErrorBoundary } from '#/shared/ui/ErrorBoundary.tsx'
 import { Button } from '#/shared/ui/Button.tsx'
+
+function AdminErrorComponent({ error }: { error: Error }) {
+  return (
+    <div className='flex min-h-screen flex-col bg-[#F8F9FD]'>
+      <header className='flex h-20 items-center bg-white px-8 border-b border-[var(--line)]'>
+        <h1 className='text-lg font-bold text-[#2D2D2D]'>ServeOS Admin</h1>
+      </header>
+      <main className='flex-1 overflow-y-auto p-8'>
+        <ErrorBoundary error={error} />
+      </main>
+    </div>
+  )
+}
 
 export const Route = createFileRoute('/admin')({
   component: AdminLayout,
-  beforeLoad: async ({ location }) => {
-    try {
-      const { queryClient } = getQueryContext()
-      const data = await queryClient.ensureQueryData({
-        queryKey: [authQueryKey.ME],
-        queryFn: authApi.me,
-      })
-
-      console.log('data', data)
-
+  errorComponent: AdminErrorComponent,
+  beforeLoad: ({ context, location }) => {
+    console.log('authUser', context.authUser)
+    if (context.authUser) {
       if (location.pathname === '/admin')
         throw redirect({
           to: '/admin/dashboard',
         })
-    } catch {
-      throw redirect({
-        to: '/',
-      })
-    }
+    } else throw redirect({ to: '/' })
   },
 })
 
@@ -65,13 +71,26 @@ const otherItems = [
 ]
 
 function AdminLayout() {
-  const navigate = useNavigate()
   const [isCollapsed, _] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+
+  const logoutMutation = useLogoutMutation()
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync()
+
+      await navigate({ to: '/' })
+      showSuccess(authUiMessage.SUCCESS_LOGOUT)
+    } catch (error) {
+      showError(getResponseErrorMessage(error))
+    }
+  }
 
   const NavLink = ({ item }: { item: (typeof menuItems)[0] }) => {
-    const isActive = location.pathname === item.href
+    const isActive = location?.pathname === item.href
     return (
       <Link
         to={item.href}
@@ -155,9 +174,7 @@ function AdminLayout() {
                   'w-full justify-start gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[var(--sea-ink-soft)] hover:bg-[var(--link-bg-hover)]',
                   isCollapsed && 'justify-center px-0',
                 )}
-                onClick={() => {
-                  void navigate({ to: '/auth/sign-in' })
-                }}
+                onClick={handleLogout}
               >
                 <LogOut className='h-5 w-5' />
                 {!isCollapsed && <span>Logout</span>}

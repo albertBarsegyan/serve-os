@@ -5,6 +5,13 @@ export interface SignUpRequest {
   lastName: string
 }
 
-export type AuthenticatedUser = object
+export interface AuthenticatedUser {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  businessId?: string
+  role?: string
+}
 
 export type SignupResponseBody = object
