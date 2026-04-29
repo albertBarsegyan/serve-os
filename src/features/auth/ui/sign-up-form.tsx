@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Eye, EyeOff, LucideLock, Mail, User } from 'lucide-react'
 import { useId, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -23,9 +23,9 @@ export function SignUpForm() {
   const passwordId = useId()
   const confirmPasswordId = useId()
 
+  const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const queryClient = useQueryClient()
 
   const {
     register,
@@ -47,7 +47,9 @@ export function SignUpForm() {
   const onSubmit = async (values: SignUpFormValues) => {
     try {
       await mutateAsync(signUpAdapter.toApi(values))
-      await queryClient.invalidateQueries({ queryKey: [authQueryKey.ME] })
+
+      await navigate({ to: '/admin/dashboard' })
+
       showSuccess(authUiMessage.SUCCESS_SIGN_UP)
     } catch (error) {
       showError(getResponseErrorMessage(error))

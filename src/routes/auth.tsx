@@ -1,4 +1,6 @@
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
+import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
+import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 
 function AuthErrorComponent({ error }: { error: Error }) {
@@ -24,6 +26,13 @@ function AuthErrorComponent({ error }: { error: Error }) {
 export const Route = createFileRoute('/auth')({
   component: AuthLayout,
   errorComponent: AuthErrorComponent,
+  beforeLoad: ({ context }) => {
+    const user = context.queryClient.getQueryData([authQueryKey.ME]) as AuthenticatedUser | null
+
+    if (user) throw redirect({ to: '/admin/dashboard' })
+
+    if (!user) throw redirect({ to: '/auth/sign-in' })
+  },
 })
 
 function AuthLayout() {

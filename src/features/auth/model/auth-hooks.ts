@@ -6,8 +6,8 @@ export function useSignInMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: authApi.signIn,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [authQueryKey.ME] })
+    onSuccess: (data) => {
+      void queryClient.setQueryData([authQueryKey.ME], data)
     },
   })
 }
@@ -16,16 +16,16 @@ export function useSignUpMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: authApi.signup,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [authQueryKey.ME] })
+    onSuccess: (data) => {
+      void queryClient.setQueryData([authQueryKey.ME], data)
     },
   })
 }
 
-export const useMe = () => {
+export const useMe = (cookie?: string) => {
   return useQuery({
     queryKey: [authQueryKey.ME],
-    queryFn: authApi.me,
+    queryFn: () => authApi.me(cookie),
     retry: false,
   })
 }
@@ -37,7 +37,7 @@ export const useLogoutMutation = () => {
     mutationFn: authApi.logout,
     retry: false,
     onSuccess: () => {
-      void queryClient.clear()
+      queryClient.setQueryData([authQueryKey.ME], null)
     },
   })
 }

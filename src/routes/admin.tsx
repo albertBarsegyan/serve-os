@@ -2,6 +2,7 @@ import {
   createFileRoute,
   Link,
   Outlet,
+  redirect,
   useLocation,
   useNavigate,
 } from '@tanstack/react-router'
@@ -20,14 +21,15 @@ import {
   UtensilsCrossed,
 } from 'lucide-react'
 import { useState } from 'react'
-
+import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
+import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
 import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
 import { useLogoutMutation } from '#/features/auth/model/auth-hooks.ts'
 import { cn } from '#/lib/utils.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary.tsx'
 import { Button } from '#/shared/ui/Button.tsx'
+import { ErrorBoundary } from '#/shared/ui/ErrorBoundary.tsx'
 
 function AdminErrorComponent({ error }: { error: Error }) {
   return (
@@ -45,6 +47,11 @@ function AdminErrorComponent({ error }: { error: Error }) {
 export const Route = createFileRoute('/admin')({
   component: AdminLayout,
   errorComponent: AdminErrorComponent,
+  beforeLoad: ({ context }) => {
+    const user = context.queryClient.getQueryData([authQueryKey.ME]) as AuthenticatedUser | null
+
+    if (!user) throw redirect({ to: '/' })
+  },
 })
 
 const menuItems = [

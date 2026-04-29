@@ -1,7 +1,8 @@
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
+import { createRootRouteWithContext, HeadContent, redirect, Scripts } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import { getRequest } from '@tanstack/react-start/server'
 import { Toaster } from 'sonner'
 import { authApi } from '#/features/auth/api/auth.ts'
 import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
@@ -14,32 +15,29 @@ import appCss from '../styles.css?url'
 
 interface MyRouterContext {
   queryClient: QueryClient
+  request?: Request
 }
 
 const THEME_INIT_SCRIPT = `(function(){try{var root=document.documentElement;root.classList.remove('dark');root.classList.add('light');root.setAttribute('data-theme','light');root.style.colorScheme='light';}catch(e){}})();`
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  beforeLoad: async ({ context }) => {
-    let authUser = null
-
-    try {
-      authUser = await context.queryClient.ensureQueryData({
-        queryKey: [authQueryKey.ME],
-        queryFn: authApi.me,
-        staleTime: Infinity,
-      })
-    } catch (error) {
-      console.log('error', error)
-      authUser = null
-    }
-
-    // Other redirect strategies are possible; see
-    // https://github.com/TanStack/router/tree/main/examples/react/i18n-paraglide#offline-redirect
+  beforeLoad: async ({ context, location }) => {
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('lang', getLocale())
     }
 
-    return { authUser }
+    const request = getRequest()
+
+    const cookie = request?.headers.get('cookie')
+
+    if (cookie) {
+      const user = await context.queryClient.fetchQuery({
+        queryKey: [authQueryKey.ME],
+        queryFn: () => authApi.me(cookie),
+      })
+
+      if (user?.id && location.pathname === '/') throw redirect({ to: '/admin/dashboard' })
+    }
   },
 
   head: () => ({

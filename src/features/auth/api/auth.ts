@@ -19,9 +19,15 @@ export const authApi = {
     return await api.post('auth/logout').json()
   },
 
-  me: async (): Promise<AuthenticatedUser | null> => {
-    const res = await api.post('auth/me')
-
-    return res.json()
+  me: async (cookie?: string | null): Promise<AuthenticatedUser | null> => {
+    try {
+      return await api
+        .get('auth/me', {
+          context: { cookie },
+        })
+        .json()
+    } catch {
+      return null
+    }
   },
 }
