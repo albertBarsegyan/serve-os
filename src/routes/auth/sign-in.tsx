@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { SignInForm } from '#/features/auth/ui/sign-in-form'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/shared/ui/Card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 
 export const Route = createFileRoute('/auth/sign-in')({
@@ -10,10 +10,10 @@ export const Route = createFileRoute('/auth/sign-in')({
 
 function SignInPage() {
   return (
-    <Card className='border-none shadow-xl shadow-[#5D5FEF]/5 rounded-[2.5rem] bg-white'>
-      <CardHeader className='pt-10 pb-2 text-center'>
-        <CardTitle className='text-2xl font-black text-[#2D2D2D]'>Welcome Back</CardTitle>
-        <CardDescription className='text-sm font-medium text-[#666]'>
+    <Card className='rounded-2xl'>
+      <CardHeader className='pb-2 pt-10 text-center'>
+        <CardTitle className='text-2xl font-semibold tracking-tight'>Welcome Back</CardTitle>
+        <CardDescription className='text-sm text-muted-foreground'>
           Enter your credentials to access your restaurant dashboard
         </CardDescription>
       </CardHeader>

@@ -1,17 +1,16 @@
 import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
-import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
-import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
+import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 
-function AuthErrorComponent({ error }: { error: Error }) {
+function AuthErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
-    <div className='min-h-screen bg-[#F8F9FD] flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
+    <div className='flex min-h-screen flex-col justify-center bg-background py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <Link to='/' className='flex justify-center items-center gap-2 mb-6'>
-          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[#5D5FEF] text-sm font-bold text-white shadow-lg shadow-[#5D5FEF]/20'>
+        <Link to='/' className='mb-6 flex items-center justify-center gap-2'>
+          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm'>
             S
           </div>
-          <span className='text-2xl font-black tracking-tighter text-[#2D2D2D] uppercase'>
+          <span className='text-2xl font-semibold tracking-tight text-foreground uppercase'>
             ServeOS
           </span>
         </Link>
@@ -26,24 +25,23 @@ function AuthErrorComponent({ error }: { error: Error }) {
 export const Route = createFileRoute('/auth')({
   component: AuthLayout,
   errorComponent: AuthErrorComponent,
-  beforeLoad: ({ context }) => {
-    const user = context.queryClient.getQueryData([authQueryKey.ME]) as AuthenticatedUser | null
+  beforeLoad: ({ context, location }) => {
+    if (context.authUser && location.pathname.startsWith('/auth'))
+      throw redirect({ to: getPostAuthDestination(context.authUser) })
 
-    if (user) throw redirect({ to: '/admin/dashboard' })
-
-    if (!user) throw redirect({ to: '/auth/sign-in' })
+    if (location.pathname === '/auth') throw redirect({ to: '/auth/sign-in' })
   },
 })
 
 function AuthLayout() {
   return (
-    <div className='min-h-screen bg-[#F8F9FD] flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
+    <div className='flex min-h-screen flex-col justify-center bg-background py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <Link to='/' className='flex justify-center items-center gap-2 mb-6'>
-          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[#5D5FEF] text-sm font-bold text-white shadow-lg shadow-[#5D5FEF]/20'>
+        <Link to='/' className='mb-6 flex items-center justify-center gap-2'>
+          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm'>
             S
           </div>
-          <span className='text-2xl font-black tracking-tighter text-[#2D2D2D] uppercase'>
+          <span className='text-2xl font-semibold tracking-tight text-foreground uppercase'>
             ServeOS
           </span>
         </Link>
@@ -53,7 +51,7 @@ function AuthLayout() {
         <Outlet />
       </div>
 
-      <div className='mt-8 text-center text-sm text-[#666]'>
+      <div className='mt-8 text-center text-sm text-muted-foreground'>
         <p>&copy; {new Date().getFullYear()} ServeOS. All rights reserved.</p>
       </div>
     </div>

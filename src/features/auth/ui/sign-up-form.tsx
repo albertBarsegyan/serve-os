@@ -1,20 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Eye, EyeOff, LucideLock, Mail, User } from 'lucide-react'
 import { useId, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
 import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
-import {
-  type SignUpFormValues,
-  signUpFormSchema,
-} from '#/features/auth/lib/schemas/sign-up-form.schema.ts'
+import { type SignUpFormValues, signUpSchema } from '#/features/auth/lib/schemas/sign-up.schema.ts'
 import { signUpAdapter } from '#/features/auth/lib/utils/auth-forms-adapter.ts'
+import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
 import { useSignUpMutation } from '#/features/auth/model/auth-hooks.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { Button } from '#/shared/ui/Button'
+import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
+import { Label } from '#/components/ui/label'
 
 export function SignUpForm() {
   const firstNameId = useId()
@@ -32,7 +30,7 @@ export function SignUpForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<SignUpFormValues>({
-    resolver: zodResolver(signUpFormSchema),
+    resolver: zodResolver(signUpSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -46,35 +44,31 @@ export function SignUpForm() {
 
   const onSubmit = async (values: SignUpFormValues) => {
     try {
-      await mutateAsync(signUpAdapter.toApi(values))
-
-      await navigate({ to: '/admin/dashboard' })
+      const authUser = await mutateAsync({ data: signUpAdapter.toApi(values) })
 
       showSuccess(authUiMessage.SUCCESS_SIGN_UP)
+      await navigate({ to: getPostAuthDestination(authUser) })
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
   }
 
-  const inputErrorClass = 'ring-2 ring-red-400 bg-red-50'
+  const inputErrorClass = 'border-destructive focus-visible:ring-destructive'
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4 mt-6'>
+    <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
       {/* First Name */}
       <div className='space-y-1.5'>
-        <label
-          htmlFor={firstNameId}
-          className='text-xs font-bold uppercase tracking-widest text-[#B0B0B0] ml-1'
-        >
+        <Label htmlFor={firstNameId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
           First Name
-        </label>
+        </Label>
         <div className='relative'>
-          <User className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B0B0]' />
-          <input
+          <User className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+          <Input
             id={firstNameId}
             type='text'
             placeholder='John'
-            className={`h-14 w-full rounded-2xl border-none bg-[#F5F5F5] pl-12 pr-4 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]/20 transition-all ${
+            className={`h-14 rounded-xl pl-12 pr-4 ${
               errors.firstName ? inputErrorClass : ''
             }`}
             {...register('firstName')}
@@ -87,19 +81,16 @@ export function SignUpForm() {
 
       {/* Last Name */}
       <div className='space-y-1.5'>
-        <label
-          htmlFor={lastNameId}
-          className='text-xs font-bold uppercase tracking-widest text-[#B0B0B0] ml-1'
-        >
+        <Label htmlFor={lastNameId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
           Last Name
-        </label>
+        </Label>
         <div className='relative'>
-          <User className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B0B0]' />
-          <input
+          <User className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+          <Input
             id={lastNameId}
             type='text'
             placeholder='Doe'
-            className={`h-14 w-full rounded-2xl border-none bg-[#F5F5F5] pl-12 pr-4 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]/20 transition-all ${
+            className={`h-14 rounded-xl pl-12 pr-4 ${
               errors.lastName ? inputErrorClass : ''
             }`}
             {...register('lastName')}
@@ -110,19 +101,16 @@ export function SignUpForm() {
 
       {/* Email */}
       <div className='space-y-1.5'>
-        <label
-          htmlFor={mailId}
-          className='text-xs font-bold uppercase tracking-widest text-[#B0B0B0] ml-1'
-        >
+        <Label htmlFor={mailId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
           Email Address
-        </label>
+        </Label>
         <div className='relative'>
-          <Mail className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B0B0]' />
-          <input
+          <Mail className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+          <Input
             id={mailId}
             type='email'
             placeholder='name@company.com'
-            className={`h-14 w-full rounded-2xl border-none bg-[#F5F5F5] pl-12 pr-4 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]/20 transition-all ${
+            className={`h-14 rounded-xl pl-12 pr-4 ${
               errors.email ? inputErrorClass : ''
             }`}
             {...register('email')}
@@ -133,19 +121,16 @@ export function SignUpForm() {
 
       {/* Password */}
       <div className='space-y-1.5'>
-        <label
-          htmlFor={passwordId}
-          className='text-xs font-bold uppercase tracking-widest text-[#B0B0B0] ml-1'
-        >
+        <Label htmlFor={passwordId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
           Password
-        </label>
+        </Label>
         <div className='relative'>
-          <LucideLock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B0B0]' />
-          <input
+          <LucideLock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+          <Input
             id={passwordId}
             type={showPassword ? 'text' : 'password'}
             placeholder='••••••••'
-            className={`h-14 w-full rounded-2xl border-none bg-[#F5F5F5] pl-12 pr-12 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]/20 transition-all ${
+            className={`h-14 rounded-xl pl-12 pr-12 ${
               errors.password ? inputErrorClass : ''
             }`}
             {...register('password')}
@@ -153,7 +138,7 @@ export function SignUpForm() {
           <button
             type='button'
             onClick={() => setShowPassword((prev) => !prev)}
-            className='absolute right-4 top-1/2 -translate-y-1/2 text-[#B0B0B0] hover:text-[#2D2D2D]'
+            className='absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground'
           >
             {showPassword ? <EyeOff className='h-5 w-5' /> : <Eye className='h-5 w-5' />}
           </button>
@@ -163,19 +148,16 @@ export function SignUpForm() {
 
       {/* Confirm Password */}
       <div className='space-y-1.5'>
-        <label
-          htmlFor={confirmPasswordId}
-          className='text-xs font-bold uppercase tracking-widest text-[#B0B0B0] ml-1'
-        >
+        <Label htmlFor={confirmPasswordId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
           Confirm Password
-        </label>
+        </Label>
         <div className='relative'>
-          <LucideLock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B0B0]' />
-          <input
+          <LucideLock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+          <Input
             id={confirmPasswordId}
             type={showConfirmPassword ? 'text' : 'password'}
             placeholder='••••••••'
-            className={`h-14 w-full rounded-2xl border-none bg-[#F5F5F5] pl-12 pr-12 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]/20 transition-all ${
+            className={`h-14 rounded-xl pl-12 pr-12 ${
               errors.confirmPassword ? inputErrorClass : ''
             }`}
             {...register('confirmPassword')}
@@ -183,7 +165,7 @@ export function SignUpForm() {
           <button
             type='button'
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className='absolute right-4 top-1/2 -translate-y-1/2 text-[#B0B0B0] hover:text-[#2D2D2D]'
+            className='absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground'
           >
             {showConfirmPassword ? <EyeOff className='h-5 w-5' /> : <Eye className='h-5 w-5' />}
           </button>
@@ -194,14 +176,14 @@ export function SignUpForm() {
       </div>
 
       <div className='pt-2'>
-        <Button type='submit' className='w-full h-14 rounded-2xl shadow-lg shadow-[#5D5FEF]/20'>
+        <Button type='submit' className='h-14 w-full rounded-xl'>
           Create Account
         </Button>
       </div>
 
-      <p className='text-center text-sm font-medium text-[#666] mt-8'>
+      <p className='mt-8 text-center text-sm font-medium text-muted-foreground'>
         Do You have an account?{' '}
-        <Link to='/auth/sign-in' className='text-[#5D5FEF] font-bold hover:underline'>
+        <Link to='/auth/sign-in' className='font-semibold text-primary hover:underline'>
           Sign in
         </Link>
       </p>

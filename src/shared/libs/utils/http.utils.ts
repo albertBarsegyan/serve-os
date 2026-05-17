@@ -1,5 +1,4 @@
 export const getResponseErrorMessage = (error: unknown): string => {
-  // Helper to safely extract nested property
   const getNestedMessage = (obj: unknown, ...keys: string[]): string | null => {
     let current = obj
     for (const key of keys) {

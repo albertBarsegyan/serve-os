@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 import { SignUpForm } from '#/features/auth/ui/sign-up-form'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/shared/ui/Card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
 
 export const Route = createFileRoute('/auth/sign-up')({
   component: SignUpPage,
@@ -10,10 +10,10 @@ export const Route = createFileRoute('/auth/sign-up')({
 
 function SignUpPage() {
   return (
-    <Card className='border-none shadow-xl shadow-[#5D5FEF]/5 rounded-[2.5rem] bg-white'>
-      <CardHeader className='pt-10 pb-2 text-center'>
-        <CardTitle className='text-2xl font-black text-[#2D2D2D]'>Create Account</CardTitle>
-        <CardDescription className='text-sm font-medium text-[#666]'>
+    <Card className='rounded-2xl'>
+      <CardHeader className='pb-2 pt-10 text-center'>
+        <CardTitle className='text-2xl font-semibold tracking-tight'>Create Account</CardTitle>
+        <CardDescription className='text-sm text-muted-foreground'>
           Start managing your venue with ServeOS today
         </CardDescription>
       </CardHeader>

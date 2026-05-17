@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import {
   ArrowRight,
   BarChart3,
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import Footer from '#/components/footer.tsx'
 import Header from '#/components/header.tsx'
+import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
 import { Button } from '#/shared/ui/Button'
 import { Card, CardContent } from '#/shared/ui/Card'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
@@ -17,6 +18,10 @@ import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 export const Route = createFileRoute('/')({
   component: LandingPage,
   errorComponent: ({ error }) => <ErrorBoundary error={error} />,
+  beforeLoad: ({ location, context }) => {
+    if (location.pathname === '/' && context.authUser)
+      throw redirect({ to: getPostAuthDestination(context.authUser) })
+  },
 })
 
 function LandingPage() {
@@ -25,7 +30,6 @@ function LandingPage() {
       <Header />
 
       <main>
-        {/* Hero Section */}
         <section className='relative overflow-hidden px-4 pt-20 pb-24 sm:pt-32 sm:pb-32'>
           <div className='page-wrap relative z-10'>
             <div className='flex flex-col items-center text-center'>
@@ -42,12 +46,14 @@ function LandingPage() {
                 system. Built for bars, clubs, restaurants, and modern hospitality venues.
               </p>
               <div className='animate-fade-in-up flex flex-wrap justify-center gap-4'>
-                <Button size='lg' className='rounded-full shadow-lg shadow-[#5D5FEF]/20'>
-                  Get Started <ArrowRight className='ml-2 h-5 w-5' />
-                </Button>
-                <Button variant='outline' size='lg' className='rounded-full bg-white'>
-                  Watch Demo
-                </Button>
+                <Link to='/auth/sign-in'>
+                  <Button
+                    size='lg'
+                    className='cursor-pointer rounded-full shadow-lg shadow-[#5D5FEF]/20'
+                  >
+                    Get Started <ArrowRight className='ml-2 h-5 w-5' />
+                  </Button>
+                </Link>
               </div>
             </div>
 

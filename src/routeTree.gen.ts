@@ -9,37 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffKitchenRouteImport } from './routes/staff/kitchen'
 import { Route as CustomerMenuRouteImport } from './routes/customer/menu'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
-import { Route as AdminTablesRouteImport } from './routes/admin/tables'
-import { Route as AdminStaffRouteImport } from './routes/admin/staff'
-import { Route as AdminSetupRouteImport } from './routes/admin/setup'
-import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
-import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
-import { Route as AdminMenuRouteImport } from './routes/admin/menu'
-import { Route as AdminKitchenRouteImport } from './routes/admin/kitchen'
-import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminTablesRouteImport } from './routes/_admin/tables'
+import { Route as AdminStaffRouteImport } from './routes/_admin/staff'
+import { Route as AdminSettingsRouteImport } from './routes/_admin/settings'
+import { Route as AdminOrdersRouteImport } from './routes/_admin/orders'
+import { Route as AdminMenuRouteImport } from './routes/_admin/menu'
+import { Route as AdminKitchenRouteImport } from './routes/_admin/kitchen'
+import { Route as AdminDashboardRouteImport } from './routes/_admin/dashboard'
 
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -82,11 +86,6 @@ const AdminStaffRoute = AdminStaffRouteImport.update({
   path: '/staff',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSetupRoute = AdminSetupRouteImport.update({
-  id: '/setup',
-  path: '/setup',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -116,16 +115,15 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/kitchen': typeof AdminKitchenRoute
-  '/admin/menu': typeof AdminMenuRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/settings': typeof AdminSettingsRoute
-  '/admin/setup': typeof AdminSetupRoute
-  '/admin/staff': typeof AdminStaffRoute
-  '/admin/tables': typeof AdminTablesRoute
+  '/setup': typeof SetupRoute
+  '/dashboard': typeof AdminDashboardRoute
+  '/kitchen': typeof AdminKitchenRoute
+  '/menu': typeof AdminMenuRoute
+  '/orders': typeof AdminOrdersRoute
+  '/settings': typeof AdminSettingsRoute
+  '/staff': typeof AdminStaffRoute
+  '/tables': typeof AdminTablesRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
@@ -135,36 +133,34 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/kitchen': typeof AdminKitchenRoute
-  '/admin/menu': typeof AdminMenuRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/settings': typeof AdminSettingsRoute
-  '/admin/setup': typeof AdminSetupRoute
-  '/admin/staff': typeof AdminStaffRoute
-  '/admin/tables': typeof AdminTablesRoute
+  '/setup': typeof SetupRoute
+  '/dashboard': typeof AdminDashboardRoute
+  '/kitchen': typeof AdminKitchenRoute
+  '/menu': typeof AdminMenuRoute
+  '/orders': typeof AdminOrdersRoute
+  '/settings': typeof AdminSettingsRoute
+  '/staff': typeof StaffIndexRoute
+  '/tables': typeof AdminTablesRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
   '/staff/kitchen': typeof StaffKitchenRoute
-  '/staff': typeof StaffIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_admin': typeof AdminRouteWithChildren
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/kitchen': typeof AdminKitchenRoute
-  '/admin/menu': typeof AdminMenuRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/settings': typeof AdminSettingsRoute
-  '/admin/setup': typeof AdminSetupRoute
-  '/admin/staff': typeof AdminStaffRoute
-  '/admin/tables': typeof AdminTablesRoute
+  '/setup': typeof SetupRoute
+  '/_admin/dashboard': typeof AdminDashboardRoute
+  '/_admin/kitchen': typeof AdminKitchenRoute
+  '/_admin/menu': typeof AdminMenuRoute
+  '/_admin/orders': typeof AdminOrdersRoute
+  '/_admin/settings': typeof AdminSettingsRoute
+  '/_admin/staff': typeof AdminStaffRoute
+  '/_admin/tables': typeof AdminTablesRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
@@ -176,16 +172,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/admin'
     | '/auth'
-    | '/admin/dashboard'
-    | '/admin/kitchen'
-    | '/admin/menu'
-    | '/admin/orders'
-    | '/admin/settings'
-    | '/admin/setup'
-    | '/admin/staff'
-    | '/admin/tables'
+    | '/setup'
+    | '/dashboard'
+    | '/kitchen'
+    | '/menu'
+    | '/orders'
+    | '/settings'
+    | '/staff'
+    | '/tables'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
@@ -195,35 +190,33 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
-    | '/admin'
     | '/auth'
-    | '/admin/dashboard'
-    | '/admin/kitchen'
-    | '/admin/menu'
-    | '/admin/orders'
-    | '/admin/settings'
-    | '/admin/setup'
-    | '/admin/staff'
-    | '/admin/tables'
+    | '/setup'
+    | '/dashboard'
+    | '/kitchen'
+    | '/menu'
+    | '/orders'
+    | '/settings'
+    | '/staff'
+    | '/tables'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
     | '/staff/kitchen'
-    | '/staff'
   id:
     | '__root__'
     | '/'
+    | '/_admin'
     | '/about'
-    | '/admin'
     | '/auth'
-    | '/admin/dashboard'
-    | '/admin/kitchen'
-    | '/admin/menu'
-    | '/admin/orders'
-    | '/admin/settings'
-    | '/admin/setup'
-    | '/admin/staff'
-    | '/admin/tables'
+    | '/setup'
+    | '/_admin/dashboard'
+    | '/_admin/kitchen'
+    | '/_admin/menu'
+    | '/_admin/orders'
+    | '/_admin/settings'
+    | '/_admin/staff'
+    | '/_admin/tables'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
@@ -233,9 +226,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRouteWithChildren
+  SetupRoute: typeof SetupRoute
   CustomerMenuRoute: typeof CustomerMenuRoute
   StaffKitchenRoute: typeof StaffKitchenRoute
   StaffIndexRoute: typeof StaffIndexRoute
@@ -243,6 +237,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -250,18 +251,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/about': {
       id: '/about'
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -306,59 +307,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignInRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/admin/tables': {
-      id: '/admin/tables'
+    '/_admin/tables': {
+      id: '/_admin/tables'
       path: '/tables'
-      fullPath: '/admin/tables'
+      fullPath: '/tables'
       preLoaderRoute: typeof AdminTablesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/staff': {
-      id: '/admin/staff'
+    '/_admin/staff': {
+      id: '/_admin/staff'
       path: '/staff'
-      fullPath: '/admin/staff'
+      fullPath: '/staff'
       preLoaderRoute: typeof AdminStaffRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/setup': {
-      id: '/admin/setup'
-      path: '/setup'
-      fullPath: '/admin/setup'
-      preLoaderRoute: typeof AdminSetupRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/settings': {
-      id: '/admin/settings'
+    '/_admin/settings': {
+      id: '/_admin/settings'
       path: '/settings'
-      fullPath: '/admin/settings'
+      fullPath: '/settings'
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/orders': {
-      id: '/admin/orders'
+    '/_admin/orders': {
+      id: '/_admin/orders'
       path: '/orders'
-      fullPath: '/admin/orders'
+      fullPath: '/orders'
       preLoaderRoute: typeof AdminOrdersRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/menu': {
-      id: '/admin/menu'
+    '/_admin/menu': {
+      id: '/_admin/menu'
       path: '/menu'
-      fullPath: '/admin/menu'
+      fullPath: '/menu'
       preLoaderRoute: typeof AdminMenuRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/kitchen': {
-      id: '/admin/kitchen'
+    '/_admin/kitchen': {
+      id: '/_admin/kitchen'
       path: '/kitchen'
-      fullPath: '/admin/kitchen'
+      fullPath: '/kitchen'
       preLoaderRoute: typeof AdminKitchenRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/dashboard': {
-      id: '/admin/dashboard'
+    '/_admin/dashboard': {
+      id: '/_admin/dashboard'
       path: '/dashboard'
-      fullPath: '/admin/dashboard'
+      fullPath: '/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
@@ -371,7 +365,6 @@ interface AdminRouteChildren {
   AdminMenuRoute: typeof AdminMenuRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
-  AdminSetupRoute: typeof AdminSetupRoute
   AdminStaffRoute: typeof AdminStaffRoute
   AdminTablesRoute: typeof AdminTablesRoute
 }
@@ -382,7 +375,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMenuRoute: AdminMenuRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminSettingsRoute: AdminSettingsRoute,
-  AdminSetupRoute: AdminSetupRoute,
   AdminStaffRoute: AdminStaffRoute,
   AdminTablesRoute: AdminTablesRoute,
 }
@@ -403,9 +395,10 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
+  AboutRoute: AboutRoute,
   AuthRoute: AuthRouteWithChildren,
+  SetupRoute: SetupRoute,
   CustomerMenuRoute: CustomerMenuRoute,
   StaffKitchenRoute: StaffKitchenRoute,
   StaffIndexRoute: StaffIndexRoute,

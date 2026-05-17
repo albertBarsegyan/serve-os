@@ -5,10 +5,10 @@ import { kitchenOrdersQueryOptions, orderQueryKeys } from '#/entities/order/api/
 import type { Order, OrderStatus } from '#/entities/order/model/types'
 import { updateOrderStatus } from '#/features/order/update-order-status/model/update-order-status'
 import { cn } from '#/lib/utils'
-import { getApiErrorMessage } from '#/shared/api/parse-api-error'
-import { Badge } from '#/shared/ui/Badge'
-import { Button } from '#/shared/ui/Button'
-import { Card, CardContent, CardHeader } from '#/shared/ui/Card'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 
 type Column = 'queue' | 'preparing' | 'ready'
 
@@ -85,23 +85,22 @@ export function AdminKitchenContent() {
     <div className='flex h-[calc(100vh-10rem)] flex-col space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-extrabold text-[var(--sea-ink)]'>Kitchen Display (KDS)</h1>
-          <p className='text-[var(--sea-ink-soft)]'>
+          <h1 className='text-3xl font-semibold tracking-tight'>Kitchen Display (KDS)</h1>
+          <p className='text-muted-foreground'>
             Real-time kitchen flow. Status updates call{' '}
-            <code className='rounded bg-[var(--surface)] px-1 text-xs'>
-              PATCH /orders/:id/status
-            </code>
+            <code className='rounded bg-muted px-1 text-xs'>PATCH /orders/:id/status</code>
             .
           </p>
           {!tenantId && (
-            <p className='mt-2 text-sm text-amber-800'>
-              Sign in or set <code className='rounded bg-amber-100 px-1'>VITE_DEV_BUSINESS_ID</code>
+            <p className='mt-2 text-sm text-amber-700'>
+              Sign in or set <code className='rounded bg-muted px-1'>VITE_DEV_BUSINESS_ID</code>
               .
             </p>
           )}
+
           {isError && (
-            <p className='mt-2 text-sm text-red-700'>
-              {getApiErrorMessage(error)}
+            <p className='mt-2 text-sm text-destructive'>
+              {getResponseErrorMessage(error)}
               <button
                 type='button'
                 className='ml-2 font-semibold underline'
@@ -117,9 +116,9 @@ export function AdminKitchenContent() {
         <div className='flex items-center gap-3'>
           <Badge
             variant='outline'
-            className='h-8 rounded-full bg-[var(--surface)] px-4 text-xs font-bold'
+            className='h-8 rounded-full bg-muted px-4 text-xs font-semibold'
           >
-            {inKitchen.length} active
+              {inKitchen.length} active
           </Badge>
           <Button
             size='sm'
@@ -141,7 +140,7 @@ export function AdminKitchenContent() {
             <div className='flex items-center justify-between px-2'>
               <div className='flex items-center gap-2'>
                 <col.icon className={cn('h-5 w-5', col.color)} />
-                <h3 className='text-lg font-bold'>{col.title}</h3>
+                <h3 className='text-lg font-semibold'>{col.title}</h3>
               </div>
               <Badge variant='secondary' className='rounded-full'>
                 {inKitchen.filter((o) => orderColumn(o.status) === col.key).length}
@@ -166,23 +165,23 @@ export function AdminKitchenContent() {
                         <span className='text-sm font-bold'>
                           #{order.id.slice(0, 8).toUpperCase()}
                         </span>
-                        <span className='text-lg font-black text-[var(--brand-magenta)]'>
+                        <span className='text-lg font-semibold text-primary'>
                           Table {order.table}
                         </span>
                       </div>
-                      <div className='flex items-center gap-1.5 text-xs font-bold text-[var(--sea-ink-soft)]'>
+                      <div className='flex items-center gap-1.5 text-xs font-medium text-muted-foreground'>
                         <Clock className='h-3.5 w-3.5' />
                         {new Date(order.createdAt).toLocaleTimeString()}
                       </div>
                     </CardHeader>
                     <CardContent className='space-y-4'>
                       <ul className='space-y-2'>
-                        {formatItemLines(order).map((line, i) => (
+                        {formatItemLines(order).map((line) => (
                           <li
-                            key={`${order.id}-line-${i}`}
+                            key={`${order.id}-${line}`}
                             className='flex items-center gap-2 font-medium'
                           >
-                            <div className='h-1.5 w-1.5 rounded-full bg-[var(--brand-rose)]' />
+                            <div className='h-1.5 w-1.5 rounded-full bg-primary' />
                             {line}
                           </li>
                         ))}
@@ -192,7 +191,7 @@ export function AdminKitchenContent() {
                         {col.key === 'queue' && (
                           <Button
                             type='button'
-                            className='w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700'
+                            className='w-full rounded-xl'
                             disabled={updateStatus.isPending}
                             onClick={() => {
                               updateStatus.mutate({
@@ -208,7 +207,7 @@ export function AdminKitchenContent() {
                         {col.key === 'preparing' && (
                           <Button
                             type='button'
-                            className='w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700'
+                            className='w-full rounded-xl'
                             disabled={updateStatus.isPending}
                             onClick={() => {
                               updateStatus.mutate({
@@ -245,12 +244,12 @@ export function AdminKitchenContent() {
 
               {!isPending &&
                 inKitchen.filter((o) => orderColumn(o.status) === col.key).length === 0 && (
-                  <div className='flex h-32 items-center justify-center rounded-[2rem] border-2 border-dashed border-[var(--line)] text-sm text-[var(--sea-ink-soft)]'>
+                          <div className='flex h-32 items-center justify-center rounded-[2rem] border-2 border-dashed border-(--line) text-sm text-(--sea-ink-soft)'>
                     No tickets
                   </div>
                 )}
               {isPending && tenantId && inKitchen.length === 0 && col.key === 'queue' && (
-                <div className='text-sm text-[var(--sea-ink-soft)]'>Loading…</div>
+                        <div className='text-sm text-(--sea-ink-soft)'>Loading…</div>
               )}
             </div>
           </div>

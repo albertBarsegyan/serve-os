@@ -1,14 +1,14 @@
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import { cn } from '#/lib/utils'
-import { Button } from '#/shared/ui/Button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/shared/ui/Card'
+import { Button } from '#/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
 
 export function AdminDashboardPage() {
   return (
     <div className='space-y-8'>
       <div>
         <h1 className='text-3xl font-extrabold'>Welcome back, John</h1>
-        <p className='text-[var(--sea-ink-soft)]'>Here's what's happening at your venue today.</p>
+        <p className='text-muted-foreground'>Here's what's happening at your venue today.</p>
       </div>
 
       <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
@@ -16,20 +16,20 @@ export function AdminDashboardPage() {
         <Card className='lg:col-span-2'>
           <CardHeader className='flex flex-row items-center justify-between'>
             <div>
-              <CardTitle className='text-base text-[var(--sea-ink-soft)]'>Revenue</CardTitle>
+              <CardTitle className='text-base text-muted-foreground'>Revenue</CardTitle>
               <div className='mt-2 flex items-baseline gap-4'>
                 <span className='text-3xl font-black'>IDR 7.852.000</span>
-                <span className='flex items-center text-xs font-bold text-emerald-500'>
+                  <span className='flex items-center text-xs font-semibold text-emerald-600'>
                   <ArrowUp className='mr-1 h-3 w-3' /> 2.1%{' '}
-                  <span className='ml-1 text-[var(--sea-ink-soft)] font-normal'>vs last week</span>
+                    <span className='ml-1 font-normal text-muted-foreground'>vs last week</span>
                 </span>
               </div>
-              <p className='mt-2 text-xs text-[var(--sea-ink-soft)]'>Sales from 1-12 Dec, 2020</p>
+               <p className='mt-2 text-xs text-muted-foreground'>Sales from 1-12 Dec, 2020</p>
             </div>
             <Button
               variant='outline'
               size='sm'
-              className='rounded-xl text-[#5D5FEF] border-[#E8EBFD] hover:bg-[#E8EBFD]'
+              className='rounded-xl'
             >
               View Report
             </Button>
@@ -38,15 +38,15 @@ export function AdminDashboardPage() {
             {/* Bar Chart Mockup */}
             <div className='mt-4 flex h-48 items-end justify-between gap-2 px-4'>
               {[40, 60, 45, 70, 55, 85, 50, 65, 40, 60, 45, 75].map((height, i) => (
-                <div key={i} className='group relative flex flex-1 flex-col items-center gap-2'>
+                <div key={height} className='group relative flex flex-1 flex-col items-center gap-2'>
                   <div
                     className={cn(
-                      'w-full rounded-t-sm transition-all group-hover:bg-[#5D5FEF]',
-                      i === 5 || i === 11 ? 'bg-[#5D5FEF]' : 'bg-[#C7C9FF]',
+                      'w-full rounded-t-sm transition-all group-hover:bg-primary',
+                      i === 5 || i === 11 ? 'bg-primary' : 'bg-accent',
                     )}
                     style={{ height: `${height}%` }}
                   />
-                  <span className='text-[10px] font-medium text-[#B0B0B0]'>
+                  <span className='text-[10px] font-medium text-muted-foreground'>
                     {(i + 1).toString().padStart(2, '0')}
                   </span>
                 </div>
@@ -54,12 +54,12 @@ export function AdminDashboardPage() {
             </div>
             <div className='mt-6 flex gap-6 px-4'>
               <div className='flex items-center gap-2'>
-                <div className='h-2.5 w-2.5 rounded-full bg-[#5D5FEF]' />
-                <span className='text-xs font-medium text-[var(--sea-ink-soft)]'>Last 6 days</span>
+                <div className='h-2.5 w-2.5 rounded-full bg-primary' />
+                <span className='text-xs font-medium text-muted-foreground'>Last 6 days</span>
               </div>
               <div className='flex items-center gap-2'>
-                <div className='h-2.5 w-2.5 rounded-full bg-[#E0E0E0]' />
-                <span className='text-xs font-medium text-[var(--sea-ink-soft)]'>Last Week</span>
+                <div className='h-2.5 w-2.5 rounded-full bg-muted' />
+                <span className='text-xs font-medium text-muted-foreground'>Last Week</span>
               </div>
             </div>
           </CardContent>
@@ -69,8 +69,8 @@ export function AdminDashboardPage() {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between'>
             <div>
-              <CardTitle className='text-base text-[var(--sea-ink-soft)]'>Order Time</CardTitle>
-              <p className='mt-1 text-xs text-[var(--sea-ink-soft)]'>From 1-6 Dec, 2020</p>
+               <CardTitle className='text-base text-muted-foreground'>Order Time</CardTitle>
+               <p className='mt-1 text-xs text-muted-foreground'>From 1-6 Dec, 2020</p>
             </div>
             <Button
               variant='outline'
@@ -90,7 +90,7 @@ export function AdminDashboardPage() {
                   cy='50'
                   r='40'
                   fill='transparent'
-                  stroke='#E8EBFD'
+                   stroke='hsl(var(--border))'
                   strokeWidth='12'
                 />
                 <circle
@@ -98,7 +98,7 @@ export function AdminDashboardPage() {
                   cy='50'
                   r='40'
                   fill='transparent'
-                  stroke='#5D5FEF'
+                   stroke='hsl(var(--primary))'
                   strokeWidth='12'
                   strokeDasharray='251.2'
                   strokeDashoffset='150.72'
@@ -109,7 +109,7 @@ export function AdminDashboardPage() {
                   cy='50'
                   r='40'
                   fill='transparent'
-                  stroke='#A5A6F6'
+                   stroke='hsl(var(--ring))'
                   strokeWidth='12'
                   strokeDasharray='251.2'
                   strokeDashoffset='220.08'
@@ -117,11 +117,11 @@ export function AdminDashboardPage() {
                 />
               </svg>
               {/* Tooltip mockup */}
-              <div className='absolute right-[-20px] top-[10px] z-10 rounded-xl bg-[#2D2D2D] p-3 text-white shadow-xl'>
+                <div className='absolute -right-5 top-2.5 z-10 rounded-xl bg-slate-800 p-3 text-white shadow-xl'>
                 <p className='text-[10px] font-medium opacity-60'>Afternoon</p>
                 <p className='text-[10px]'>1pm - 4pm</p>
                 <p className='mt-1 text-sm font-bold'>1.890 orders</p>
-                <div className='absolute bottom-[-6px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#2D2D2D]' />
+                <div className='absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-slate-800' />
               </div>
             </div>
             <div className='mt-12 grid w-full grid-cols-3 gap-2'>
@@ -130,21 +130,21 @@ export function AdminDashboardPage() {
                   <div className='h-2 w-2 rounded-full bg-[#5D5FEF]' />
                   <span className='text-[10px] font-bold'>Afternoon</span>
                 </div>
-                <span className='text-xs text-[var(--sea-ink-soft)]'>40%</span>
+                <span className='text-xs text-muted-foreground'>40%</span>
               </div>
               <div className='flex flex-col items-center gap-1'>
                 <div className='flex items-center gap-2'>
                   <div className='h-2 w-2 rounded-full bg-[#A5A6F6]' />
                   <span className='text-[10px] font-bold'>Evening</span>
                 </div>
-                <span className='text-xs text-[var(--sea-ink-soft)]'>32%</span>
+                <span className='text-xs text-muted-foreground'>32%</span>
               </div>
               <div className='flex flex-col items-center gap-1'>
                 <div className='flex items-center gap-2'>
                   <div className='h-2 w-2 rounded-full bg-[#E8EBFD]' />
                   <span className='text-[10px] font-bold'>Morning</span>
                 </div>
-                <span className='text-xs text-[var(--sea-ink-soft)]'>28%</span>
+                <span className='text-xs text-muted-foreground'>28%</span>
               </div>
             </div>
           </CardContent>
@@ -206,15 +206,15 @@ export function AdminDashboardPage() {
                 price: 'IDR 45.000',
                 img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7bb7445?w=100&h=100&fit=crop',
               },
-            ].map((item, i) => (
-              <div key={i} className='flex items-center justify-between'>
+            ].map((item) => (
+              <div key={item.name} className='flex items-center justify-between'>
                 <div className='flex items-center gap-4'>
                   <div className='h-10 w-10 overflow-hidden rounded-lg'>
                     <img src={item.img} alt={item.name} className='h-full w-full object-cover' />
                   </div>
-                  <span className='text-sm font-bold text-[#2D2D2D]'>{item.name}</span>
+                        <span className='text-sm font-medium text-foreground'>{item.name}</span>
                 </div>
-                <span className='text-xs font-medium text-[var(--sea-ink-soft)]'>{item.price}</span>
+                <span className='text-xs font-medium text-muted-foreground'>{item.price}</span>
               </div>
             ))}
           </CardContent>
@@ -224,15 +224,15 @@ export function AdminDashboardPage() {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between'>
             <div>
-              <CardTitle className='text-base text-[var(--sea-ink-soft)]'>Order</CardTitle>
+              <CardTitle className='text-base text-muted-foreground'>Order</CardTitle>
               <div className='mt-2 flex items-baseline gap-4'>
                 <span className='text-3xl font-black'>2.568</span>
-                <span className='flex items-center text-xs font-bold text-red-500'>
+                <span className='flex items-center text-xs font-semibold text-red-600'>
                   <ArrowDown className='mr-1 h-3 w-3' /> 2.1%{' '}
-                  <span className='ml-1 text-[var(--sea-ink-soft)] font-normal'>vs last week</span>
+                    <span className='ml-1 font-normal text-muted-foreground'>vs last week</span>
                 </span>
               </div>
-              <p className='mt-2 text-xs text-[var(--sea-ink-soft)]'>Sales from 1-6 Dec, 2020</p>
+               <p className='mt-2 text-xs text-muted-foreground'>Sales from 1-6 Dec, 2020</p>
             </div>
             <Button
               variant='outline'
@@ -250,18 +250,18 @@ export function AdminDashboardPage() {
                 <path
                   d='M0,40 L40,45 L80,35 L120,40 L160,30 L200,10'
                   fill='transparent'
-                  stroke='#5D5FEF'
+                  stroke='hsl(var(--primary))'
                   strokeWidth='2'
                 />
                 <path
                   d='M0,30 L40,25 L80,45 L120,35 L160,40 L200,20'
                   fill='transparent'
-                  stroke='#E0E0E0'
+                  stroke='hsl(var(--border))'
                   strokeWidth='2'
                 />
               </svg>
             </div>
-            <div className='mt-4 flex justify-between px-2 text-[10px] font-medium text-[#B0B0B0]'>
+            <div className='mt-4 flex justify-between px-2 text-[10px] font-medium text-muted-foreground'>
               <span>01</span>
               <span>02</span>
               <span>03</span>
@@ -271,12 +271,12 @@ export function AdminDashboardPage() {
             </div>
             <div className='mt-6 flex gap-6'>
               <div className='flex items-center gap-2'>
-                <div className='h-2.5 w-2.5 rounded-full bg-[#5D5FEF]' />
-                <span className='text-xs font-medium text-[var(--sea-ink-soft)]'>Last 6 days</span>
+                <div className='h-2.5 w-2.5 rounded-full bg-primary' />
+                <span className='text-xs font-medium text-muted-foreground'>Last 6 days</span>
               </div>
               <div className='flex items-center gap-2'>
-                <div className='h-2.5 w-2.5 rounded-full bg-[#E0E0E0]' />
-                <span className='text-xs font-medium text-[var(--sea-ink-soft)]'>Last Week</span>
+                <div className='h-2.5 w-2.5 rounded-full bg-muted' />
+                <span className='text-xs font-medium text-muted-foreground'>Last Week</span>
               </div>
             </div>
           </CardContent>

@@ -81,7 +81,6 @@ src/
     api/
       ky.ts
       dto.ts
-      parse-api-error.ts
       auth-storage.ts
       admin/admin-api.ts
       customer/customer-api.ts

@@ -1,7 +1,6 @@
-import * as React from 'react'
-import { X } from 'lucide-react'
-import { cn } from '#/lib/utils'
-import { Button } from './Button'
+import {X} from 'lucide-react'
+import {useEffect} from 'react'
+import {Button} from '#/components/ui/button'
 
 interface ModalProps {
   isOpen: boolean
@@ -11,8 +10,8 @@ interface ModalProps {
   footer?: React.ReactNode
 }
 
-export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
-  React.useEffect(() => {
+export function Modal({ isOpen, onClose, title, children, footer }: Readonly<ModalProps>) {
+  useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
     } else {
@@ -26,12 +25,14 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6'>
-      <div 
-        className='fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity' 
-        onClick={onClose} 
+    <div className='fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6'>
+      <button
+        type='button'
+        aria-label='Close modal backdrop'
+        className='fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity'
+        onClick={onClose}
       />
-      <div className='relative w-full max-w-lg animate-in fade-in zoom-in duration-200 rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-2xl sm:p-8'>
+      <div className='relative w-full max-w-lg animate-in fade-in zoom-in duration-200 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg sm:p-8'>
         <div className='mb-6 flex items-center justify-between'>
           <h2 className='text-xl font-bold'>{title}</h2>
           <Button variant='ghost' size='icon' onClick={onClose} className='rounded-full'>

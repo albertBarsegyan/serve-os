@@ -51,12 +51,6 @@ Via TanStack Query error defaults in `src/integrations/tanstack-query/root-provi
 - `staleTime: 30s` - Fresh data fetching strategy
 - Error state propagates to route error boundaries
 
-### 5. **Utility Functions** (`src/shared/libs/utils/error.utils.ts`)
-- `getErrorMessage()` - Extract human-readable error messages
-- `handleRouteError()` - Log and notify route errors
-- `handleQueryError()` - Log and notify query errors
-- `createErrorHandler()` - Create reusable error handlers
-
 ## UI Components
 
 ### ErrorBoundary (`src/shared/ui/ErrorBoundary.tsx`)

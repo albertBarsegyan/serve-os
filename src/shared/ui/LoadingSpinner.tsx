@@ -11,14 +11,14 @@ export function LoadingSpinner({
 }: LoadingSpinnerProps) {
   const content = (
     <div className='flex flex-col items-center justify-center gap-4'>
-      <Loader className='h-8 w-8 animate-spin text-[#5D5FEF]' />
-      {message && <p className='text-[#666] font-medium'>{message}</p>}
+      <Loader className='h-8 w-8 animate-spin text-primary' />
+      {message && <p className='font-medium text-muted-foreground'>{message}</p>}
     </div>
   )
 
   if (fullScreen) {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F8F9FD] to-[#F0F1FD]'>
+      <div className='min-h-screen flex items-center justify-center bg-background'>
         {content}
       </div>
     )
@@ -39,7 +39,7 @@ export function LoadingSkeleton({
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className={`${height} bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg animate-pulse`}
+          className={`${height} animate-pulse rounded-lg bg-muted`}
         />
       ))}
     </div>

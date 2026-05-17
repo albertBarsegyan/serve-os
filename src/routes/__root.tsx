@@ -1,11 +1,10 @@
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext, HeadContent, redirect, Scripts } from '@tanstack/react-router'
+import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { getRequest } from '@tanstack/react-start/server'
 import { Toaster } from 'sonner'
-import { authApi } from '#/features/auth/api/auth.ts'
-import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
+import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
+import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { getLocale } from '#/paraglide/runtime'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 import { NotFoundPage } from '#/shared/ui/NotFoundPage'
@@ -15,29 +14,20 @@ import appCss from '../styles.css?url'
 
 interface MyRouterContext {
   queryClient: QueryClient
-  request?: Request
+  authUser?: AuthenticatedUser | null
 }
 
 const THEME_INIT_SCRIPT = `(function(){try{var root=document.documentElement;root.classList.remove('dark');root.classList.add('light');root.setAttribute('data-theme','light');root.style.colorScheme='light';}catch(e){}})();`
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  beforeLoad: async ({ context, location }) => {
+  beforeLoad: async ({ context }) => {
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('lang', getLocale())
     }
 
-    const request = getRequest()
+    const authUser = await context.queryClient.ensureQueryData(authUserQueryOptions())
 
-    const cookie = request?.headers.get('cookie')
-
-    if (cookie) {
-      const user = await context.queryClient.fetchQuery({
-        queryKey: [authQueryKey.ME],
-        queryFn: () => authApi.me(cookie),
-      })
-
-      if (user?.id && location.pathname === '/') throw redirect({ to: '/admin/dashboard' })
-    }
+    return { authUser }
   },
 
   head: () => ({

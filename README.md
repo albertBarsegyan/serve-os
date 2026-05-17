@@ -1,5 +1,31 @@
 Welcome to your new TanStack Start app! 
 
+# Docker
+
+This project includes a production Dockerfile and a Compose setup for the web app.
+
+## Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+The app will be available on `http://localhost:3000`.
+
+### Required environment variables
+
+- `VITE_API_BASE_URL` — baked into the client bundle at build time.
+- `API_BASE_URL` — used by the server at runtime.
+
+For local development, the example defaults point to `http://localhost:4000/api`.
+If your API runs inside another container, set both variables to that service's
+network address, for example `http://api:4000/api`.
+
+Container runtime defaults:
+
+- `HOST=0.0.0.0`
+- `PORT=3000`
+
 # Getting Started
 
 To run this application:

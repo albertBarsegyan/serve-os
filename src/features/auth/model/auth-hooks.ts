@@ -1,13 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { authApi } from '#/features/auth/api/auth'
-import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
+import { logoutServerFn, signInServerFn, signUpServerFn } from '#/shared/api/auth/auth.fns.ts'
 
 export function useSignInMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: authApi.signIn,
+    mutationFn: signInServerFn,
     onSuccess: (data) => {
-      void queryClient.setQueryData([authQueryKey.ME], data)
+      queryClient.setQueryData(authUserQueryOptions().queryKey, data)
     },
   })
 }
@@ -15,18 +15,10 @@ export function useSignInMutation() {
 export function useSignUpMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: authApi.signup,
+    mutationFn: signUpServerFn,
     onSuccess: (data) => {
-      void queryClient.setQueryData([authQueryKey.ME], data)
+      queryClient.setQueryData(authUserQueryOptions().queryKey, data)
     },
-  })
-}
-
-export const useMe = (cookie?: string) => {
-  return useQuery({
-    queryKey: [authQueryKey.ME],
-    queryFn: () => authApi.me(cookie),
-    retry: false,
   })
 }
 
@@ -34,10 +26,11 @@ export const useLogoutMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: authApi.logout,
+    mutationFn: () => logoutServerFn(),
     retry: false,
-    onSuccess: () => {
-      queryClient.setQueryData([authQueryKey.ME], null)
+    onSuccess: async () => {
+      await queryClient.cancelQueries()
+      queryClient.clear()
     },
   })
 }

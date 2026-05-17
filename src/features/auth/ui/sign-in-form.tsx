@@ -8,10 +8,13 @@ import {
   type SignInFormValues,
   signInSchema,
 } from '#/features/auth/lib/schemas/sign-in-form.schema.ts'
+import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
 import { useSignInMutation } from '#/features/auth/model/auth-hooks'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { Button } from '#/shared/ui/Button'
+import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
+import { Label } from '#/components/ui/label'
 
 export function SignInForm() {
   const emailId = useId()
@@ -30,34 +33,31 @@ export function SignInForm() {
 
   const onSubmit = async (values: SignInFormValues) => {
     try {
-      await signInMutation.mutateAsync(values)
+      const authUser = await signInMutation.mutateAsync({ data: values })
 
       showSuccess(authUiMessage.SUCCESS_SIGN_IN)
-      await navigate({ to: '/admin/dashboard' })
+      await navigate({ to: getPostAuthDestination(authUser) })
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-5 mt-6'>
+    <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-5'>
       <div className='space-y-2'>
-        <label
-          htmlFor={emailId}
-          className='text-xs font-bold uppercase tracking-widest text-[#B0B0B0] ml-1'
-        >
+        <Label htmlFor={emailId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
           Email Address
-        </label>
+        </Label>
 
         <div className='relative'>
-          <Mail className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B0B0]' />
-          <input
+          <Mail className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+          <Input
             type='email'
             id={emailId}
             required
             autoComplete='email'
             placeholder='name@company.com'
-            className='h-14 w-full rounded-2xl border-none bg-[#F5F5F5] pl-12 pr-4 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]/20 transition-all'
+            className='h-14 rounded-xl pl-12'
             {...register('email')}
           />
         </div>
@@ -65,28 +65,25 @@ export function SignInForm() {
 
       <div className='space-y-2'>
         <div className='flex justify-between items-center ml-1'>
-          <label
-            htmlFor={passwordId}
-            className='text-xs font-bold uppercase tracking-widest text-[#B0B0B0]'
-          >
+          <Label htmlFor={passwordId} className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
             Password
-          </label>
+          </Label>
         </div>
         <div className='relative'>
-          <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B0B0]' />
-          <input
+          <Lock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+          <Input
             type={showPassword ? 'text' : 'password'}
             required
             id={passwordId}
             autoComplete='current-password'
             placeholder='••••••••'
-            className='h-14 w-full rounded-2xl border-none bg-[#F5F5F5] pl-12 pr-12 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]/20 transition-all'
+            className='h-14 rounded-xl pl-12 pr-12'
             {...register('password')}
           />
           <button
             type='button'
             onClick={() => setShowPassword(!showPassword)}
-            className='absolute right-4 top-1/2 -translate-y-1/2 text-[#B0B0B0] hover:text-[#2D2D2D] transition-colors'
+            className='absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground'
           >
             {showPassword ? <EyeOff className='h-5 w-5' /> : <Eye className='h-5 w-5' />}
           </button>
@@ -96,14 +93,14 @@ export function SignInForm() {
       <Button
         type='submit'
         disabled={signInMutation.isPending}
-        className='w-full h-14 rounded-2xl shadow-lg shadow-[#5D5FEF]/20 mt-4'
+        className='mt-4 h-14 w-full rounded-xl'
       >
         {signInMutation.isPending ? 'Signing in…' : 'Sign In'}
       </Button>
 
-      <p className='text-center text-sm font-medium text-[#666] mt-8'>
+      <p className='mt-8 text-center text-sm font-medium text-muted-foreground'>
         Don't have an account?{' '}
-        <Link to='/auth/sign-up' className='text-[#5D5FEF] font-bold hover:underline'>
+        <Link to='/auth/sign-up' className='font-semibold text-primary hover:underline'>
           Create an account
         </Link>
       </p>

@@ -8,17 +8,24 @@ let context:
   | undefined
 
 export function getQueryContext() {
-  if (context) {
+  // client — singleton, persists across navigations
+  if (typeof document !== 'undefined') {
+    context ??= createContext()
+
     return context
   }
 
+  return createContext()
+}
+
+function createContext() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         refetchOnWindowFocus: false,
         retry: 1,
-        staleTime: 30 * 1000, // 30s: avoids refetch spam
-        gcTime: 5 * 60 * 1000, // 5 min cache retention (formerly cacheTime)
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
         refetchOnReconnect: true,
         refetchOnMount: true,
       },
@@ -27,12 +34,7 @@ export function getQueryContext() {
       },
     },
   })
-
-  context = {
-    queryClient,
-  }
-
-  return context
+  return { queryClient }
 }
 
 export default function TanStackQueryProvider({ children }: { children: ReactNode }) {

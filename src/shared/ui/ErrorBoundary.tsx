@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { AlertTriangle, Home, RotateCcw } from 'lucide-react'
 
-import { Button } from './Button'
+import { Button } from '#/components/ui/button'
 
 interface ErrorBoundaryProps {
   error: Error
@@ -9,26 +9,26 @@ interface ErrorBoundaryProps {
   isNotFound?: boolean
 }
 
-export function ErrorBoundary({ error, reset, isNotFound = false }: ErrorBoundaryProps) {
+export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<ErrorBoundaryProps>) {
   const navigate = useNavigate()
 
   const handleReset = () => {
     if (reset) {
       reset()
     } else {
-      window.location.reload()
+      globalThis.location.reload()
     }
   }
 
   if (isNotFound) {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F8F9FD] to-[#F0F1FD] px-4'>
+      <div className='min-h-screen flex items-center justify-center bg-background px-4'>
         <div className='text-center max-w-lg'>
-          <div className='mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
-            <AlertTriangle className='h-8 w-8 text-red-600' />
+          <div className='mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10'>
+            <AlertTriangle className='h-8 w-8 text-destructive' />
           </div>
-          <h1 className='mb-2 text-3xl font-black text-[#2D2D2D]'>Page Not Found</h1>
-          <p className='mb-8 text-[#666]'>
+          <h1 className='mb-2 text-3xl font-semibold tracking-tight text-foreground'>Page Not Found</h1>
+          <p className='mb-8 text-muted-foreground'>
             The page you're looking for doesn't exist or has been moved.
           </p>
           <div className='flex flex-col gap-3 sm:flex-row justify-center'>
@@ -39,7 +39,7 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: ErrorBoundar
               <Home className='h-4 w-4' />
               Go to Home
             </Button>
-            <Button variant='outline' onClick={() => window.history.back()}>
+            <Button variant='outline' onClick={() => globalThis.history.back()}>
               Go Back
             </Button>
           </div>
@@ -53,30 +53,30 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: ErrorBoundar
   const errorStack = error?.stack || ''
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F8F9FD] to-[#F0F1FD] px-4'>
+    <div className='min-h-screen flex items-center justify-center bg-background px-4'>
       <div className='max-w-lg w-full'>
-        <div className='rounded-lg border border-red-200 bg-white p-8 shadow-lg'>
-          <div className='mb-6 inline-flex h-14 w-14 items-center justify-center rounded-full bg-red-100'>
-            <AlertTriangle className='h-7 w-7 text-red-600' />
+        <div className='rounded-xl border border-border bg-card p-8 text-card-foreground shadow-sm'>
+          <div className='mb-6 inline-flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10'>
+            <AlertTriangle className='h-7 w-7 text-destructive' />
           </div>
 
-          <h1 className='mb-2 text-2xl font-black text-[#2D2D2D]'>Something Went Wrong</h1>
+          <h1 className='mb-2 text-2xl font-semibold tracking-tight'>Something Went Wrong</h1>
 
-          <p className='mb-6 text-[#666]'>
+          <p className='mb-6 text-muted-foreground'>
             We encountered an unexpected error. Please try again or contact support if the problem
             persists.
           </p>
 
           {isDev && (
-            <div className='mb-6 rounded bg-red-50 p-4 border border-red-200'>
-              <p className='mb-2 text-xs font-mono font-bold text-red-700'>Error Details:</p>
-              <p className='mb-3 text-sm font-mono text-red-600 break-words'>{errorMessage}</p>
+            <div className='mb-6 rounded-lg border border-destructive/20 bg-destructive/5 p-4'>
+              <p className='mb-2 text-xs font-mono font-semibold text-destructive'>Error Details:</p>
+                  <p className='mb-3 wrap-break-word font-mono text-sm text-destructive'>{errorMessage}</p>
               {errorStack && (
                 <details className='text-xs'>
-                  <summary className='cursor-pointer font-bold text-red-700 mb-2'>
+                  <summary className='mb-2 cursor-pointer font-semibold text-destructive'>
                     Stack Trace
                   </summary>
-                  <pre className='overflow-auto bg-red-900 text-red-100 p-2 rounded text-xs max-h-40'>
+                  <pre className='max-h-40 overflow-auto rounded bg-foreground p-2 text-xs text-background'>
                     {errorStack}
                   </pre>
                 </details>
@@ -109,6 +109,6 @@ interface ErrorFallbackProps {
   isNotFound?: boolean
 }
 
-export function ErrorFallback({ error, isNotFound }: ErrorFallbackProps) {
+export function ErrorFallback({ error, isNotFound }: Readonly<ErrorFallbackProps>) {
   return <ErrorBoundary error={error} isNotFound={isNotFound} />
 }
