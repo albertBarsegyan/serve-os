@@ -1,13 +1,13 @@
-import {zodResolver} from '@hookform/resolvers/zod'
-import {createFileRoute, redirect, useNavigate} from '@tanstack/react-router'
-import {Building2, FileJson, MapPin, Sparkles, Store} from 'lucide-react'
-import {useId} from 'react'
-import {useForm} from 'react-hook-form'
-import {Button} from '#/components/ui/button'
-import {Checkbox} from '#/components/ui/checkbox'
-import {Input} from '#/components/ui/input'
-import {Label} from '#/components/ui/label'
-import {Textarea} from '#/components/ui/textarea'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { Building2, FileJson, MapPin, Sparkles, Store } from 'lucide-react'
+import { useId } from 'react'
+import { useForm } from 'react-hook-form'
+import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
+import { Input } from '#/components/ui/input'
+import { Label } from '#/components/ui/label'
+import { Textarea } from '#/components/ui/textarea'
 import {
   businessFeatureLabels,
   businessFeaturePresets,
@@ -18,11 +18,11 @@ import {
   createBusinessFormSchema,
   type CreateBusinessFormValues,
 } from '#/features/business/lib/schemas/create-business-form.schema.ts'
-import {businessFormAdapter} from '#/features/business/lib/utils/business-form-adapter.ts'
-import {useCreateBusinessMutation} from '#/features/business/model/business-hooks.ts'
-import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
-import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
-import {stringToCommaSeparated} from '#/shared/libs/utils/naming.utils.ts'
+import { businessFormAdapter } from '#/features/business/lib/utils/business-form-adapter.ts'
+import { useCreateBusinessMutation } from '#/features/business/model/business-hooks.ts'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { stringToCommaSeparated } from '#/shared/libs/utils/naming.utils.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
 
 export const Route = createFileRoute('/setup')({
