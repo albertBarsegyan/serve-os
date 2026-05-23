@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-// server request helpers are not required here
+
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { signInSchema } from '#/features/auth/lib/schemas/sign-in-form.schema.ts'
 import { signUpRequestSchema } from '#/features/auth/lib/schemas/sign-up.schema.ts'
@@ -7,7 +7,7 @@ import { serverApiInstance } from '#/shared/api/server-instance.ts'
 import { forwardCookies } from '#/shared/libs/utils/cookie.utils.ts'
 
 export const getAuthUserServerFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<AuthenticatedUser | null> => {
+  async (): Promise<{ user: AuthenticatedUser | null }> => {
     try {
       const response = await serverApiInstance<AuthenticatedUser>('auth/me')
 
@@ -15,14 +15,14 @@ export const getAuthUserServerFn = createServerFn({ method: 'GET' }).handler(
 
       return await response.json()
     } catch {
-      return null
+      return { user: null }
     }
   },
 )
 
 export const signInServerFn = createServerFn({ method: 'POST' })
   .inputValidator(signInSchema)
-  .handler(async ({ data }): Promise<AuthenticatedUser> => {
+  .handler(async ({ data }): Promise<{ user: AuthenticatedUser }> => {
     const request = await serverApiInstance<AuthenticatedUser>('auth/login', {
       method: 'POST',
       json: data,
@@ -35,7 +35,7 @@ export const signInServerFn = createServerFn({ method: 'POST' })
 
 export const signUpServerFn = createServerFn({ method: 'POST' })
   .inputValidator(signUpRequestSchema)
-  .handler(async ({ data }): Promise<AuthenticatedUser> => {
+  .handler(async ({ data }): Promise<Promise<{ user: AuthenticatedUser }>> => {
     const request = await serverApiInstance<AuthenticatedUser>('auth/register', {
       method: 'POST',
       json: data,

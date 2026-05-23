@@ -22,6 +22,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react'
 import { useState } from 'react'
+import { Button } from '#/components/ui/button'
 import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { useLogoutMutation } from '#/features/auth/model/auth-hooks.ts'
@@ -30,7 +31,6 @@ import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary.tsx'
 import { Modal } from '#/shared/ui/Modal'
-import { Button } from '#/components/ui/button'
 
 function AdminErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
@@ -51,11 +51,11 @@ export const Route = createFileRoute('/_admin')({
   beforeLoad: ({ context, location }) => {
     if (!context.authUser) throw redirect({ to: '/auth/sign-in' })
 
-    if (!context.authUser.businessId && location.pathname !== '/setup')
-      throw redirect({ to: '/setup' })
-
-    if (context.authUser.businessId && location.pathname === '/setup')
+    if (context.authUser.hasBusiness && location.pathname === '/setup')
       throw redirect({ to: '/dashboard' })
+
+    if (!context.authUser.hasBusiness && location.pathname !== '/setup')
+      throw redirect({ to: '/setup' })
   },
 })
 
@@ -240,11 +240,7 @@ function AdminLayout() {
                 <ChevronRight className='h-4 w-4 rotate-90 text-muted-foreground' />
               </div>
             </div>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='relative h-11 w-11 rounded-xl bg-muted'
-            >
+            <Button variant='ghost' size='icon' className='relative h-11 w-11 rounded-xl bg-muted'>
               <Bell className='h-5 w-5 text-muted-foreground' />
               <span className='absolute right-3.5 top-3.5 flex h-2 w-2 rounded-full border-2 border-white bg-red-500' />
             </Button>

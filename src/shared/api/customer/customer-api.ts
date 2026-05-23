@@ -56,7 +56,7 @@ export async function createOrder(businessId: string, body: CreateOrderBody): Pr
   return mapApiOrder(created, businessId)
 }
 
-export async function createPayment(businessId: string, body: CreatePaymentBody): Promise<unknown> {
+export function createPayment(businessId: string, body: CreatePaymentBody): Promise<unknown> {
   return clientApiInstance
     .post('payments', {
       searchParams: guestParams(businessId),
@@ -65,6 +65,6 @@ export async function createPayment(businessId: string, body: CreatePaymentBody)
     .json()
 }
 
-export async function scanTable(qrCode: string): Promise<TableScanResponse> {
+export function scanTable(qrCode: string): Promise<TableScanResponse> {
   return clientApiInstance.get(`tables/scan/${encodeURIComponent(qrCode)}`).json()
 }

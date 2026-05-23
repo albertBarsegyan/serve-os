@@ -6,6 +6,7 @@ import { Toaster } from 'sonner'
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { getLocale } from '#/paraglide/runtime'
+import BusinessSelectorProvider from '#/shared/ui/business-selector-provider'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
 import { NotFoundPage } from '#/shared/ui/NotFoundPage'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
@@ -25,9 +26,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       document.documentElement.setAttribute('lang', getLocale())
     }
 
-    const authUser = await context.queryClient.ensureQueryData(authUserQueryOptions())
+    const { user } = await context.queryClient.ensureQueryData(authUserQueryOptions())
 
-    return { authUser }
+    return { authUser: user }
   },
 
   head: () => ({
@@ -79,21 +80,23 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className='font-sans antialiased wrap-anywhere selection:bg-[var(--selection-bg)]'>
         <TanStackQueryProvider>
-          {children}
+          <BusinessSelectorProvider>
+            {children}
 
-          <Toaster richColors />
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
+            <Toaster richColors />
+            <TanStackDevtools
+              config={{
+                position: 'bottom-right',
+              }}
+              plugins={[
+                {
+                  name: 'Tanstack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+                TanStackQueryDevtools,
+              ]}
+            />
+          </BusinessSelectorProvider>
         </TanStackQueryProvider>
         <Scripts />
       </body>

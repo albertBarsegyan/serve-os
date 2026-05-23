@@ -1,14 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, ArrowRight, CheckCircle2, ChefHat, Clock } from 'lucide-react'
-
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { kitchenOrdersQueryOptions, orderQueryKeys } from '#/entities/order/api/query-options'
 import type { Order, OrderStatus } from '#/entities/order/model/types'
 import { updateOrderStatus } from '#/features/order/update-order-status/model/update-order-status'
 import { cn } from '#/lib/utils'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader } from '#/components/ui/card'
 
 type Column = 'queue' | 'preparing' | 'ready'
 
@@ -88,13 +87,11 @@ export function AdminKitchenContent() {
           <h1 className='text-3xl font-semibold tracking-tight'>Kitchen Display (KDS)</h1>
           <p className='text-muted-foreground'>
             Real-time kitchen flow. Status updates call{' '}
-            <code className='rounded bg-muted px-1 text-xs'>PATCH /orders/:id/status</code>
-            .
+            <code className='rounded bg-muted px-1 text-xs'>PATCH /orders/:id/status</code>.
           </p>
           {!tenantId && (
             <p className='mt-2 text-sm text-amber-700'>
-              Sign in or set <code className='rounded bg-muted px-1'>VITE_DEV_BUSINESS_ID</code>
-              .
+              Sign in or set <code className='rounded bg-muted px-1'>VITE_DEV_BUSINESS_ID</code>.
             </p>
           )}
 
@@ -114,11 +111,8 @@ export function AdminKitchenContent() {
           )}
         </div>
         <div className='flex items-center gap-3'>
-          <Badge
-            variant='outline'
-            className='h-8 rounded-full bg-muted px-4 text-xs font-semibold'
-          >
-              {inKitchen.length} active
+          <Badge variant='outline' className='h-8 rounded-full bg-muted px-4 text-xs font-semibold'>
+            {inKitchen.length} active
           </Badge>
           <Button
             size='sm'
@@ -244,12 +238,12 @@ export function AdminKitchenContent() {
 
               {!isPending &&
                 inKitchen.filter((o) => orderColumn(o.status) === col.key).length === 0 && (
-                          <div className='flex h-32 items-center justify-center rounded-[2rem] border-2 border-dashed border-(--line) text-sm text-(--sea-ink-soft)'>
+                  <div className='flex h-32 items-center justify-center rounded-[2rem] border-2 border-dashed border-(--line) text-sm text-(--sea-ink-soft)'>
                     No tickets
                   </div>
                 )}
               {isPending && tenantId && inKitchen.length === 0 && col.key === 'queue' && (
-                        <div className='text-sm text-(--sea-ink-soft)'>Loading…</div>
+                <div className='text-sm text-(--sea-ink-soft)'>Loading…</div>
               )}
             </div>
           </div>

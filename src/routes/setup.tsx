@@ -17,24 +17,27 @@ import {
 import {
   createBusinessFormSchema,
   type CreateBusinessFormValues,
-} from '#/features/business/lib/schemas/business-form.schema.ts'
+} from '#/features/business/lib/schemas/create-business-form.schema.ts'
 import {businessFormAdapter} from '#/features/business/lib/utils/business-form-adapter.ts'
 import {useCreateBusinessMutation} from '#/features/business/model/business-hooks.ts'
 import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
 import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
 import {stringToCommaSeparated} from '#/shared/libs/utils/naming.utils.ts'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
 
 export const Route = createFileRoute('/setup')({
   component: AdminSetupRoute,
   beforeLoad: ({ context }) => {
     if (!context.authUser) throw redirect({ to: '/auth/sign-in' })
-    if (context.authUser.businessId) throw redirect({ to: '/dashboard' })
+
+    if (context.authUser.hasBusiness) throw redirect({ to: '/dashboard' })
   },
 })
 
 function AdminSetupRoute() {
   const navigate = useNavigate()
   const createBusinessMutation = useCreateBusinessMutation()
+  const setActiveBusiness = useActiveBusinessStore((s) => s.setActive)
   const nameId = useId()
   const typeId = useId()
   const currencyId = useId()
@@ -65,7 +68,11 @@ function AdminSetupRoute() {
 
   const onSubmit = async (values: CreateBusinessFormValues) => {
     try {
-      await createBusinessMutation.mutateAsync({ data: businessFormAdapter.toApi(values) })
+      const newBusiness = await createBusinessMutation.mutateAsync({
+        data: businessFormAdapter.toApi(values),
+      })
+
+      setActiveBusiness({ id: newBusiness.id, name: newBusiness.name })
 
       showSuccess('Business created successfully')
       await navigate({ to: '/dashboard' })
@@ -117,7 +124,7 @@ function AdminSetupRoute() {
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
             <div className='grid gap-5 sm:grid-cols-2'>
               <div className='space-y-2 sm:col-span-2'>
-                <div>
+                <div className='space-y-2'>
                   <Label
                     htmlFor={nameId}
                     className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'

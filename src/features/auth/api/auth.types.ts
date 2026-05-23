@@ -10,8 +10,6 @@ export interface AuthenticatedUser {
   email: string
   firstName: string
   lastName: string
-  businessId: null | string
+  hasBusiness: boolean
   role: string
 }
-
-export type SignupResponseBody = object

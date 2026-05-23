@@ -3,18 +3,18 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { useId, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
+import { Label } from '#/components/ui/label'
 import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
 import {
   type SignInFormValues,
   signInSchema,
 } from '#/features/auth/lib/schemas/sign-in-form.schema.ts'
-import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
 import { useSignInMutation } from '#/features/auth/model/auth-hooks'
+import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { Button } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
 
 export function SignInForm() {
   const emailId = useId()
@@ -36,7 +36,7 @@ export function SignInForm() {
       const authUser = await signInMutation.mutateAsync({ data: values })
 
       showSuccess(authUiMessage.SUCCESS_SIGN_IN)
-      await navigate({ to: getPostAuthDestination(authUser) })
+      await navigate({ to: getPostAuthDestination(authUser.user) })
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
@@ -45,7 +45,10 @@ export function SignInForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-5'>
       <div className='space-y-2'>
-        <Label htmlFor={emailId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+        <Label
+          htmlFor={emailId}
+          className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
+        >
           Email Address
         </Label>
 
@@ -65,7 +68,10 @@ export function SignInForm() {
 
       <div className='space-y-2'>
         <div className='flex justify-between items-center ml-1'>
-          <Label htmlFor={passwordId} className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+          <Label
+            htmlFor={passwordId}
+            className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
+          >
             Password
           </Label>
         </div>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
-import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
 import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
+import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
 
 function AuthErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (

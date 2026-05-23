@@ -1,40 +1,4 @@
-export const businessTypes = [
-  'RESTAURANT',
-  'CAFE',
-  'BAR',
-  'PUB',
-  'BAKERY',
-  'FAST_FOOD',
-  'FOOD_TRUCK',
-  'PIZZERIA',
-  'STEAKHOUSE',
-  'SEAFOOD_RESTAURANT',
-  'SUSHI_BAR',
-  'BUFFET',
-  'ICE_CREAM_SHOP',
-  'JUICE_BAR',
-  'COFFEE_SHOP',
-  'TEA_HOUSE',
-  'WINE_BAR',
-  'COCKTAIL_BAR',
-  'BREWERY',
-  'NIGHTCLUB',
-  'HOTEL',
-  'HOSTEL',
-  'RESORT',
-  'MOTEL',
-  'GUEST_HOUSE',
-  'APARTMENT_HOTEL',
-  'CASINO',
-  'LOUNGE',
-  'KARAOKE',
-  'CINEMA',
-  'EVENT_VENUE',
-  'CATERING',
-  'BANQUET_HALL',
-  'PRIVATE_CLUB',
-  'OTHER',
-] as const
+import type { businessTypes } from '#/features/business/api/business.types.ts'
 
 export type BusinessType = (typeof businessTypes)[number]
 
@@ -67,23 +31,8 @@ export interface CreateBusinessRequest {
   type: BusinessType
   location: string
   currency: string
-  workingHours?: unknown
+  workingHours?: string
   features?: BusinessFeature[]
-}
-
-export interface BusinessResponse {
-  id: string
-  name: string
-  type: BusinessType
-  features: BusinessFeature[]
-  location: string
-  currency: string
-  workingHours?: unknown
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-  ownerId: string
-  owner?: unknown
 }
 
 export const businessTypeLabels: Record<BusinessType, string> = {

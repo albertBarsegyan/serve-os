@@ -1,5 +1,5 @@
 import type { CreateBusinessRequest } from '#/features/business/api/business-domain.ts'
-import type { CreateBusinessFormValues } from '#/features/business/lib/schemas/business-form.schema.ts'
+import type { CreateBusinessFormValues } from '#/features/business/lib/schemas/create-business-form.schema.ts'
 
 function parseWorkingHoursJson(workingHoursJson: string): Record<string, string> | undefined {
   const trimmed = workingHoursJson.trim()
