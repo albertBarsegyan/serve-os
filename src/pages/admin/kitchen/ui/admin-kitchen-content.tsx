@@ -1,109 +1,87 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, ArrowRight, CheckCircle2, ChefHat, Clock } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { AlertCircle, ArrowRight, CheckCircle2, ChefHat, Clock, Wifi, WifiOff } from 'lucide-react'
+import { useState } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
-import { kitchenOrdersQueryOptions, orderQueryKeys } from '#/entities/order/api/query-options'
-import type { Order, OrderStatus } from '#/entities/order/model/types'
-import { updateOrderStatus } from '#/features/order/update-order-status/model/update-order-status'
+import type { Order, OrderStatus } from '#/features/platform/api/platform.types.ts'
+import { kitchenActiveOrdersQueryOptions } from '#/features/platform/lib/query-options.ts'
+import { useUpdateOrderStatusMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
+import { showError } from '#/shared/libs/hooks/toast.ts'
+import { useKitchenSocket } from '#/shared/libs/hooks/use-kitchen-socket.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
 
 type Column = 'queue' | 'preparing' | 'ready'
 
 function orderColumn(status: OrderStatus): Column {
-  if (status === 'PENDING' || status === 'CONFIRMED') {
-    return 'queue'
-  }
-  if (status === 'PREPARING') {
-    return 'preparing'
-  }
-  if (status === 'READY') {
-    return 'ready'
-  }
+  if (status === 'CONFIRMED') return 'queue'
+  if (status === 'IN_KITCHEN') return 'preparing'
+  if (status === 'READY') return 'ready'
   return 'queue'
 }
 
 function formatItemLines(order: Order): string[] {
-  if (!order.items.length) {
-    return ['(no line items)']
-  }
-  return order.items.map((l) => {
-    const name = l.name ?? l.productId.slice(0, 8)
-    return `${name} x${l.quantity}`
+  if (!order.items.length) return ['(no line items)']
+  return order.items.map((item) => {
+    const name = item.product?.name ?? item.productId.slice(0, 8)
+    return `${name} x${item.quantity}`
   })
 }
 
-const columns: {
-  title: string
-  key: Column
-  icon: typeof AlertCircle
-  color: string
-}[] = [
+const columns: { title: string; key: Column; icon: typeof AlertCircle; color: string }[] = [
   { title: 'Queue', key: 'queue', icon: AlertCircle, color: 'text-amber-500' },
   { title: 'Preparing', key: 'preparing', icon: ChefHat, color: 'text-blue-500' },
   { title: 'Ready', key: 'ready', icon: CheckCircle2, color: 'text-emerald-500' },
 ]
 
 export function AdminKitchenContent() {
-  const tenantId = '100'
-  const queryClient = useQueryClient()
+  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
+  const [isConnected, setIsConnected] = useState(false)
+
+  useKitchenSocket(businessId, setIsConnected)
+
   const {
     data: orders = [],
     isPending,
     isError,
     error,
     refetch,
-  } = useQuery(kitchenOrdersQueryOptions(tenantId))
+  } = useQuery(kitchenActiveOrdersQueryOptions())
 
-  const updateStatus = useMutation({
-    mutationFn: ({
-      tenant: tid,
-      orderId,
-      status,
-    }: {
-      tenant: string
-      orderId: string
-      status: OrderStatus
-    }) => updateOrderStatus(tid, orderId, status),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: orderQueryKeys.kitchen(tenantId) })
-      void queryClient.invalidateQueries({ queryKey: orderQueryKeys.business(tenantId) })
-    },
-  })
+  const updateStatusMutation = useUpdateOrderStatusMutation()
 
-  const inKitchen = orders.filter(
-    (o) =>
-      o.status === 'PENDING' ||
-      o.status === 'CONFIRMED' ||
-      o.status === 'PREPARING' ||
-      o.status === 'READY',
+  // Kitchen endpoint returns CONFIRMED, IN_KITCHEN, READY orders only
+  const activeOrders = orders.filter((o) =>
+    (['CONFIRMED', 'IN_KITCHEN', 'READY'] as OrderStatus[]).includes(o.status),
   )
+
+  const advance = (orderId: string, status: Exclude<OrderStatus, 'CREATED' | 'CONFIRMED'>) => {
+    updateStatusMutation.mutate(
+      { orderId, data: { status } },
+      { onError: (err) => showError(getResponseErrorMessage(err)) },
+    )
+  }
 
   return (
     <div className='flex h-[calc(100vh-10rem)] flex-col space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
           <h1 className='text-3xl font-semibold tracking-tight'>Kitchen Display (KDS)</h1>
-          <p className='text-muted-foreground'>
-            Real-time kitchen flow. Status updates call{' '}
-            <code className='rounded bg-muted px-1 text-xs'>PATCH /orders/:id/status</code>.
-          </p>
-          {!tenantId && (
+          <p className='text-muted-foreground'>Real-time kitchen flow.</p>
+          {!businessId && (
             <p className='mt-2 text-sm text-amber-700'>
-              Sign in or set <code className='rounded bg-muted px-1'>VITE_DEV_BUSINESS_ID</code>.
+              No active business selected. Please select a business first.
             </p>
           )}
-
           {isError && (
             <p className='mt-2 text-sm text-destructive'>
               {getResponseErrorMessage(error)}
               <button
                 type='button'
                 className='ml-2 font-semibold underline'
-                onClick={() => {
-                  void refetch()
-                }}
+                onClick={() => void refetch()}
               >
                 Retry
               </button>
@@ -111,17 +89,23 @@ export function AdminKitchenContent() {
           )}
         </div>
         <div className='flex items-center gap-3'>
+          <div className='flex items-center gap-1.5 text-xs text-muted-foreground'>
+            {isConnected ? (
+              <Wifi className='h-3.5 w-3.5 text-emerald-500' />
+            ) : (
+              <WifiOff className='h-3.5 w-3.5 text-amber-500' />
+            )}
+            <span>{isConnected ? 'Live' : 'Polling'}</span>
+          </div>
           <Badge variant='outline' className='h-8 rounded-full bg-muted px-4 text-xs font-semibold'>
-            {inKitchen.length} active
+            {activeOrders.length} active
           </Badge>
           <Button
             size='sm'
             variant='outline'
             type='button'
             className='rounded-full'
-            onClick={() => {
-              void refetch()
-            }}
+            onClick={() => void refetch()}
           >
             Refresh
           </Button>
@@ -137,21 +121,19 @@ export function AdminKitchenContent() {
                 <h3 className='text-lg font-semibold'>{col.title}</h3>
               </div>
               <Badge variant='secondary' className='rounded-full'>
-                {inKitchen.filter((o) => orderColumn(o.status) === col.key).length}
+                {activeOrders.filter((o) => orderColumn(o.status) === col.key).length}
               </Badge>
             </div>
 
-            <div className='flex-1 space-y-4 overflow-y-auto pr-2 pb-8 scrollbar-hide'>
-              {inKitchen
+            <div className='flex-1 space-y-4 overflow-y-auto pb-8 pr-2'>
+              {activeOrders
                 .filter((o) => orderColumn(o.status) === col.key)
                 .map((order) => (
                   <Card
                     key={order.id}
                     className={cn(
                       'border-l-4 transition-all hover:shadow-lg',
-                      order.status === 'PENDING' && orderColumn(order.status) === 'queue'
-                        ? 'border-l-amber-500'
-                        : 'border-l-transparent',
+                      col.key === 'queue' ? 'border-l-amber-500' : 'border-l-transparent',
                     )}
                   >
                     <CardHeader className='flex flex-row items-center justify-between pb-2'>
@@ -160,7 +142,7 @@ export function AdminKitchenContent() {
                           #{order.id.slice(0, 8).toUpperCase()}
                         </span>
                         <span className='text-lg font-semibold text-primary'>
-                          Table {order.table}
+                          {order.table ? `Table ${order.table.number}` : order.type}
                         </span>
                       </div>
                       <div className='flex items-center gap-1.5 text-xs font-medium text-muted-foreground'>
@@ -186,14 +168,8 @@ export function AdminKitchenContent() {
                           <Button
                             type='button'
                             className='w-full rounded-xl'
-                            disabled={updateStatus.isPending}
-                            onClick={() => {
-                              updateStatus.mutate({
-                                tenant: tenantId,
-                                orderId: order.id,
-                                status: 'PREPARING',
-                              })
-                            }}
+                            disabled={updateStatusMutation.isPending}
+                            onClick={() => advance(order.id, 'IN_KITCHEN')}
                           >
                             Start Preparing <ArrowRight className='ml-2 h-4 w-4' />
                           </Button>
@@ -202,14 +178,8 @@ export function AdminKitchenContent() {
                           <Button
                             type='button'
                             className='w-full rounded-xl'
-                            disabled={updateStatus.isPending}
-                            onClick={() => {
-                              updateStatus.mutate({
-                                tenant: tenantId,
-                                orderId: order.id,
-                                status: 'READY',
-                              })
-                            }}
+                            disabled={updateStatusMutation.isPending}
+                            onClick={() => advance(order.id, 'READY')}
                           >
                             Mark as Ready <CheckCircle2 className='ml-2 h-4 w-4' />
                           </Button>
@@ -219,14 +189,8 @@ export function AdminKitchenContent() {
                             type='button'
                             variant='outline'
                             className='w-full rounded-xl border-emerald-500 text-emerald-600 hover:bg-emerald-50'
-                            disabled={updateStatus.isPending}
-                            onClick={() => {
-                              updateStatus.mutate({
-                                tenant: tenantId,
-                                orderId: order.id,
-                                status: 'DELIVERED',
-                              })
-                            }}
+                            disabled={updateStatusMutation.isPending}
+                            onClick={() => advance(order.id, 'DELIVERED')}
                           >
                             Served
                           </Button>
@@ -237,13 +201,25 @@ export function AdminKitchenContent() {
                 ))}
 
               {!isPending &&
-                inKitchen.filter((o) => orderColumn(o.status) === col.key).length === 0 && (
-                  <div className='flex h-32 items-center justify-center rounded-[2rem] border-2 border-dashed border-(--line) text-sm text-(--sea-ink-soft)'>
-                    No tickets
+                activeOrders.filter((o) => orderColumn(o.status) === col.key).length === 0 && (
+                  <div className='flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border py-10 text-center'>
+                    <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
+                      <col.icon className={cn('h-5 w-5', col.color)} />
+                    </div>
+                    <p className='text-sm font-semibold'>
+                      {col.key === 'queue' && 'No orders waiting'}
+                      {col.key === 'preparing' && 'Nothing in progress'}
+                      {col.key === 'ready' && 'Nothing ready yet'}
+                    </p>
+                    <p className='mt-1 max-w-[10rem] text-xs text-muted-foreground'>
+                      {col.key === 'queue' && 'New orders will appear here'}
+                      {col.key === 'preparing' && 'Orders you start will show here'}
+                      {col.key === 'ready' && 'Completed orders will show here'}
+                    </p>
                   </div>
                 )}
-              {isPending && tenantId && inKitchen.length === 0 && col.key === 'queue' && (
-                <div className='text-sm text-(--sea-ink-soft)'>Loading…</div>
+              {isPending && col.key === 'queue' && (
+                <div className='text-sm text-muted-foreground'>Loading…</div>
               )}
             </div>
           </div>

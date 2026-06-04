@@ -2,26 +2,21 @@ import { queryOptions } from '@tanstack/react-query'
 import type { OrderStatus } from '#/features/platform/api/platform.types.ts'
 import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys.ts'
 import {
-  getCustomerSessionByToken,
+  fetchActiveKitchenOrders,
+  getModifierGroupById,
   getOrderById,
+  getSessionBill,
   getStaffById,
   getTableById,
-  listBusinessPaymentMethods,
-  listKitchenTickets,
   listMenuCategories,
+  listModifierGroups,
+  listModifiers,
   listOrders,
+  listPayments,
   listProducts,
   listStaff,
   listTables,
 } from '#/shared/api/platform/platform-api.ts'
-
-export function customerSessionByTokenQueryOptions(token: string) {
-  return queryOptions({
-    queryKey: platformQueryKeys.customerSessionByToken(token),
-    queryFn: () => getCustomerSessionByToken(token),
-    enabled: Boolean(token),
-  })
-}
 
 export function tablesQueryOptions() {
   return queryOptions({
@@ -38,6 +33,14 @@ export function tableByIdQueryOptions(tableId: string) {
   })
 }
 
+export function sessionBillQueryOptions(sessionId: string) {
+  return queryOptions({
+    queryKey: platformQueryKeys.sessionBill(sessionId),
+    queryFn: () => getSessionBill(sessionId),
+    enabled: Boolean(sessionId),
+  })
+}
+
 export function menuCategoriesQueryOptions(includeProducts = false) {
   return queryOptions({
     queryKey: platformQueryKeys.menuCategories(includeProducts),
@@ -49,6 +52,30 @@ export function productsQueryOptions(filters?: { categoryId?: string; availableO
   return queryOptions({
     queryKey: platformQueryKeys.products(filters),
     queryFn: () => listProducts(filters),
+  })
+}
+
+export function modifierGroupsQueryOptions(businessId: string) {
+  return queryOptions({
+    queryKey: platformQueryKeys.modifierGroups(businessId),
+    queryFn: () => listModifierGroups(businessId),
+    enabled: Boolean(businessId),
+  })
+}
+
+export function modifierGroupByIdQueryOptions(businessId: string, groupId: string) {
+  return queryOptions({
+    queryKey: platformQueryKeys.modifierGroupById(businessId, groupId),
+    queryFn: () => getModifierGroupById(businessId, groupId),
+    enabled: Boolean(businessId) && Boolean(groupId),
+  })
+}
+
+export function modifiersQueryOptions(businessId: string, groupId: string) {
+  return queryOptions({
+    queryKey: platformQueryKeys.modifiers(businessId, groupId),
+    queryFn: () => listModifiers(businessId, groupId),
+    enabled: Boolean(businessId) && Boolean(groupId),
   })
 }
 
@@ -72,32 +99,32 @@ export function orderByIdQueryOptions(orderId: string) {
   })
 }
 
-export function kitchenTicketsQueryOptions(status?: 'PREPARING' | 'READY') {
+export function kitchenActiveOrdersQueryOptions() {
   return queryOptions({
-    queryKey: platformQueryKeys.kitchenTickets(status),
-    queryFn: () => listKitchenTickets(status ? { status } : undefined),
+    queryKey: platformQueryKeys.kitchenOrders(),
+    queryFn: fetchActiveKitchenOrders,
   })
 }
 
-export function staffQueryOptions() {
+export function paymentsQueryOptions() {
   return queryOptions({
-    queryKey: platformQueryKeys.staff(),
-    queryFn: listStaff,
+    queryKey: platformQueryKeys.payments(),
+    queryFn: listPayments,
   })
 }
 
-export function staffByIdQueryOptions(staffId: string) {
+export function staffQueryOptions(businessId: string) {
   return queryOptions({
-    queryKey: platformQueryKeys.staffById(staffId),
-    queryFn: () => getStaffById(staffId),
-    enabled: Boolean(staffId),
+    queryKey: platformQueryKeys.staff(businessId),
+    queryFn: () => listStaff(businessId),
+    enabled: Boolean(businessId),
   })
 }
 
-export function businessPaymentMethodsQueryOptions() {
+export function staffByIdQueryOptions(businessId: string, staffId: string) {
   return queryOptions({
-    queryKey: platformQueryKeys.businessPaymentMethods(),
-    queryFn: listBusinessPaymentMethods,
+    queryKey: platformQueryKeys.staffById(businessId, staffId),
+    queryFn: () => getStaffById(businessId, staffId),
+    enabled: Boolean(businessId) && Boolean(staffId),
   })
 }
-

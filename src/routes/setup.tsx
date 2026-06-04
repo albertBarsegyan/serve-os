@@ -1,60 +1,69 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { Building2, FileJson, MapPin, Sparkles, Store } from 'lucide-react'
-import { useId } from 'react'
-import { useForm } from 'react-hook-form'
-import { Button } from '#/components/ui/button'
-import { Checkbox } from '#/components/ui/checkbox'
-import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
-import { Textarea } from '#/components/ui/textarea'
-import {
-  businessFeatureLabels,
-  businessFeaturePresets,
-  businessFeatures,
-  businessTypeLabels,
-} from '#/features/business/api/business-domain.ts'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {useQueryClient} from '@tanstack/react-query'
+import {createFileRoute, redirect, useNavigate} from '@tanstack/react-router'
+import {Building2, MapPin} from 'lucide-react'
+import {useEffect, useId, useMemo} from 'react'
+import {Controller, useForm} from 'react-hook-form'
+import {FeatureSelector} from '#/components/feature-selector'
+import {Button} from '#/components/ui/button'
+import {Input} from '#/components/ui/input'
+import {Label} from '#/components/ui/label'
+import type {AuthenticatedUser} from '#/features/auth/api/auth.types.ts'
+import {authQueryKey} from '#/features/auth/lib/constants/auth-query-keys.ts'
+import {type BusinessType, businessTypeLabels, FEATURE_PRESETS,} from '#/features/business/api/business-domain.ts'
 import {
   createBusinessFormSchema,
   type CreateBusinessFormValues,
 } from '#/features/business/lib/schemas/create-business-form.schema.ts'
-import { businessFormAdapter } from '#/features/business/lib/utils/business-form-adapter.ts'
-import { useCreateBusinessMutation } from '#/features/business/model/business-hooks.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { stringToCommaSeparated } from '#/shared/libs/utils/naming.utils.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
+import {businessFormAdapter} from '#/features/business/lib/utils/business-form-adapter.ts'
+import {getCityOptions, getCountryOptions, getCurrencyOptions,} from '#/features/business/lib/utils/location-options.ts'
+import {useCreateBusinessMutation} from '#/features/business/model/business-hooks.ts'
+import {adminRoutePathname} from '#/shared/libs/constants/route-pathname/admin.ts'
+import {sharedRoutePathname} from '#/shared/libs/constants/route-pathname/shared.ts'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import {stringToCommaSeparated} from '#/shared/libs/utils/naming.utils.ts'
+import {WorkingHoursPicker} from '#/widgets/shared/working-hours-picker'
 
 export const Route = createFileRoute('/setup')({
   component: AdminSetupRoute,
   beforeLoad: ({ context }) => {
-    if (!context.authUser) throw redirect({ to: '/auth/sign-in' })
+    if (!context.authUser) throw redirect({ to: sharedRoutePathname.SIGN_UP })
 
-    if (context.authUser.hasBusiness) throw redirect({ to: '/dashboard' })
+    if (
+      context.authUser.type === 'staff' ||
+      (context.authUser.type === 'owner' && context.authUser.hasBusiness)
+    ) {
+      throw redirect({ to: adminRoutePathname.DASHBOARD })
+    }
   },
 })
 
 function AdminSetupRoute() {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const createBusinessMutation = useCreateBusinessMutation()
-  const setActiveBusiness = useActiveBusinessStore((s) => s.setActive)
+
   const nameId = useId()
   const typeId = useId()
   const currencyId = useId()
-  const locationId = useId()
-  const workingHoursId = useId()
+  const countryId = useId()
+  const cityId = useId()
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
+    control,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(createBusinessFormSchema),
     defaultValues: {
       name: '',
       type: 'RESTAURANT',
-      location: '',
+      locationCountry: '',
+      locationCity: '',
       currency: 'USD',
       workingHoursJson: '',
       features: [],
@@ -62,17 +71,41 @@ function AdminSetupRoute() {
   } as const)
 
   const selectedType = watch('type')
-  const selectedFeatures = watch('features')
-  const presetFeatures = businessFeaturePresets[selectedType]
+  const selectedCountry = watch('locationCountry')
+  const selectedCity = watch('locationCity')
+
   const generatedSlug = stringToCommaSeparated(watch('name')) || 'sunset-bistro'
+  const countryOptions = useMemo(() => getCountryOptions(), [])
+  const cityOptions = useMemo(() => getCityOptions(selectedCountry), [selectedCountry])
+  const currencyOptions = useMemo(() => getCurrencyOptions(), [])
+
+  useEffect(() => {
+    if (selectedCity && !cityOptions.some((option) => option.value === selectedCity)) {
+      setValue('locationCity', '')
+    }
+  }, [cityOptions, selectedCity, setValue])
+
+  useEffect(() => {
+    setValue('features', FEATURE_PRESETS[selectedType])
+  }, [selectedType, setValue])
 
   const onSubmit = async (values: CreateBusinessFormValues) => {
     try {
-      const newBusiness = await createBusinessMutation.mutateAsync({
+      await createBusinessMutation.mutateAsync({
         data: businessFormAdapter.toApi(values),
       })
 
-      setActiveBusiness({ id: newBusiness.id, name: newBusiness.name })
+      await queryClient.invalidateQueries({ queryKey: ['business'] })
+      queryClient.setQueryData<{ user: AuthenticatedUser }>([authQueryKey.ME], (old) => {
+        if (!old) return old
+
+        return {
+          user: {
+            ...old.user,
+            hasBusiness: true,
+          },
+        }
+      })
 
       showSuccess('Business created successfully')
       await navigate({ to: '/dashboard' })
@@ -82,13 +115,13 @@ function AdminSetupRoute() {
   }
 
   return (
-    <main className='w-full max-w-[1600px] mx-auto px-4 py-10'>
+    <main className='w-full max-w-400 mx-auto px-4 py-10'>
       <section className='mb-6 overflow-hidden rounded-3xl border border-border bg-card px-6 py-8 shadow-sm sm:px-8'>
         <div className='relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
           <div className='max-w-2xl space-y-4 rise-in'>
             <div className='inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground'>
-              <span className='h-2 w-2 rounded-full bg-primary animate-pulse' />
-              First-time onboarding
+              <span aria-hidden='true' className='h-2 w-2 rounded-full bg-primary animate-pulse' />
+              <span>First-time onboarding</span>
             </div>
             <div className='space-y-2'>
               <p className='text-sm font-medium text-muted-foreground'>Hi, nice to see you.</p>
@@ -110,7 +143,7 @@ function AdminSetupRoute() {
         </div>
       </section>
 
-      <section className='grid gap-6 lg:grid-cols-[1.1fr_0.9fr]'>
+      <section>
         <div className='island-shell rounded-2xl p-6 sm:p-8'>
           <p className='island-kicker mb-2'>Business Creation</p>
           <h2 className='mb-3 text-3xl font-semibold tracking-tight text-foreground'>
@@ -184,23 +217,22 @@ function AdminSetupRoute() {
                 >
                   Currency
                 </Label>
-                <div className='relative'>
-                  <span className='absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground'>
-                    ₳
-                  </span>
-                  <Input
-                    id={currencyId}
-                    type='text'
-                    placeholder='USD'
-                    maxLength={3}
-                    className={`h-14 rounded-xl pl-12 pr-4 uppercase ${
-                      errors.currency ? 'border-red-400 ring-2 ring-red-100' : ''
-                    }`}
-                    {...register('currency', {
-                      setValueAs: (value) => String(value).toUpperCase(),
-                    })}
-                  />
-                </div>
+                <select
+                  id={currencyId}
+                  className={`h-14 w-full rounded-xl border border-input bg-background px-4 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                    errors.currency ? 'border-red-400 ring-2 ring-red-100' : ''
+                  }`}
+                  {...register('currency', {
+                    setValueAs: (value) => String(value).toUpperCase(),
+                  })}
+                >
+                  <option value=''>Select currency</option>
+                  {currencyOptions.map((currency) => (
+                    <option key={currency.value} value={currency.value}>
+                      {currency.label}
+                    </option>
+                  ))}
+                </select>
                 {errors.currency && (
                   <p className='text-xs text-red-500'>{errors.currency.message}</p>
                 )}
@@ -208,127 +240,104 @@ function AdminSetupRoute() {
 
               <div className='space-y-2 sm:col-span-2'>
                 <Label
-                  htmlFor={locationId}
+                  htmlFor={countryId}
                   className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
                   Location
                 </Label>
-                <div className='relative'>
-                  <MapPin className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
-                  <Input
-                    id={locationId}
-                    type='text'
-                    placeholder='123 Main St, New York'
-                    className={`h-14 rounded-xl pl-12 pr-4 ${
-                      errors.location ? 'border-red-400 ring-2 ring-red-100' : ''
-                    }`}
-                    {...register('location')}
-                  />
+
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <div className='space-y-2'>
+                    <Label
+                      htmlFor={countryId}
+                      className='text-xs font-medium text-muted-foreground'
+                    >
+                      Country
+                    </Label>
+                    <div className='relative'>
+                      <MapPin className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+                      <select
+                        id={countryId}
+                        className={`h-14 w-full rounded-xl border border-input bg-background pl-12 pr-4 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                          errors.locationCountry ? 'border-red-400 ring-2 ring-red-100' : ''
+                        }`}
+                        {...register('locationCountry')}
+                      >
+                        <option value=''>Select country</option>
+                        {countryOptions.map((country) => (
+                          <option key={country.value} value={country.value}>
+                            {country.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {errors.locationCountry && (
+                      <p className='text-xs text-red-500'>{errors.locationCountry.message}</p>
+                    )}
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor={cityId} className='text-xs font-medium text-muted-foreground'>
+                      City
+                    </Label>
+                    <select
+                      id={cityId}
+                      disabled={!selectedCountry}
+                      className={`h-14 w-full rounded-xl border border-input bg-background px-4 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                        errors.locationCity ? 'border-red-400 ring-2 ring-red-100' : ''
+                      }`}
+                      {...register('locationCity')}
+                    >
+                      <option value=''>
+                        {selectedCountry ? 'Select city' : 'Select a country first'}
+                      </option>
+                      {cityOptions.map((city) => (
+                        <option key={city.value} value={city.value}>
+                          {city.label}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.locationCity && (
+                      <p className='text-xs text-red-500'>{errors.locationCity.message}</p>
+                    )}
+                  </div>
                 </div>
-                {errors.location && (
-                  <p className='text-xs text-red-500'>{errors.location.message}</p>
-                )}
               </div>
 
               <div className='space-y-2 sm:col-span-2'>
                 <Label
-                  htmlFor={workingHoursId}
+                  htmlFor='working-hours'
                   className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  Working hours JSON
+                  Working hours
                 </Label>
-                <div className='relative'>
-                  <FileJson className='absolute left-4 top-4 h-5 w-5 text-muted-foreground' />
-                  <Textarea
-                    id={workingHoursId}
-                    rows={4}
-                    placeholder='{"monday":"09:00-22:00","tuesday":"09:00-22:00"}'
-                    className={`w-full rounded-xl py-4 pl-12 pr-4 ${
-                      errors.workingHoursJson ? 'border-red-400 ring-2 ring-red-100' : ''
-                    }`}
-                    {...register('workingHoursJson')}
-                  />
-                </div>
+                <Controller
+                  name='workingHoursJson'
+                  control={control}
+                  render={({ field }) => (
+                    <WorkingHoursPicker value={field.value || ''} onChange={field.onChange} />
+                  )}
+                />
                 <p className='text-xs text-muted-foreground'>
-                  Optional. Leave empty to skip. Must be a JSON object.
+                  Optional. Select the days and hours your business operates. Leave empty to skip.
                 </p>
                 {errors.workingHoursJson && (
                   <p className='text-xs text-red-500'>{errors.workingHoursJson.message}</p>
                 )}
               </div>
 
-              <div className='space-y-3 sm:col-span-2'>
-                <div className='flex items-center justify-between gap-3'>
-                  <p className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-                    Features
-                  </p>
-                  <span className='text-xs text-muted-foreground'>
-                    {selectedFeatures.length} selected
-                  </span>
-                </div>
-
-                <div className='grid gap-3 sm:grid-cols-2'>
-                  {businessFeatures.map((feature) => {
-                    const featureId = `feature-${feature.toLowerCase()}`
-
-                    return (
-                      <div
-                        key={feature}
-                        className='flex items-start gap-3 rounded-xl border border-border bg-card p-3 text-sm'
-                      >
-                        <Checkbox
-                          id={featureId}
-                          value={feature}
-                          className='mt-1'
-                          {...register('features')}
-                        />
-                        <Label htmlFor={featureId} className='cursor-pointer'>
-                          <span>
-                            <span className='block font-semibold text-foreground'>
-                              {businessFeatureLabels[feature]}
-                            </span>
-                            <span className='block text-xs text-muted-foreground'>
-                              Included in the selected preset only if you leave the list empty.
-                            </span>
-                          </span>
-                        </Label>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className='flex flex-col gap-4 rounded-2xl border border-border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between'>
-              <div className='flex items-start gap-3'>
-                <Sparkles className='mt-0.5 h-5 w-5 text-primary' />
-                <div>
-                  <p className='text-sm font-semibold text-foreground'>
-                    Default preset for {businessTypeLabels[selectedType]}
-                  </p>
-                  <p className='text-xs text-muted-foreground'>
-                    {presetFeatures.length
-                      ? 'If you do not select features, backend defaults will be applied.'
-                      : 'This business type starts without a predefined feature preset.'}
-                  </p>
-                </div>
-              </div>
-
-              <div className='flex flex-wrap gap-2'>
-                {presetFeatures.length ? (
-                  presetFeatures.map((feature) => (
-                    <span
-                      key={feature}
-                      className='rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground'
-                    >
-                      {businessFeatureLabels[feature]}
-                    </span>
-                  ))
-                ) : (
-                  <span className='rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground'>
-                    No preset features
-                  </span>
-                )}
+              <div className='sm:col-span-2'>
+                <Controller
+                  name='features'
+                  control={control}
+                  render={({ field }) => (
+                    <FeatureSelector
+                      selectedFeatures={field.value}
+                      onFeaturesChange={field.onChange}
+                      selectedType={selectedType as BusinessType}
+                    />
+                  )}
+                />
               </div>
             </div>
 
@@ -341,44 +350,6 @@ function AdminSetupRoute() {
             </Button>
           </form>
         </div>
-
-        <aside className='island-shell rounded-2xl p-6 sm:p-8 h-min'>
-          <p className='island-kicker mb-2'>What happens next</p>
-          <h2 className='mb-4 text-2xl font-semibold tracking-tight text-foreground'>
-            Your venue onboarding
-          </h2>
-          <div className='space-y-4 text-sm text-muted-foreground'>
-            <div className='rounded-xl border border-border bg-card p-4'>
-              <p className='mb-1 flex items-center gap-2 font-semibold text-foreground'>
-                <Store className='h-4 w-4 text-primary' />
-                Business profile
-              </p>
-              <p>Store the venue name, location, currency, and optional working hours.</p>
-            </div>
-
-            <div className='rounded-xl border border-border bg-card p-4'>
-              <p className='mb-1 flex items-center gap-2 font-semibold text-foreground'>
-                <Sparkles className='h-4 w-4 text-primary' />
-                Feature-driven modules
-              </p>
-              <p>
-                The backend decides the final feature set. The UI should only expose modules that
-                exist in the saved business features.
-              </p>
-            </div>
-
-            <div className='rounded-xl border border-border bg-card p-4'>
-              <p className='mb-1 flex items-center gap-2 font-semibold text-foreground'>
-                <Building2 className='h-4 w-4 text-primary' />
-                Automatic redirect
-              </p>
-              <p>
-                Once the business is created, the app will update your session and continue to the
-                dashboard.
-              </p>
-            </div>
-          </div>
-        </aside>
       </section>
     </main>
   )

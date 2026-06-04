@@ -1,13 +1,18 @@
 import { createServerFn } from '@tanstack/react-start'
+import { z } from 'zod'
 import type {
+  BusinessPaymentMethodResponse,
   BusinessResponse,
   CreateBusinessRequest,
   UpdateBusinessRequest,
+  UpsertPaymentMethodRequest,
 } from '#/features/business/api/business.types.ts'
 import { createBusinessRequestSchema } from '#/features/business/lib/schemas/create-business-form.schema.ts'
 import { updateBusinessRequestSchema } from '#/features/business/lib/schemas/update-business-form.schema.ts'
 import { serverApiInstance } from '#/shared/api/server-instance.ts'
 import { forwardCookies } from '#/shared/libs/utils/cookie.utils.ts'
+
+const selectBusinessRequestSchema = z.string().uuid()
 
 /**
  * Create business
@@ -100,8 +105,80 @@ export const deleteBusinessServerFn = createServerFn({
     })
 
     forwardCookies(request)
+  })
 
-    if (!request.ok) {
-      throw new Error('Failed to delete business')
-    }
+/**
+ * Select active business
+ */
+export const selectBusinessServerFn = createServerFn({
+  method: 'POST',
+})
+  .inputValidator(selectBusinessRequestSchema)
+  .handler(async ({ data }): Promise<void> => {
+    const response = await serverApiInstance('auth/business', {
+      method: 'POST',
+      json: { businessId: data },
+    })
+
+    forwardCookies(response)
+  })
+
+/**
+ * Clear active business
+ */
+export const clearBusinessServerFn = createServerFn({
+  method: 'DELETE',
+}).handler(async (): Promise<void> => {
+  const response = await serverApiInstance('auth/business', {
+    method: 'DELETE',
+  })
+
+  forwardCookies(response)
+})
+
+/**
+ * List payment methods for a business
+ */
+export const listPaymentMethodsServerFn = createServerFn({
+  method: 'GET',
+})
+  .inputValidator((data: { businessId: string }) => data)
+  .handler(async ({ data }): Promise<BusinessPaymentMethodResponse[]> => {
+    const request = await serverApiInstance<BusinessPaymentMethodResponse[]>(
+      `business/${data.businessId}/payment-methods`,
+      { method: 'GET' },
+    )
+    forwardCookies(request)
+    return request.json()
+  })
+
+/**
+ * Upsert a payment method configuration
+ */
+export const upsertPaymentMethodServerFn = createServerFn({
+  method: 'POST',
+})
+  .inputValidator((data: { businessId: string; payload: UpsertPaymentMethodRequest }) => data)
+  .handler(async ({ data }): Promise<BusinessPaymentMethodResponse> => {
+    const request = await serverApiInstance<BusinessPaymentMethodResponse>(
+      `business/${data.businessId}/payment-methods`,
+      { method: 'PUT', json: data.payload },
+    )
+    forwardCookies(request)
+    return request.json()
+  })
+
+/**
+ * Delete a payment method configuration
+ */
+export const deletePaymentMethodServerFn = createServerFn({
+  method: 'POST',
+})
+  .inputValidator((data: { businessId: string; methodId: string }) => data)
+  .handler(async ({ data }): Promise<void> => {
+    const request = await serverApiInstance(
+      `business/${data.businessId}/payment-methods/${data.methodId}`,
+      { method: 'DELETE' },
+    )
+    forwardCookies(request)
   })

@@ -3,16 +3,16 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { Eye, EyeOff, LucideLock, Mail, User } from 'lucide-react'
 import { useId, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
-import { type SignUpFormValues, signUpSchema } from '#/features/auth/lib/schemas/sign-up.schema.ts'
-import { signUpAdapter } from '#/features/auth/lib/utils/auth-forms-adapter.ts'
-import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
-import { useSignUpMutation } from '#/features/auth/model/auth-hooks.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
+import { type SignUpFormValues, signUpSchema } from '#/features/auth/lib/schemas/sign-up.schema.ts'
+import { signUpAdapter } from '#/features/auth/lib/utils/auth-forms-adapter.ts'
+import { useSignUpMutation } from '#/features/auth/model/auth-hooks.ts'
+import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 
 export function SignUpForm() {
   const firstNameId = useId()
@@ -44,10 +44,10 @@ export function SignUpForm() {
 
   const onSubmit = async (values: SignUpFormValues) => {
     try {
-      const authUser = await mutateAsync({ data: signUpAdapter.toApi(values) })
+      await mutateAsync({ data: signUpAdapter.toApi(values) })
 
       showSuccess(authUiMessage.SUCCESS_SIGN_UP)
-      await navigate({ to: getPostAuthDestination(authUser) })
+      await navigate({ to: adminRoutePathname.SETUP_BUSINESS })
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
@@ -59,7 +59,10 @@ export function SignUpForm() {
     <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
       {/* First Name */}
       <div className='space-y-1.5'>
-        <Label htmlFor={firstNameId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+        <Label
+          htmlFor={firstNameId}
+          className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
+        >
           First Name
         </Label>
         <div className='relative'>
@@ -68,9 +71,7 @@ export function SignUpForm() {
             id={firstNameId}
             type='text'
             placeholder='John'
-            className={`h-14 rounded-xl pl-12 pr-4 ${
-              errors.firstName ? inputErrorClass : ''
-            }`}
+            className={`h-14 rounded-xl pl-12 pr-4 ${errors.firstName ? inputErrorClass : ''}`}
             {...register('firstName')}
           />
         </div>
@@ -81,7 +82,10 @@ export function SignUpForm() {
 
       {/* Last Name */}
       <div className='space-y-1.5'>
-        <Label htmlFor={lastNameId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+        <Label
+          htmlFor={lastNameId}
+          className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
+        >
           Last Name
         </Label>
         <div className='relative'>
@@ -90,9 +94,7 @@ export function SignUpForm() {
             id={lastNameId}
             type='text'
             placeholder='Doe'
-            className={`h-14 rounded-xl pl-12 pr-4 ${
-              errors.lastName ? inputErrorClass : ''
-            }`}
+            className={`h-14 rounded-xl pl-12 pr-4 ${errors.lastName ? inputErrorClass : ''}`}
             {...register('lastName')}
           />
         </div>
@@ -101,7 +103,10 @@ export function SignUpForm() {
 
       {/* Email */}
       <div className='space-y-1.5'>
-        <Label htmlFor={mailId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+        <Label
+          htmlFor={mailId}
+          className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
+        >
           Email Address
         </Label>
         <div className='relative'>
@@ -110,9 +115,7 @@ export function SignUpForm() {
             id={mailId}
             type='email'
             placeholder='name@company.com'
-            className={`h-14 rounded-xl pl-12 pr-4 ${
-              errors.email ? inputErrorClass : ''
-            }`}
+            className={`h-14 rounded-xl pl-12 pr-4 ${errors.email ? inputErrorClass : ''}`}
             {...register('email')}
           />
         </div>
@@ -121,7 +124,10 @@ export function SignUpForm() {
 
       {/* Password */}
       <div className='space-y-1.5'>
-        <Label htmlFor={passwordId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+        <Label
+          htmlFor={passwordId}
+          className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
+        >
           Password
         </Label>
         <div className='relative'>
@@ -130,9 +136,7 @@ export function SignUpForm() {
             id={passwordId}
             type={showPassword ? 'text' : 'password'}
             placeholder='••••••••'
-            className={`h-14 rounded-xl pl-12 pr-12 ${
-              errors.password ? inputErrorClass : ''
-            }`}
+            className={`h-14 rounded-xl pl-12 pr-12 ${errors.password ? inputErrorClass : ''}`}
             {...register('password')}
           />
           <button
@@ -148,7 +152,10 @@ export function SignUpForm() {
 
       {/* Confirm Password */}
       <div className='space-y-1.5'>
-        <Label htmlFor={confirmPasswordId} className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+        <Label
+          htmlFor={confirmPasswordId}
+          className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
+        >
           Confirm Password
         </Label>
         <div className='relative'>

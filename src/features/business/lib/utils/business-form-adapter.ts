@@ -1,25 +1,14 @@
-import type { CreateBusinessRequest } from '#/features/business/api/business-domain.ts'
 import type { CreateBusinessFormValues } from '#/features/business/lib/schemas/create-business-form.schema.ts'
-
-function parseWorkingHoursJson(workingHoursJson: string): Record<string, string> | undefined {
-  const trimmed = workingHoursJson.trim()
-  if (!trimmed) return undefined
-
-  return JSON.parse(trimmed) as Record<string, string>
-}
+import { formatBackendLocation } from '#/features/business/lib/utils/location-options.ts'
 
 export const businessFormAdapter = {
-  toApi: (formData: CreateBusinessFormValues): CreateBusinessRequest => {
-    const workingHours = formData.workingHoursJson
-      ? parseWorkingHoursJson(formData.workingHoursJson)
-      : undefined
-
+  toApi: (formData: CreateBusinessFormValues) => {
     return {
       name: formData.name.trim(),
       type: formData.type,
-      location: formData.location.trim(),
+      location: formatBackendLocation(formData.locationCity, formData.locationCountry),
       currency: formData.currency.trim().toUpperCase(),
-      ...(workingHours === undefined ? {} : { workingHours }),
+      ...(formData.workingHoursJson.trim() ? { workingHours: formData.workingHoursJson.trim() } : {}),
       ...(formData.features.length ? { features: formData.features } : {}),
     }
   },

@@ -1,52 +1,105 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Trash2, UserPlus } from 'lucide-react'
+import { Copy, Edit2, Search, Trash2, UserPlus } from 'lucide-react'
 import { useId, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
-import { createStaffInviteSchema } from '#/features/platform/lib/schemas/platform.schemas.ts'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
+import type { StaffMember, StaffRole } from '#/features/platform/api/platform.types.ts'
 import { staffQueryOptions } from '#/features/platform/lib/query-options.ts'
 import {
-  useCreateStaffInviteMutation,
+  createStaffWithInviteSchema,
+  createStaffWithPasswordSchema,
+  createStaffWithPinSchema,
+  updateStaffSchema,
+} from '#/features/platform/lib/schemas/platform.schemas.ts'
+import {
+  useCreateStaffWithInviteMutation,
+  useCreateStaffWithPasswordMutation,
+  useCreateStaffWithPinMutation,
   useRemoveStaffMutation,
+  useUpdateStaffMutation,
   useUpdateStaffRoleMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import { Modal } from '#/shared/ui/Modal'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui/table'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import { Modal } from '#/shared/ui/modal'
 
-type InviteFormValues = z.infer<typeof createStaffInviteSchema>
+type InviteFormValues = z.infer<typeof createStaffWithInviteSchema>
+type PasswordFormValues = z.infer<typeof createStaffWithPasswordSchema>
+type PinFormValues = z.infer<typeof createStaffWithPinSchema>
+type UpdateStaffFormValues = z.infer<typeof updateStaffSchema>
 
-const roleOptions = ['OWNER', 'ADMIN', 'WAITER', 'CHEF'] as const
+type CreateMode = 'invite' | 'password' | 'pin'
+
+const roleOptions: StaffRole[] = ['MANAGER', 'WAITER', 'CASHIER', 'KITCHEN']
+const allRoles: StaffRole[] = ['MANAGER', 'WAITER', 'CASHIER', 'KITCHEN']
 
 export function AdminStaffPage() {
   const [search, setSearch] = useState('')
-  const [isInviteOpen, setIsInviteOpen] = useState(false)
+  const [createMode, setCreateMode] = useState<CreateMode | null>(null)
+  const [editingMember, setEditingMember] = useState<StaffMember | null>(null)
 
   const emailId = useId()
   const roleId = useId()
+  const displayNameId = useId()
+  const passwordId = useId()
+  const pinId = useId()
+  const editNameId = useId()
+  const editRoleId = useId()
+  const editActiveId = useId()
+  const displayNameId2 = useId()
+  const emailId2 = useId()
+  const roleId2 = useId()
+  const displayNameId3 = useId()
+  const roleId3 = useId()
 
-  const { data: staffMembers = [], isPending } = useQuery(staffQueryOptions())
+  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
 
-  const createInviteMutation = useCreateStaffInviteMutation()
+  const { data: staffMembers = [], isPending } = useQuery(staffQueryOptions(businessId))
+
+  const createWithInviteMutation = useCreateStaffWithInviteMutation()
+  const createWithPasswordMutation = useCreateStaffWithPasswordMutation()
+  const createWithPinMutation = useCreateStaffWithPinMutation()
   const updateRoleMutation = useUpdateStaffRoleMutation()
+  const updateStaffMutation = useUpdateStaffMutation()
   const removeStaffMutation = useRemoveStaffMutation()
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<InviteFormValues>({
-    resolver: zodResolver(createStaffInviteSchema),
+  const staffSignInLink = `${window.location.origin}/staff-login?businessId=${businessId}`
+
+  const inviteForm = useForm<InviteFormValues>({
+    resolver: zodResolver(createStaffWithInviteSchema),
+    defaultValues: { displayName: '', email: '', role: 'WAITER' as StaffRole },
+  })
+
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(createStaffWithPasswordSchema),
     defaultValues: {
+      displayName: '',
+      role: 'WAITER' as StaffRole,
       email: '',
-      role: 'WAITER',
+      temporaryPassword: '',
     },
+  })
+
+  const pinForm = useForm<PinFormValues>({
+    resolver: zodResolver(createStaffWithPinSchema),
+    defaultValues: { displayName: '', role: 'WAITER' as StaffRole, pin: '' },
+  })
+
+  const editForm = useForm<UpdateStaffFormValues>({
+    resolver: zodResolver(updateStaffSchema),
   })
 
   const filteredStaff = useMemo(() => {
@@ -54,7 +107,7 @@ export function AdminStaffPage() {
     if (!needle) return staffMembers
 
     return staffMembers.filter((member) =>
-      [member.firstName, member.lastName, member.email, member.role]
+      [member.displayName, member.email, member.role]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
@@ -62,33 +115,90 @@ export function AdminStaffPage() {
     )
   }, [search, staffMembers])
 
+  const closeModal = () => {
+    setCreateMode(null)
+    inviteForm.reset()
+
+    passwordForm.reset()
+    pinForm.reset()
+  }
+
+  const openEditMember = (member: StaffMember) => {
+    setEditingMember(member)
+    editForm.reset({
+      displayName: member.displayName,
+      role: member.role,
+      isActive: member.isActive,
+    })
+  }
+
   const onInviteSubmit = async (values: InviteFormValues) => {
     try {
-      await createInviteMutation.mutateAsync(values)
+      await createWithInviteMutation.mutateAsync({ businessId, data: values })
       showSuccess('Invite sent')
-      reset({ email: '', role: 'WAITER' })
-      setIsInviteOpen(false)
+      closeModal()
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
   }
 
-  const changeRole = async (staffId: string, role: (typeof roleOptions)[number]) => {
+  const onPasswordSubmit = async (values: PasswordFormValues) => {
     try {
-      await updateRoleMutation.mutateAsync({ staffId, data: { role } })
+      const payload = { ...values, email: values.email || undefined }
+      await createWithPasswordMutation.mutateAsync({ businessId, data: payload })
+      showSuccess('Staff member created')
+      closeModal()
+    } catch (error) {
+      showError(getResponseErrorMessage(error))
+    }
+  }
+
+  const onPinSubmit = async (values: PinFormValues) => {
+    try {
+      await createWithPinMutation.mutateAsync({ businessId, data: values })
+      showSuccess('Staff member created')
+      closeModal()
+    } catch (error) {
+      showError(getResponseErrorMessage(error))
+    }
+  }
+
+  const onEditSubmit = async (values: UpdateStaffFormValues) => {
+    if (!editingMember) return
+    try {
+      await updateStaffMutation.mutateAsync({
+        businessId,
+        staffId: editingMember.id,
+        data: values,
+      })
+      showSuccess('Staff member updated')
+      setEditingMember(null)
+    } catch (error) {
+      showError(getResponseErrorMessage(error))
+    }
+  }
+
+  const changeRole = async (staffId: string, role: StaffRole) => {
+    try {
+      await updateRoleMutation.mutateAsync({ businessId, staffId, data: { role } })
       showSuccess('Role updated')
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
   }
 
-  const removeStaff = async (staffId: string) => {
+  const handleRemoveStaff = async (staffId: string) => {
     try {
-      await removeStaffMutation.mutateAsync(staffId)
+      await removeStaffMutation.mutateAsync({ businessId, staffId })
       showSuccess('Staff member removed')
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
+  }
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(staffSignInLink)
+    showSuccess('Sign-in link copied to clipboard')
   }
 
   return (
@@ -97,14 +207,39 @@ export function AdminStaffPage() {
         <div>
           <h1 className='text-3xl font-semibold tracking-tight'>Staff Management</h1>
           <p className='text-muted-foreground'>Manage your team roles, permissions, and status.</p>
+          <p className='flex items-center gap-2'>
+            <span className='text-sm text-muted-foreground'>Staff sign-in link</span>
+            <Button onClick={copyLink} variant='ghost' size='sm'>
+              <Copy className='h-4 w-4 mr-1.5' />
+              Copy link
+            </Button>
+          </p>
         </div>
-        <Button size='sm' className='rounded-full' onClick={() => setIsInviteOpen(true)}>
-          <UserPlus className='mr-2 h-4 w-4' /> Invite Staff Member
-        </Button>
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            size='sm'
+            className='rounded-full'
+            onClick={() => setCreateMode('pin')}
+          >
+            Add by PIN
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            className='rounded-full'
+            onClick={() => setCreateMode('password')}
+          >
+            Add by Password
+          </Button>
+          <Button size='sm' className='rounded-full' onClick={() => setCreateMode('invite')}>
+            <UserPlus className='mr-2 h-4 w-4' /> Invite by Email
+          </Button>
+        </div>
       </div>
 
       <Card className='overflow-hidden'>
-          <CardHeader className='border-b border-border'>
+        <CardHeader className='border-b border-border'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
             <CardTitle>Staff Members</CardTitle>
             <div className='relative'>
@@ -150,7 +285,7 @@ export function AdminStaffPage() {
               {filteredStaff.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell className='pl-8 font-bold'>
-                    {[member.firstName, member.lastName].filter(Boolean).join(' ') || member.id.slice(0, 8)}
+                    {member.displayName || member.id.slice(0, 8)}
                   </TableCell>
                   <TableCell className='text-muted-foreground'>{member.email ?? '-'}</TableCell>
                   <TableCell>
@@ -158,11 +293,10 @@ export function AdminStaffPage() {
                       className='h-8 rounded-lg border border-input bg-background px-2 text-xs font-medium'
                       value={member.role}
                       onChange={(event) => {
-                        const value = event.target.value as (typeof roleOptions)[number]
-                        void changeRole(member.id, value)
+                        void changeRole(member.id, event.target.value as StaffRole)
                       }}
                     >
-                      {roleOptions.map((role) => (
+                      {allRoles.map((role) => (
                         <option key={role} value={role}>
                           {role}
                         </option>
@@ -170,8 +304,8 @@ export function AdminStaffPage() {
                     </select>
                   </TableCell>
                   <TableCell>
-                    <Badge variant='success' className='capitalize'>
-                      active
+                    <Badge variant={member.isActive ? 'success' : 'outline'} className='capitalize'>
+                      {member.isActive ? 'active' : 'inactive'}
                     </Badge>
                   </TableCell>
                   <TableCell className='pr-8 text-right'>
@@ -179,11 +313,18 @@ export function AdminStaffPage() {
                       <Button
                         variant='ghost'
                         size='icon'
+                        className='rounded-full'
+                        title='Edit'
+                        onClick={() => openEditMember(member)}
+                      >
+                        <Edit2 className='h-4 w-4' />
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='icon'
                         className='rounded-full text-red-500 hover:bg-red-500/10 hover:text-red-600'
                         title='Remove'
-                        onClick={() => {
-                          void removeStaff(member.id)
-                        }}
+                        onClick={() => void handleRemoveStaff(member.id)}
                       >
                         <Trash2 className='h-4 w-4' />
                       </Button>
@@ -196,29 +337,122 @@ export function AdminStaffPage() {
         </CardContent>
       </Card>
 
+      {/* Edit staff modal */}
       <Modal
-        isOpen={isInviteOpen}
-        onClose={() => setIsInviteOpen(false)}
-        title='Invite staff member'
+        isOpen={Boolean(editingMember)}
+        onClose={() => setEditingMember(null)}
+        title='Edit staff member'
         footer={
           <>
-            <Button variant='ghost' onClick={() => setIsInviteOpen(false)}>
+            <Button variant='ghost' onClick={() => setEditingMember(null)}>
               Cancel
             </Button>
             <Button
-              disabled={createInviteMutation.isPending}
-              onClick={() => {
-                void handleSubmit(onInviteSubmit)()
-              }}
+              disabled={updateStaffMutation.isPending}
+              onClick={() => void editForm.handleSubmit(onEditSubmit)()}
             >
-              {createInviteMutation.isPending ? 'Sending...' : 'Send invite'}
+              {updateStaffMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </>
         }
       >
         <form className='space-y-4'>
           <div className='space-y-1'>
-            <label htmlFor={emailId} className='text-xs font-semibold uppercase text-muted-foreground'>
+            <label
+              htmlFor={editNameId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Display name
+            </label>
+            <input
+              id={editNameId}
+              type='text'
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...editForm.register('displayName')}
+            />
+            {editForm.formState.errors.displayName && (
+              <p className='text-xs text-red-600'>
+                {editForm.formState.errors.displayName.message}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-1'>
+            <label
+              htmlFor={editRoleId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Role
+            </label>
+            <select
+              id={editRoleId}
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...editForm.register('role')}
+            >
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <label htmlFor={editActiveId} className='flex items-center gap-2 text-sm'>
+            <input
+              id={editActiveId}
+              type='checkbox'
+              className='h-4 w-4 rounded border border-input accent-primary'
+              {...editForm.register('isActive')}
+            />
+            <span>Active</span>
+          </label>
+        </form>
+      </Modal>
+
+      {/* Invite by email modal */}
+      <Modal
+        isOpen={createMode === 'invite'}
+        onClose={closeModal}
+        title='Invite staff by email'
+        footer={
+          <>
+            <Button variant='ghost' onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button
+              disabled={createWithInviteMutation.isPending}
+              onClick={() => void inviteForm.handleSubmit(onInviteSubmit)()}
+            >
+              {createWithInviteMutation.isPending ? 'Sending...' : 'Send invite'}
+            </Button>
+          </>
+        }
+      >
+        <form className='space-y-4'>
+          <div className='space-y-1'>
+            <label
+              htmlFor={displayNameId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Display name
+            </label>
+            <input
+              id={displayNameId}
+              type='text'
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...inviteForm.register('displayName')}
+            />
+            {inviteForm.formState.errors.displayName && (
+              <p className='text-xs text-red-600'>
+                {inviteForm.formState.errors.displayName.message}
+              </p>
+            )}
+          </div>
+          <div className='space-y-1'>
+            <label
+              htmlFor={emailId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
               Email
             </label>
             <input
@@ -226,25 +460,202 @@ export function AdminStaffPage() {
               type='email'
               placeholder='staff@example.com'
               className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...register('email')}
+              {...inviteForm.register('email')}
             />
-            {errors.email && <p className='text-xs text-red-600'>{errors.email.message}</p>}
+            {inviteForm.formState.errors.email && (
+              <p className='text-xs text-red-600'>{inviteForm.formState.errors.email.message}</p>
+            )}
           </div>
-
           <div className='space-y-1'>
-            <label htmlFor={roleId} className='text-xs font-semibold uppercase text-muted-foreground'>
+            <label
+              htmlFor={roleId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
               Role
             </label>
             <select
               id={roleId}
               className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...register('role')}
+              {...inviteForm.register('role')}
             >
-              <option value='ADMIN'>ADMIN</option>
-              <option value='WAITER'>WAITER</option>
-              <option value='CHEF'>CHEF</option>
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
             </select>
-            {errors.role && <p className='text-xs text-red-600'>{errors.role.message}</p>}
+          </div>
+        </form>
+      </Modal>
+
+      {/* Create with password modal */}
+      <Modal
+        isOpen={createMode === 'password'}
+        onClose={closeModal}
+        title='Add staff with password'
+        footer={
+          <>
+            <Button variant='ghost' onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button
+              disabled={createWithPasswordMutation.isPending}
+              onClick={() => void passwordForm.handleSubmit(onPasswordSubmit)()}
+            >
+              {createWithPasswordMutation.isPending ? 'Creating...' : 'Create'}
+            </Button>
+          </>
+        }
+      >
+        <form className='space-y-4'>
+          <div className='space-y-1'>
+            <label
+              htmlFor={displayNameId2}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Display name
+            </label>
+            <input
+              id={displayNameId2}
+              type='text'
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...passwordForm.register('displayName')}
+            />
+            {passwordForm.formState.errors.displayName && (
+              <p className='text-xs text-red-600'>
+                {passwordForm.formState.errors.displayName.message}
+              </p>
+            )}
+          </div>
+          <div className='space-y-1'>
+            <label
+              htmlFor={emailId2}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Email (optional)
+            </label>
+            <input
+              id={emailId2}
+              type='email'
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...passwordForm.register('email')}
+            />
+          </div>
+          <div className='space-y-1'>
+            <label
+              htmlFor={roleId2}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Role
+            </label>
+            <select
+              id={roleId2}
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...passwordForm.register('role')}
+            >
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className='space-y-1'>
+            <label
+              htmlFor={passwordId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Temporary password
+            </label>
+            <input
+              id={passwordId}
+              type='password'
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...passwordForm.register('temporaryPassword')}
+            />
+            {passwordForm.formState.errors.temporaryPassword && (
+              <p className='text-xs text-red-600'>
+                {passwordForm.formState.errors.temporaryPassword.message}
+              </p>
+            )}
+          </div>
+        </form>
+      </Modal>
+
+      {/* Create with PIN modal */}
+      <Modal
+        isOpen={createMode === 'pin'}
+        onClose={closeModal}
+        title='Add staff with PIN'
+        footer={
+          <>
+            <Button variant='ghost' onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button
+              disabled={createWithPinMutation.isPending}
+              onClick={() => void pinForm.handleSubmit(onPinSubmit)()}
+            >
+              {createWithPinMutation.isPending ? 'Creating...' : 'Create'}
+            </Button>
+          </>
+        }
+      >
+        <form className='space-y-4'>
+          <div className='space-y-1'>
+            <label
+              htmlFor={displayNameId3}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Display name
+            </label>
+            <input
+              id={displayNameId3}
+              type='text'
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...pinForm.register('displayName')}
+            />
+            {pinForm.formState.errors.displayName && (
+              <p className='text-xs text-red-600'>{pinForm.formState.errors.displayName.message}</p>
+            )}
+          </div>
+          <div className='space-y-1'>
+            <label
+              htmlFor={roleId3}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Role
+            </label>
+            <select
+              id={roleId3}
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...pinForm.register('role')}
+            >
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className='space-y-1'>
+            <label
+              htmlFor={pinId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              PIN (exactly 4 digits)
+            </label>
+            <input
+              id={pinId}
+              type='password'
+              inputMode='numeric'
+              maxLength={4}
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...pinForm.register('pin')}
+            />
+            {pinForm.formState.errors.pin && (
+              <p className='text-xs text-red-600'>{pinForm.formState.errors.pin.message}</p>
+            )}
           </div>
         </form>
       </Modal>

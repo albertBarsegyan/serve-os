@@ -1,38 +1,42 @@
-import { clientApiInstance } from '#/shared/api/client-instance.ts'
 import type {
-  AssignKitchenTicketRequest,
-  AttachModifierGroupsRequest,
-  BusinessPaymentMethod,
+  AcceptInviteRequest,
+  AddModifierRequest,
+  ChangePasswordRequest,
   ConfirmPaymentRequest,
-  CreateCustomerSessionRequest,
   CreateMenuCategoryRequest,
   CreateModifierGroupRequest,
   CreateOrderRequest,
   CreatePaymentRequest,
   CreateProductRequest,
-  CreateStaffInviteRequest,
+  CreateStaffWithInviteRequest,
+  CreateStaffWithPasswordRequest,
+  CreateStaffWithPinRequest,
   CreateTableRequest,
-  CustomerSession,
-  KitchenTicket,
-  KitchenTicketStatus,
   MenuCategory,
   Modifier,
   ModifierGroup,
   Order,
   OrderStatus,
   Payment,
+  ProcessPaymentRequest,
   Product,
-  StaffInvite,
+  ScanSessionRequest,
+  SessionBill,
+  StaffLoginWithPasswordRequest,
+  StaffLoginWithPinRequest,
   StaffMember,
   TableEntity,
-  UpdateKitchenTicketStatusRequest,
-  UpdateOrderItemsRequest,
+  TableSession,
+  UpdateMenuCategoryRequest,
+  UpdateModifierGroupRequest,
+  UpdateModifierRequest,
   UpdateOrderStatusRequest,
   UpdateProductRequest,
+  UpdateStaffRequest,
   UpdateStaffRoleRequest,
   UpdateTableRequest,
-  UpsertBusinessPaymentMethodRequest,
 } from '#/features/platform/api/platform.types.ts'
+import { clientApiInstance } from '#/shared/api/client-instance.ts'
 
 type ListResponse<T> = T[] | { data?: T[] }
 
@@ -41,25 +45,14 @@ function unwrapList<T>(payload: ListResponse<T>): T[] {
   return payload.data ?? []
 }
 
-export function createCustomerSession(data: CreateCustomerSessionRequest): Promise<CustomerSession> {
-  return clientApiInstance.post('customer-sessions', { json: data }).json<CustomerSession>()
-}
-
-export function getCustomerSessionByToken(token: string): Promise<CustomerSession> {
-  return clientApiInstance
-    .get(`customer-sessions/token/${encodeURIComponent(token)}`)
-    .json<CustomerSession>()
-}
+// --- Tables ---
 
 export function createTable(data: CreateTableRequest): Promise<TableEntity> {
   return clientApiInstance.post('tables', { json: data }).json<TableEntity>()
 }
 
 export function listTables(): Promise<TableEntity[]> {
-  return clientApiInstance
-    .get('tables')
-    .json<ListResponse<TableEntity>>()
-    .then(unwrapList)
+  return clientApiInstance.get('tables').json<ListResponse<TableEntity>>().then(unwrapList)
 }
 
 export function getTableById(tableId: string): Promise<TableEntity> {
@@ -74,6 +67,22 @@ export function deleteTable(tableId: string): Promise<{ message: string }> {
   return clientApiInstance.delete(`tables/${tableId}`).json<{ message: string }>()
 }
 
+// --- Table Sessions ---
+
+export function scanSession(data: ScanSessionRequest): Promise<TableSession> {
+  return clientApiInstance.post('sessions/scan', { json: data }).json<TableSession>()
+}
+
+export function closeSession(sessionId: string): Promise<void> {
+  return clientApiInstance.post(`sessions/${sessionId}/close`).json<void>()
+}
+
+export function getSessionBill(sessionId: string): Promise<SessionBill> {
+  return clientApiInstance.get(`sessions/${sessionId}/bill`).json<SessionBill>()
+}
+
+// --- Menu Categories ---
+
 export function createMenuCategory(data: CreateMenuCategoryRequest): Promise<MenuCategory> {
   return clientApiInstance.post('menu/categories', { json: data }).json<MenuCategory>()
 }
@@ -86,6 +95,21 @@ export function listMenuCategories(includeProducts = false): Promise<MenuCategor
     .json<ListResponse<MenuCategory>>()
     .then(unwrapList)
 }
+
+export function updateMenuCategory(
+  categoryId: string,
+  data: UpdateMenuCategoryRequest,
+): Promise<MenuCategory> {
+  return clientApiInstance
+    .patch(`menu/categories/${categoryId}`, { json: data })
+    .json<MenuCategory>()
+}
+
+export function deleteMenuCategory(categoryId: string): Promise<void> {
+  return clientApiInstance.delete(`menu/categories/${categoryId}`).json<void>()
+}
+
+// --- Products ---
 
 export function createProduct(data: CreateProductRequest): Promise<Product> {
   return clientApiInstance.post('menu/products', { json: data }).json<Product>()
@@ -114,27 +138,93 @@ export function deleteProduct(productId: string): Promise<{ message: string }> {
   return clientApiInstance.delete(`menu/products/${productId}`).json<{ message: string }>()
 }
 
-export function createModifierGroup(data: CreateModifierGroupRequest): Promise<ModifierGroup> {
-  return clientApiInstance.post('modifier-groups', { json: data }).json<ModifierGroup>()
+export function syncProductModifierGroups(productId: string, groupIds: string[]): Promise<Product> {
+  return clientApiInstance
+    .put(`menu/products/${productId}/modifier-groups`, { json: { groupIds } })
+    .json<Product>()
 }
 
-export function addModifierToGroup(
+// --- Modifier Groups ---
+
+export function createModifierGroup(
+  businessId: string,
+  data: CreateModifierGroupRequest,
+): Promise<ModifierGroup> {
+  return clientApiInstance
+    .post(`businesses/${businessId}/modifier-groups`, { json: data })
+    .json<ModifierGroup>()
+}
+
+export function listModifierGroups(businessId: string): Promise<ModifierGroup[]> {
+  return clientApiInstance
+    .get(`businesses/${businessId}/modifier-groups`)
+    .json<ListResponse<ModifierGroup>>()
+    .then(unwrapList)
+}
+
+export function getModifierGroupById(businessId: string, groupId: string): Promise<ModifierGroup> {
+  return clientApiInstance
+    .get(`businesses/${businessId}/modifier-groups/${groupId}`)
+    .json<ModifierGroup>()
+}
+
+export function updateModifierGroup(
+  businessId: string,
   groupId: string,
-  data: { name: string; priceAdjustment: string; position?: number; isActive?: boolean },
+  data: UpdateModifierGroupRequest,
+): Promise<ModifierGroup> {
+  return clientApiInstance
+    .put(`businesses/${businessId}/modifier-groups/${groupId}`, { json: data })
+    .json<ModifierGroup>()
+}
+
+export function deleteModifierGroup(businessId: string, groupId: string) {
+  return clientApiInstance.delete(`businesses/${businessId}/modifier-groups/${groupId}`)
+}
+
+// --- Modifiers ---
+
+export function addModifierToGroup(
+  businessId: string,
+  groupId: string,
+  data: AddModifierRequest,
 ): Promise<Modifier> {
   return clientApiInstance
-    .post(`modifier-groups/${groupId}/modifiers`, { json: data })
+    .post(`businesses/${businessId}/modifier-groups/${groupId}/modifiers`, { json: data })
     .json<Modifier>()
 }
 
-export function attachModifierGroupsToProduct(
-  productId: string,
-  data: AttachModifierGroupsRequest,
-): Promise<Product> {
+export function listModifiers(businessId: string, groupId: string): Promise<Modifier[]> {
   return clientApiInstance
-    .post(`menu/products/${productId}/modifier-groups`, { json: data })
-    .json<Product>()
+    .get(`businesses/${businessId}/modifier-groups/${groupId}/modifiers`)
+    .json<ListResponse<Modifier>>()
+    .then(unwrapList)
 }
+
+export function updateModifier(
+  businessId: string,
+  groupId: string,
+  modifierId: string,
+  data: UpdateModifierRequest,
+): Promise<Modifier> {
+  return clientApiInstance
+    .put(`businesses/${businessId}/modifier-groups/${groupId}/modifiers/${modifierId}`, {
+      json: data,
+    })
+    .json<Modifier>()
+}
+
+export function deleteModifier(
+  businessId: string,
+  groupId: string,
+  modifierId: string,
+): Promise<void> {
+  return clientApiInstance
+    .delete(`businesses/${businessId}/modifier-groups/${groupId}/modifiers/${modifierId}`)
+    .json<void>()
+}
+
+// --- Orders ---
 
 export function createOrder(data: CreateOrderRequest): Promise<Order> {
   return clientApiInstance.post('orders', { json: data }).json<Order>()
@@ -142,10 +232,6 @@ export function createOrder(data: CreateOrderRequest): Promise<Order> {
 
 export function updateOrderStatus(orderId: string, data: UpdateOrderStatusRequest): Promise<Order> {
   return clientApiInstance.patch(`orders/${orderId}/status`, { json: data }).json<Order>()
-}
-
-export function updateOrderItems(orderId: string, data: UpdateOrderItemsRequest): Promise<Order> {
-  return clientApiInstance.patch(`orders/${orderId}/items`, { json: data }).json<Order>()
 }
 
 export function listOrders(filters?: {
@@ -171,78 +257,128 @@ export function getOrderById(orderId: string): Promise<Order> {
   return clientApiInstance.get(`orders/${orderId}`).json<Order>()
 }
 
-export function listKitchenTickets(filters?: {
-  status?: Extract<KitchenTicketStatus, 'PREPARING' | 'READY'>
-}): Promise<KitchenTicket[]> {
-  return clientApiInstance
-    .get('kitchen/tickets', {
-      searchParams: filters?.status ? { status: filters.status } : undefined,
-    })
-    .json<ListResponse<KitchenTicket>>()
-    .then(unwrapList)
+export function processCashPayment(orderId: string, data: ProcessPaymentRequest): Promise<Payment> {
+  return clientApiInstance.post(`orders/${orderId}/payment/cash`, { json: data }).json<Payment>()
 }
 
-export function assignKitchenTicket(
-  ticketId: string,
-  data: AssignKitchenTicketRequest,
-): Promise<KitchenTicket> {
-  return clientApiInstance.patch(`kitchen/tickets/${ticketId}/assign`, { json: data }).json<KitchenTicket>()
+export function processPosPayment(orderId: string, data: ProcessPaymentRequest): Promise<Payment> {
+  return clientApiInstance.post(`orders/${orderId}/payment/pos`, { json: data }).json<Payment>()
 }
 
-export function updateKitchenTicketStatus(
-  ticketId: string,
-  data: UpdateKitchenTicketStatusRequest,
-): Promise<KitchenTicket> {
-  return clientApiInstance
-    .patch(`kitchen/tickets/${ticketId}/status`, { json: data })
-    .json<KitchenTicket>()
-}
+// --- Payments ---
 
 export function createPayment(data: CreatePaymentRequest): Promise<Payment> {
   return clientApiInstance.post('payments', { json: data }).json<Payment>()
 }
 
+export function listPayments(): Promise<Payment[]> {
+  return clientApiInstance.get('payments').json<ListResponse<Payment>>().then(unwrapList)
+}
+
 export function confirmPayment(paymentId: string, data: ConfirmPaymentRequest): Promise<Payment> {
-  return clientApiInstance.post(`payments/${paymentId}/confirm`, { json: data }).json<Payment>()
+  return clientApiInstance.patch(`payments/${paymentId}/confirm`, { json: data }).json<Payment>()
 }
 
-export function createStaffInvite(data: CreateStaffInviteRequest): Promise<StaffInvite> {
-  return clientApiInstance.post('staff/invites', { json: data }).json<StaffInvite>()
-}
+// --- Staff ---
 
-export function acceptStaffInvite(token: string): Promise<StaffInvite> {
-  return clientApiInstance.get(`staff/invites/accept/${encodeURIComponent(token)}`).json<StaffInvite>()
-}
-
-export function listStaff(): Promise<StaffMember[]> {
+export function createStaffWithInvite(
+  businessId: string,
+  data: CreateStaffWithInviteRequest,
+): Promise<StaffMember> {
   return clientApiInstance
-    .get('staff')
+    .post(`businesses/${businessId}/staff/invite`, { json: data })
+    .json<StaffMember>()
+}
+
+export function createStaffWithPassword(
+  businessId: string,
+  data: CreateStaffWithPasswordRequest,
+): Promise<StaffMember> {
+  return clientApiInstance
+    .post(`businesses/${businessId}/staff/password`, { json: data })
+    .json<StaffMember>()
+}
+
+export function createStaffWithPin(
+  businessId: string,
+  data: CreateStaffWithPinRequest,
+): Promise<StaffMember> {
+  return clientApiInstance
+    .post(`businesses/${businessId}/staff/pin`, { json: data })
+    .json<StaffMember>()
+}
+
+// Backend returns { accessToken } and also sets staff_access_token cookie.
+// The cookie is the primary auth mechanism; the body field is supplementary.
+export function loginStaffWithPassword(
+  businessId: string,
+  data: StaffLoginWithPasswordRequest,
+): Promise<{ accessToken: string } | { requirePasswordChange: boolean }> {
+  return clientApiInstance
+    .post(`businesses/${businessId}/staff/login`, { json: data })
+    .json<{ accessToken: string } | { requirePasswordChange: boolean }>()
+}
+
+export function loginStaffWithPin(
+  businessId: string,
+  data: StaffLoginWithPinRequest,
+): Promise<{ accessToken: string }> {
+  return clientApiInstance
+    .post(`businesses/${businessId}/staff/login/pin`, { json: data })
+    .json<{ accessToken: string }>()
+}
+
+export function logoutStaff(businessId: string): Promise<void> {
+  return clientApiInstance.post(`businesses/${businessId}/staff/logout`).json<void>()
+}
+
+export function acceptStaffInvite(data: AcceptInviteRequest): Promise<void> {
+  return clientApiInstance.post('staff/accept-invite', { json: data }).json<void>()
+}
+
+export function changePassword(data: ChangePasswordRequest): Promise<void> {
+  return clientApiInstance.post('staff/change-password', { json: data }).json<void>()
+}
+
+export function listStaff(businessId: string): Promise<StaffMember[]> {
+  return clientApiInstance
+    .get(`businesses/${businessId}/staff`)
     .json<ListResponse<StaffMember>>()
     .then(unwrapList)
 }
 
-export function getStaffById(staffId: string): Promise<StaffMember> {
-  return clientApiInstance.get(`staff/${staffId}`).json<StaffMember>()
+export function getStaffById(businessId: string, staffId: string): Promise<StaffMember> {
+  return clientApiInstance.get(`businesses/${businessId}/staff/${staffId}`).json<StaffMember>()
 }
 
-export function updateStaffRole(staffId: string, data: UpdateStaffRoleRequest): Promise<StaffMember> {
-  return clientApiInstance.patch(`staff/${staffId}`, { json: data }).json<StaffMember>()
-}
-
-export function removeStaff(staffId: string): Promise<{ message: string }> {
-  return clientApiInstance.delete(`staff/${staffId}`).json<{ message: string }>()
-}
-
-export function listBusinessPaymentMethods(): Promise<BusinessPaymentMethod[]> {
+export function updateStaffRole(
+  businessId: string,
+  staffId: string,
+  data: UpdateStaffRoleRequest,
+): Promise<StaffMember> {
   return clientApiInstance
-    .get('business/payment-methods')
-    .json<ListResponse<BusinessPaymentMethod>>()
-    .then(unwrapList)
+    .patch(`businesses/${businessId}/staff/${staffId}`, { json: data })
+    .json<StaffMember>()
 }
 
-export function upsertBusinessPaymentMethod(
-  data: UpsertBusinessPaymentMethodRequest,
-): Promise<BusinessPaymentMethod> {
-  return clientApiInstance.post('business/payment-methods', { json: data }).json<BusinessPaymentMethod>()
+export function updateStaff(
+  businessId: string,
+  staffId: string,
+  data: UpdateStaffRequest,
+): Promise<StaffMember> {
+  return clientApiInstance
+    .patch(`businesses/${businessId}/staff/${staffId}`, { json: data })
+    .json<StaffMember>()
 }
 
+export function removeStaff(businessId: string, staffId: string): Promise<{ message: string }> {
+  return clientApiInstance
+    .delete(`businesses/${businessId}/staff/${staffId}`)
+    .json<{ message: string }>()
+}
+
+// --- Kitchen (active orders only — /kitchen/active-orders) ---
+
+export function fetchActiveKitchenOrders(): Promise<Order[]> {
+  return clientApiInstance.get('kitchen/active-orders').json<ListResponse<Order>>().then(unwrapList)
+}

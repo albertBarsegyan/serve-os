@@ -1,284 +1,241 @@
-import { ArrowDown, ArrowUp } from 'lucide-react'
-import { cn } from '#/lib/utils'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
+import { useQuery } from '@tanstack/react-query'
+import { CreditCard, ShoppingBag, TrendingUp, Users } from 'lucide-react'
+import { useMemo } from 'react'
+import { Badge } from '#/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
+import { ordersQueryOptions, paymentsQueryOptions, staffQueryOptions } from '#/features/platform/lib/query-options.ts'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
+
+function formatStatus(s: string) {
+  return s.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+}
 
 export function AdminDashboardPage() {
+  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
+  const businessName = useActiveBusinessStore((s) => s.active?.name)
+  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+
+  const { data: orders = [], isPending: ordersLoading } = useQuery(ordersQueryOptions())
+  const { data: payments = [], isPending: paymentsLoading } = useQuery(paymentsQueryOptions())
+  const { data: staff = [] } = useQuery(staffQueryOptions(businessId))
+
+  const stats = useMemo(() => {
+    const today = new Date().toDateString()
+
+    const todayOrders = orders.filter(
+      (o) => new Date(o.createdAt).toDateString() === today,
+    )
+
+    const confirmedPayments = payments.filter((p) => p.status === 'CONFIRMED')
+    const totalRevenue = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+
+    const todayRevenue = confirmedPayments
+      .filter((p) => new Date(p.createdAt).toDateString() === today)
+      .reduce((sum, p) => sum + Number(p.amount), 0)
+
+    const pendingPayments = payments.filter((p) => p.status === 'PENDING')
+    const pendingRevenue = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+
+    const activeOrders = orders.filter((o) =>
+      ['CREATED', 'CONFIRMED', 'IN_KITCHEN', 'READY', 'DELIVERED'].includes(o.status),
+    )
+
+    return {
+      totalOrders: orders.length,
+      todayOrders: todayOrders.length,
+      totalRevenue,
+      todayRevenue,
+      pendingRevenue,
+      activeOrders: activeOrders.length,
+      confirmedPayments: confirmedPayments.length,
+    }
+  }, [orders, payments])
+
+  const recentOrders = useMemo(
+    () =>
+      [...orders]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 8),
+    [orders],
+  )
+
+  const isLoading = ordersLoading || paymentsLoading
+
   return (
     <div className='space-y-8'>
       <div>
-        <h1 className='text-3xl font-extrabold'>Welcome back, John</h1>
+        <h1 className='text-3xl font-extrabold'>
+          Welcome back{businessName ? `, ${businessName}` : ''}
+        </h1>
         <p className='text-muted-foreground'>Here's what's happening at your venue today.</p>
       </div>
 
-      <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
-        {/* Revenue Card */}
-        <Card className='lg:col-span-2'>
-          <CardHeader className='flex flex-row items-center justify-between'>
-            <div>
-              <CardTitle className='text-base text-muted-foreground'>Revenue</CardTitle>
-              <div className='mt-2 flex items-baseline gap-4'>
-                <span className='text-3xl font-black'>IDR 7.852.000</span>
-                  <span className='flex items-center text-xs font-semibold text-emerald-600'>
-                  <ArrowUp className='mr-1 h-3 w-3' /> 2.1%{' '}
-                    <span className='ml-1 font-normal text-muted-foreground'>vs last week</span>
-                </span>
-              </div>
-               <p className='mt-2 text-xs text-muted-foreground'>Sales from 1-12 Dec, 2020</p>
-            </div>
-            <Button
-              variant='outline'
-              size='sm'
-              className='rounded-xl'
-            >
-              View Report
-            </Button>
+      {/* Stats grid */}
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between pb-2'>
+            <CardTitle className='text-sm font-medium text-muted-foreground'>
+              Today's Orders
+            </CardTitle>
+            <ShoppingBag className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            {/* Bar Chart Mockup */}
-            <div className='mt-4 flex h-48 items-end justify-between gap-2 px-4'>
-              {[40, 60, 45, 70, 55, 85, 50, 65, 40, 60, 45, 75].map((height, i) => (
-                <div key={height} className='group relative flex flex-1 flex-col items-center gap-2'>
+            <div className='text-3xl font-black'>
+              {isLoading ? '—' : stats.todayOrders}
+            </div>
+            <p className='mt-1 text-xs text-muted-foreground'>
+              {stats.totalOrders} total all-time
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between pb-2'>
+            <CardTitle className='text-sm font-medium text-muted-foreground'>
+              Today's Revenue
+            </CardTitle>
+            <TrendingUp className='h-4 w-4 text-muted-foreground' />
+          </CardHeader>
+          <CardContent>
+            <div className='text-3xl font-black'>
+              {isLoading ? '—' : formatPrice(stats.todayRevenue, currency)}
+            </div>
+            <p className='mt-1 text-xs text-muted-foreground'>
+              {formatPrice(stats.totalRevenue, currency)} total confirmed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between pb-2'>
+            <CardTitle className='text-sm font-medium text-muted-foreground'>
+              Active Orders
+            </CardTitle>
+            <ShoppingBag className='h-4 w-4 text-amber-500' />
+          </CardHeader>
+          <CardContent>
+            <div className='text-3xl font-black'>
+              {isLoading ? '—' : stats.activeOrders}
+            </div>
+            <p className='mt-1 text-xs text-muted-foreground'>in progress right now</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between pb-2'>
+            <CardTitle className='text-sm font-medium text-muted-foreground'>
+              Pending Payments
+            </CardTitle>
+            <CreditCard className='h-4 w-4 text-amber-500' />
+          </CardHeader>
+          <CardContent>
+            <div className='text-3xl font-black'>
+              {isLoading ? '—' : formatPrice(stats.pendingRevenue, currency)}
+            </div>
+            <p className='mt-1 text-xs text-muted-foreground'>awaiting confirmation</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+        {/* Recent orders */}
+        <Card className='lg:col-span-2'>
+          <CardHeader className='flex flex-row items-center justify-between'>
+            <CardTitle className='text-base'>Recent Orders</CardTitle>
+            <Badge variant='outline' className='text-xs'>
+              {stats.totalOrders} total
+            </Badge>
+          </CardHeader>
+          <CardContent className='p-0'>
+            {isLoading ? (
+              <div className='flex h-32 items-center justify-center text-sm text-muted-foreground'>
+                Loading…
+              </div>
+            ) : recentOrders.length === 0 ? (
+              <div className='flex h-32 items-center justify-center text-sm text-muted-foreground'>
+                No orders yet.
+              </div>
+            ) : (
+              <div className='divide-y divide-border'>
+                {recentOrders.map((order) => (
                   <div
-                    className={cn(
-                      'w-full rounded-t-sm transition-all group-hover:bg-primary',
-                      i === 5 || i === 11 ? 'bg-primary' : 'bg-accent',
-                    )}
-                    style={{ height: `${height}%` }}
-                  />
-                  <span className='text-[10px] font-medium text-muted-foreground'>
-                    {(i + 1).toString().padStart(2, '0')}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className='mt-6 flex gap-6 px-4'>
-              <div className='flex items-center gap-2'>
-                <div className='h-2.5 w-2.5 rounded-full bg-primary' />
-                <span className='text-xs font-medium text-muted-foreground'>Last 6 days</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <div className='h-2.5 w-2.5 rounded-full bg-muted' />
-                <span className='text-xs font-medium text-muted-foreground'>Last Week</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Order Time Card */}
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between'>
-            <div>
-               <CardTitle className='text-base text-muted-foreground'>Order Time</CardTitle>
-               <p className='mt-1 text-xs text-muted-foreground'>From 1-6 Dec, 2020</p>
-            </div>
-            <Button
-              variant='outline'
-              size='sm'
-              className='rounded-xl text-[#5D5FEF] border-[#E8EBFD] hover:bg-[#E8EBFD]'
-            >
-              View Report
-            </Button>
-          </CardHeader>
-          <CardContent className='flex flex-col items-center pt-4'>
-            <div className='relative h-48 w-48'>
-              {/* Donut Chart SVG */}
-              <svg viewBox='0 0 100 100' className='h-full w-full -rotate-90'>
-                <title>Restaurant app</title>
-                <circle
-                  cx='50'
-                  cy='50'
-                  r='40'
-                  fill='transparent'
-                   stroke='hsl(var(--border))'
-                  strokeWidth='12'
-                />
-                <circle
-                  cx='50'
-                  cy='50'
-                  r='40'
-                  fill='transparent'
-                   stroke='hsl(var(--primary))'
-                  strokeWidth='12'
-                  strokeDasharray='251.2'
-                  strokeDashoffset='150.72'
-                  strokeLinecap='round'
-                />
-                <circle
-                  cx='50'
-                  cy='50'
-                  r='40'
-                  fill='transparent'
-                   stroke='hsl(var(--ring))'
-                  strokeWidth='12'
-                  strokeDasharray='251.2'
-                  strokeDashoffset='220.08'
-                  strokeLinecap='round'
-                />
-              </svg>
-              {/* Tooltip mockup */}
-                <div className='absolute -right-5 top-2.5 z-10 rounded-xl bg-slate-800 p-3 text-white shadow-xl'>
-                <p className='text-[10px] font-medium opacity-60'>Afternoon</p>
-                <p className='text-[10px]'>1pm - 4pm</p>
-                <p className='mt-1 text-sm font-bold'>1.890 orders</p>
-                <div className='absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-slate-800' />
-              </div>
-            </div>
-            <div className='mt-12 grid w-full grid-cols-3 gap-2'>
-              <div className='flex flex-col items-center gap-1'>
-                <div className='flex items-center gap-2'>
-                  <div className='h-2 w-2 rounded-full bg-[#5D5FEF]' />
-                  <span className='text-[10px] font-bold'>Afternoon</span>
-                </div>
-                <span className='text-xs text-muted-foreground'>40%</span>
-              </div>
-              <div className='flex flex-col items-center gap-1'>
-                <div className='flex items-center gap-2'>
-                  <div className='h-2 w-2 rounded-full bg-[#A5A6F6]' />
-                  <span className='text-[10px] font-bold'>Evening</span>
-                </div>
-                <span className='text-xs text-muted-foreground'>32%</span>
-              </div>
-              <div className='flex flex-col items-center gap-1'>
-                <div className='flex items-center gap-2'>
-                  <div className='h-2 w-2 rounded-full bg-[#E8EBFD]' />
-                  <span className='text-[10px] font-bold'>Morning</span>
-                </div>
-                <span className='text-xs text-muted-foreground'>28%</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Your Rating Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-base'>Your Rating</CardTitle>
-            <CardDescription className='text-xs'>
-              Lorem ipsum dolor sit amet, consectetur
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='flex h-64 items-center justify-center p-0'>
-            <div className='relative h-48 w-64'>
-              <div className='absolute bottom-0 left-0 flex h-32 w-32 flex-col items-center justify-center rounded-full bg-[#26C1C9] text-white'>
-                <span className='text-xl font-black'>92%</span>
-                <span className='text-[10px]'>Packaging</span>
-              </div>
-              <div className='absolute top-0 left-12 flex h-32 w-32 flex-col items-center justify-center rounded-full bg-[#7B79FF] text-white border-4 border-white'>
-                <span className='text-xl font-black'>85%</span>
-                <span className='text-[10px]'>Hygiene</span>
-              </div>
-              <div className='absolute bottom-4 right-0 flex h-36 w-36 flex-col items-center justify-center rounded-full bg-[#FF9F2D] text-white border-4 border-white'>
-                <span className='text-2xl font-black'>85%</span>
-                <span className='text-[10px]'>Food Taste</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Most Ordered Food Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-base'>Most Ordered Food</CardTitle>
-            <CardDescription className='text-xs'>
-              Adipiscing elit, sed do eiusmod tempor
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            {[
-              {
-                name: 'Fresh Salad Bowl',
-                price: 'IDR 45.000',
-                img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=100&h=100&fit=crop',
-              },
-              {
-                name: 'Chicken Noodles',
-                price: 'IDR 75.000',
-                img: 'https://images.unsplash.com/photo-1552611052-33e04de081de?w=100&h=100&fit=crop',
-              },
-              {
-                name: 'Smoothie Fruits',
-                price: 'IDR 45.000',
-                img: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=100&h=100&fit=crop',
-              },
-              {
-                name: 'Hot Chicken Wings',
-                price: 'IDR 45.000',
-                img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7bb7445?w=100&h=100&fit=crop',
-              },
-            ].map((item) => (
-              <div key={item.name} className='flex items-center justify-between'>
-                <div className='flex items-center gap-4'>
-                  <div className='h-10 w-10 overflow-hidden rounded-lg'>
-                    <img src={item.img} alt={item.name} className='h-full w-full object-cover' />
+                    key={order.id}
+                    className='flex items-center justify-between px-6 py-3'
+                  >
+                    <div className='flex items-center gap-3'>
+                      <span className='font-mono text-xs font-semibold text-muted-foreground'>
+                        #{order.id.slice(0, 8).toUpperCase()}
+                      </span>
+                      <div>
+                        <p className='text-sm font-medium'>
+                          {order.table
+                            ? `Table ${order.table.number}`
+                            : order.tableId
+                              ? `Table #${order.tableId.slice(0, 6)}`
+                              : order.type}
+                        </p>
+                        <p className='text-xs text-muted-foreground'>
+                          {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                          {' · '}
+                          {new Date(order.createdAt).toLocaleTimeString(undefined, {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className='flex items-center gap-3'>
+                      <Badge
+                        variant={
+                          order.status === 'CLOSED'
+                            ? 'success'
+                            : order.status === 'READY' || order.status === 'DELIVERED'
+                              ? 'info'
+                              : order.status === 'IN_KITCHEN' || order.status === 'CONFIRMED'
+                                ? 'warning'
+                                : 'outline'
+                        }
+                        className='text-xs capitalize'
+                      >
+                        {formatStatus(order.status)}
+                      </Badge>
+                      <span className='font-mono text-sm font-semibold'>
+                        {formatPrice(Number(order.totalAmount), currency)}
+                      </span>
+                    </div>
                   </div>
-                        <span className='text-sm font-medium text-foreground'>{item.name}</span>
-                </div>
-                <span className='text-xs font-medium text-muted-foreground'>{item.price}</span>
+                ))}
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
 
-        {/* Order Card */}
+        {/* Staff summary */}
         <Card>
           <CardHeader className='flex flex-row items-center justify-between'>
-            <div>
-              <CardTitle className='text-base text-muted-foreground'>Order</CardTitle>
-              <div className='mt-2 flex items-baseline gap-4'>
-                <span className='text-3xl font-black'>2.568</span>
-                <span className='flex items-center text-xs font-semibold text-red-600'>
-                  <ArrowDown className='mr-1 h-3 w-3' /> 2.1%{' '}
-                    <span className='ml-1 font-normal text-muted-foreground'>vs last week</span>
-                </span>
-              </div>
-               <p className='mt-2 text-xs text-muted-foreground'>Sales from 1-6 Dec, 2020</p>
-            </div>
-            <Button
-              variant='outline'
-              size='sm'
-              className='rounded-xl text-[#5D5FEF] border-[#E8EBFD] hover:bg-[#E8EBFD]'
-            >
-              View Report
-            </Button>
+            <CardTitle className='text-base'>Staff</CardTitle>
+            <Users className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
-          <CardContent className='pt-6'>
-            {/* Line Chart Mockup */}
-            <div className='relative h-32 w-full'>
-              <svg viewBox='0 0 200 60' className='h-full w-full overflow-visible'>
-                <title>Restaurant icon</title>
-                <path
-                  d='M0,40 L40,45 L80,35 L120,40 L160,30 L200,10'
-                  fill='transparent'
-                  stroke='hsl(var(--primary))'
-                  strokeWidth='2'
-                />
-                <path
-                  d='M0,30 L40,25 L80,45 L120,35 L160,40 L200,20'
-                  fill='transparent'
-                  stroke='hsl(var(--border))'
-                  strokeWidth='2'
-                />
-              </svg>
-            </div>
-            <div className='mt-4 flex justify-between px-2 text-[10px] font-medium text-muted-foreground'>
-              <span>01</span>
-              <span>02</span>
-              <span>03</span>
-              <span>04</span>
-              <span>05</span>
-              <span>06</span>
-            </div>
-            <div className='mt-6 flex gap-6'>
-              <div className='flex items-center gap-2'>
-                <div className='h-2.5 w-2.5 rounded-full bg-primary' />
-                <span className='text-xs font-medium text-muted-foreground'>Last 6 days</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <div className='h-2.5 w-2.5 rounded-full bg-muted' />
-                <span className='text-xs font-medium text-muted-foreground'>Last Week</span>
-              </div>
-            </div>
+          <CardContent className='space-y-3'>
+            {staff.length === 0 ? (
+              <p className='text-sm text-muted-foreground'>No staff yet.</p>
+            ) : (
+              staff.slice(0, 6).map((member) => (
+                <div key={member.id} className='flex items-center justify-between'>
+                  <div>
+                    <p className='text-sm font-medium'>{member.displayName}</p>
+                    <p className='text-xs text-muted-foreground'>{member.role}</p>
+                  </div>
+                  <Badge variant={member.isActive ? 'success' : 'outline'} className='text-xs'>
+                    {member.isActive ? 'active' : 'inactive'}
+                  </Badge>
+                </div>
+              ))
+            )}
+            {staff.length > 6 && (
+              <p className='text-xs text-muted-foreground'>+{staff.length - 6} more</p>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -1,3 +1,6 @@
+import type { BusinessFeature } from '#/shared/lib/permissions/index.ts'
+import type { StaffPermission, StaffRole } from '#/shared/lib/permissions/index.ts'
+
 export interface SignUpRequest {
   email: string
   password: string
@@ -5,7 +8,8 @@ export interface SignUpRequest {
   lastName: string
 }
 
-export interface AuthenticatedUser {
+export interface OwnerAuthUser {
+  type: 'owner'
   id: string
   email: string
   firstName: string
@@ -13,3 +17,16 @@ export interface AuthenticatedUser {
   hasBusiness: boolean
   role: string
 }
+
+export interface StaffAuthUser {
+  type: 'staff'
+  staffId: string
+  displayName: string
+  email?: string | null
+  businessId: string
+  role: StaffRole
+  permissions: StaffPermission[]
+  business: { features: BusinessFeature[] }
+}
+
+export type AuthenticatedUser = OwnerAuthUser | StaffAuthUser

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SignInForm } from '#/features/auth/ui/sign-in-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
+import { SignInForm } from '#/features/auth/ui/sign-in-form'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/auth/sign-in')({
   component: SignInPage,

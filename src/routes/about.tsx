@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import Footer from '#/components/footer.tsx'
 import Header from '#/components/header.tsx'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/about')({
   component: About,

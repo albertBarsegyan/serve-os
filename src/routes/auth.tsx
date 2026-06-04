@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
-import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
+import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
+import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 function AuthErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
@@ -26,10 +27,11 @@ export const Route = createFileRoute('/auth')({
   component: AuthLayout,
   errorComponent: AuthErrorComponent,
   beforeLoad: ({ context, location }) => {
-    if (context.authUser && location.pathname.startsWith('/auth'))
-      throw redirect({ to: getPostAuthDestination(context.authUser) })
+    if (context.authUser && location.pathname.startsWith(sharedRoutePathname.AUTH))
+      throw redirect({ to: adminRoutePathname.DASHBOARD })
 
-    if (location.pathname === '/auth') throw redirect({ to: '/auth/sign-in' })
+    if (location.pathname === sharedRoutePathname.AUTH)
+      throw redirect({ to: sharedRoutePathname.AUTH })
   },
 })
 

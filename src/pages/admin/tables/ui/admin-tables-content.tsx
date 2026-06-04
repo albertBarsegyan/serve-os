@@ -1,23 +1,26 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQuery } from '@tanstack/react-query'
-import { MoreVertical, Plus, QrCode, Trash2, Users } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import type { z } from 'zod'
-import { createTableSchema } from '#/features/platform/lib/schemas/platform.schemas.ts'
-import { tablesQueryOptions } from '#/features/platform/lib/query-options.ts'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {useQuery} from '@tanstack/react-query'
+import {Edit2, LayoutGrid, MoreVertical, Plus, QrCode, Trash2, Users} from 'lucide-react'
+import {useId, useMemo, useState} from 'react'
+import {useForm} from 'react-hook-form'
+import type {z} from 'zod'
+import {Badge} from '#/components/ui/badge'
+import {Button} from '#/components/ui/button'
+import {Card, CardContent, CardHeader, CardTitle} from '#/components/ui/card'
+import type {TableEntity} from '#/features/platform/api/platform.types.ts'
+import {tablesQueryOptions} from '#/features/platform/lib/query-options.ts'
+import {createTableSchema, updateTableSchema,} from '#/features/platform/lib/schemas/platform.schemas.ts'
 import {
   useCreateTableMutation,
   useDeleteTableMutation,
+  useUpdateTableMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import { Modal } from '#/shared/ui/Modal'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import {Modal} from '#/shared/ui/modal'
 
 type CreateTableFormValues = z.infer<typeof createTableSchema>
+type UpdateTableFormValues = z.infer<typeof updateTableSchema>
 
 export function AdminTablesContent() {
   const skeletonCards = useMemo(
@@ -26,19 +29,20 @@ export function AdminTablesContent() {
   )
 
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [editingTable, setEditingTable] = useState<TableEntity | null>(null)
   const [isQrModalOpen, setIsQrModalOpen] = useState(false)
-  const [selectedTable, setSelectedTable] = useState<{
-    label: string
-    qrCode: string
-  } | null>(null)
+  const [selectedTable, setSelectedTable] = useState<{ label: string; qrCode: string } | null>(null)
 
   const numberId = useId()
   const capacityId = useId()
-  const qrCodeId = useId()
+  const editNumberId = useId()
+  const editCapacityId = useId()
+  const editActiveId = useId()
 
   const { data: tables = [], isPending, isError, error, refetch } = useQuery(tablesQueryOptions())
 
   const createTableMutation = useCreateTableMutation()
+  const updateTableMutation = useUpdateTableMutation()
   const deleteTableMutation = useDeleteTableMutation()
 
   const {
@@ -48,20 +52,40 @@ export function AdminTablesContent() {
     formState: { errors },
   } = useForm<CreateTableFormValues>({
     resolver: zodResolver(createTableSchema),
-    defaultValues: {
-      number: 1,
-      capacity: 2,
-      qrCode: '',
-      isActive: true,
-    },
+    defaultValues: { number: 1, capacity: 2, isActive: true },
+  })
+
+  const {
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    reset: resetEdit,
+    formState: { errors: editErrors },
+  } = useForm<UpdateTableFormValues>({
+    resolver: zodResolver(updateTableSchema),
   })
 
   const onCreateSubmit = async (values: CreateTableFormValues) => {
     try {
       await createTableMutation.mutateAsync(values)
       showSuccess('Table created')
-      reset({ number: values.number + 1, capacity: 2, qrCode: '', isActive: true })
+      reset({ number: values.number + 1, capacity: 2, isActive: true })
       setIsCreateOpen(false)
+    } catch (mutationError) {
+      showError(getResponseErrorMessage(mutationError))
+    }
+  }
+
+  const openEditTable = (table: TableEntity) => {
+    setEditingTable(table)
+    resetEdit({ number: table.number, capacity: table.capacity, isActive: table.isActive })
+  }
+
+  const onEditSubmit = async (values: UpdateTableFormValues) => {
+    if (!editingTable) return
+    try {
+      await updateTableMutation.mutateAsync({ tableId: editingTable.id, data: values })
+      showSuccess('Table updated')
+      setEditingTable(null)
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
     }
@@ -94,9 +118,7 @@ export function AdminTablesContent() {
           <button
             type='button'
             className='ml-2 font-semibold underline'
-            onClick={() => {
-              void refetch()
-            }}
+            onClick={() => void refetch()}
           >
             Retry
           </button>
@@ -110,6 +132,21 @@ export function AdminTablesContent() {
               <CardContent className='h-40 animate-pulse rounded-xl bg-muted' />
             </Card>
           ))}
+
+        {!isPending && tables.length === 0 && (
+          <div className='col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center'>
+            <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted'>
+              <LayoutGrid className='h-6 w-6 text-muted-foreground' />
+            </div>
+            <h3 className='mb-1 text-base font-semibold'>No tables yet</h3>
+            <p className='mb-6 max-w-xs text-sm text-muted-foreground'>
+              You don't have any tables yet. Start by adding your first table.
+            </p>
+            <Button size='sm' className='rounded-full' onClick={() => setIsCreateOpen(true)}>
+              <Plus className='mr-2 h-4 w-4' /> Add your first table
+            </Button>
+          </div>
+        )}
 
         {!isPending &&
           tables.map((table) => (
@@ -131,10 +168,7 @@ export function AdminTablesContent() {
                     size='sm'
                     className='flex-1 rounded-xl'
                     onClick={() => {
-                      setSelectedTable({
-                        label: `Table ${table.number}`,
-                        qrCode: table.qrCode,
-                      })
+                      setSelectedTable({ label: `Table ${table.number}`, qrCode: table.qrCode })
                       setIsQrModalOpen(true)
                     }}
                   >
@@ -143,10 +177,17 @@ export function AdminTablesContent() {
                   <Button
                     variant='ghost'
                     size='icon'
+                    className='rounded-xl border border-border'
+                    title='Edit table'
+                    onClick={() => openEditTable(table)}
+                  >
+                    <Edit2 className='h-4 w-4' />
+                  </Button>
+                  <Button
+                    variant='ghost'
+                    size='icon'
                     className='rounded-xl border border-border text-destructive hover:bg-destructive/10'
-                    onClick={() => {
-                      void handleDelete(table.id)
-                    }}
+                    onClick={() => void handleDelete(table.id)}
                   >
                     <Trash2 className='h-4 w-4' />
                   </Button>
@@ -156,6 +197,7 @@ export function AdminTablesContent() {
           ))}
       </div>
 
+      {/* Create modal */}
       <Modal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
@@ -166,9 +208,7 @@ export function AdminTablesContent() {
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                void handleSubmit(onCreateSubmit)()
-              }}
+              onClick={() => void handleSubmit(onCreateSubmit)()}
               disabled={createTableMutation.isPending}
             >
               {createTableMutation.isPending ? 'Creating...' : 'Create'}
@@ -178,7 +218,10 @@ export function AdminTablesContent() {
       >
         <form className='space-y-4'>
           <div className='space-y-2'>
-            <label htmlFor={numberId} className='text-xs font-semibold uppercase text-muted-foreground'>
+            <label
+              htmlFor={numberId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
               Number
             </label>
             <input
@@ -192,7 +235,10 @@ export function AdminTablesContent() {
           </div>
 
           <div className='space-y-2'>
-            <label htmlFor={capacityId} className='text-xs font-semibold uppercase text-muted-foreground'>
+            <label
+              htmlFor={capacityId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
               Capacity
             </label>
             <input
@@ -205,27 +251,88 @@ export function AdminTablesContent() {
             {errors.capacity && <p className='text-xs text-red-600'>{errors.capacity.message}</p>}
           </div>
 
-          <div className='space-y-2'>
-            <label htmlFor={qrCodeId} className='text-xs font-semibold uppercase text-muted-foreground'>
-              QR code token
-            </label>
-            <input
-              id={qrCodeId}
-              type='text'
-              placeholder='table-12-qr'
-              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...register('qrCode')}
-            />
-            {errors.qrCode && <p className='text-xs text-red-600'>{errors.qrCode.message}</p>}
-          </div>
-
           <label className='flex items-center gap-2 text-sm'>
-            <input type='checkbox' className='h-4 w-4 rounded border border-input accent-primary' {...register('isActive')} />
+            <input
+              type='checkbox'
+              className='h-4 w-4 rounded border border-input accent-primary'
+              {...register('isActive')}
+            />
             <span>Active</span>
           </label>
         </form>
       </Modal>
 
+      {/* Edit modal */}
+      <Modal
+        isOpen={Boolean(editingTable)}
+        onClose={() => setEditingTable(null)}
+        title={`Edit Table ${editingTable?.number ?? ''}`}
+        footer={
+          <>
+            <Button variant='ghost' onClick={() => setEditingTable(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void handleEditSubmit(onEditSubmit)()}
+              disabled={updateTableMutation.isPending}
+            >
+              {updateTableMutation.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </>
+        }
+      >
+        <form className='space-y-4'>
+          <div className='space-y-2'>
+            <label
+              htmlFor={editNumberId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Number
+            </label>
+            <input
+              id={editNumberId}
+              type='number'
+              min={1}
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...registerEdit('number', { valueAsNumber: true })}
+            />
+            {editErrors.number && (
+              <p className='text-xs text-red-600'>{editErrors.number.message}</p>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <label
+              htmlFor={editCapacityId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Capacity
+            </label>
+            <input
+              id={editCapacityId}
+              type='number'
+              min={1}
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...registerEdit('capacity', { valueAsNumber: true })}
+            />
+            {editErrors.capacity && (
+              <p className='text-xs text-red-600'>{editErrors.capacity.message}</p>
+            )}
+          </div>
+
+          <label htmlFor={editActiveId} className='flex items-center gap-2 text-sm'>
+            <input
+              id={editActiveId}
+              type='checkbox'
+              className='h-4 w-4 rounded border border-input accent-primary'
+              {...registerEdit('isActive')}
+            />
+            <span>Active</span>
+          </label>
+        </form>
+      </Modal>
+
+      {/* QR modal */}
       <Modal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}

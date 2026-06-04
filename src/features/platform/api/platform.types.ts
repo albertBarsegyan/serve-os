@@ -1,70 +1,105 @@
-export const roles = ['OWNER', 'ADMIN', 'WAITER', 'CHEF'] as const
-export type Role = (typeof roles)[number]
+// ── Re-exports: business domain (authoritative source for BusinessFeature) ────
+export { BusinessFeature } from '#/features/business/api/business-domain.ts'
 
-export const businessFeatures = [
-  'TABLES',
-  'QR_ORDERING',
-  'DELIVERY',
-  'TAKEAWAY',
-  'DINE_IN',
-  'KITCHEN',
-  'KDS',
-  'RESERVATIONS',
-  'ROOM_BOOKING',
-  'BAR_MENU',
-  'ALCOHOL_SERVICE',
-  'ONLINE_PAYMENT',
-  'CASH_PAYMENT',
-  'POS_PAYMENT',
-  'STAFF_MANAGEMENT',
-  'INVENTORY',
-  'EVENTS',
-  'MEMBERSHIP',
-  'MULTI_BRANCH',
-] as const
-export type BusinessFeature = (typeof businessFeatures)[number]
+// ── Re-exports: product types (authoritative source for Product shapes) ───────
+export type {
+  ProductResponse as Product,
+  ProductVariantResponse,
+  CreateProductRequest,
+  UpdateProductRequest,
+  ServicePeriod,
+  DietaryFlag,
+  Allergen,
+} from '#/features/product/api/product.types.ts'
+export {
+  servicePeriods,
+  dietaryFlags,
+  allergens,
+} from '#/features/product/api/product.types.ts'
 
+// ── Staff roles — matches backend StaffRole enum exactly ─────────────────────
+export const staffRoles = ['MANAGER', 'WAITER', 'CASHIER', 'KITCHEN'] as const
+export type StaffRole = (typeof staffRoles)[number]
+// Keep 'roles' export so platform.schemas.ts doesn't need a separate import change
+export const roles = staffRoles
+/** @deprecated Use StaffRole */
+export type Role = StaffRole
+
+// ── Payment ───────────────────────────────────────────────────────────────────
 export const paymentMethods = ['CASH', 'POS', 'ONLINE'] as const
 export type PaymentMethod = (typeof paymentMethods)[number]
 
 export const paymentStatuses = ['PENDING', 'CONFIRMED', 'FAILED'] as const
 export type PaymentStatus = (typeof paymentStatuses)[number]
 
+// ── Order status — matches backend OrderStatus enum exactly ───────────────────
 export const orderStatuses = [
-  'PENDING',
+  'CREATED',
   'CONFIRMED',
-  'PREPARING',
+  'IN_KITCHEN',
   'READY',
   'DELIVERED',
   'CLOSED',
   'CANCELLED',
+  'PAYMENT_FAILED',
+  'REFUNDED',
 ] as const
 export type OrderStatus = (typeof orderStatuses)[number]
 
-export const kitchenTicketStatuses = ['PREPARING', 'READY', 'CANCELLED'] as const
-export type KitchenTicketStatus = (typeof kitchenTicketStatuses)[number]
+// ── Order type — matches backend OrderType enum exactly ───────────────────────
+export const orderTypes = ['DINE_IN', 'TAKEAWAY', 'DELIVERY'] as const
+export type OrderType = (typeof orderTypes)[number]
 
+// ── Staff auth type — matches backend StaffAuthType enum ─────────────────────
+export const staffAuthTypes = ['PIN', 'PASSWORD', 'INVITE_PENDING'] as const
+export type StaffAuthType = (typeof staffAuthTypes)[number]
+
+// ── Modifier selection type — matches backend ModifierSelectionType enum ──────
+export const modifierSelectionTypes = ['SINGLE', 'MULTIPLE'] as const
+export type ModifierSelectionType = (typeof modifierSelectionTypes)[number]
+
+// ── Payment webhook events — matches backend PaymentWebhookEvent enum ─────────
+export const paymentWebhookEvents = ['success', 'failure', 'refund'] as const
+export type PaymentWebhookEvent = (typeof paymentWebhookEvents)[number]
+
+// ── Shared ────────────────────────────────────────────────────────────────────
 export interface ApiListQuery {
   limit?: number
   offset?: number
 }
 
-export interface CustomerSession {
+// ── Table sessions ────────────────────────────────────────────────────────────
+export interface TableSession {
   id: string
   businessId: string
   tableId: string
   token: string
-  expiresAt: string | null
   isActive: boolean
   createdAt: string
 }
 
-export interface CreateCustomerSessionRequest {
-  businessId?: string
+export interface ScanSessionRequest {
+  businessId: string
   tableId: string
-  expiresAt?: string
 }
 
+export interface SessionBillItem {
+  productId: string
+  productName: string
+  quantity: number
+  unitPrice: string
+  totalPrice: string
+}
+
+export interface SessionBill {
+  sessionId: string
+  tableId: string
+  items: SessionBillItem[]
+  subtotal: string
+  total: string
+}
+
+// ── Tables ────────────────────────────────────────────────────────────────────
 export interface TableEntity {
   id: string
   businessId: string
@@ -79,7 +114,6 @@ export interface TableEntity {
 export interface CreateTableRequest {
   number: number
   capacity: number
-  qrCode: string
   isActive?: boolean
 }
 
@@ -90,25 +124,32 @@ export interface UpdateTableRequest {
   isActive?: boolean
 }
 
+// ── Menu categories ───────────────────────────────────────────────────────────
 export interface MenuCategory {
   id: string
   businessId: string
   name: string
+  description?: string | null
   sortOrder: number
-  products?: Product[]
+  createdAt: string
+  updatedAt: string
+  products?: import('#/features/product/api/product.types.ts').ProductResponse[]
 }
 
 export interface CreateMenuCategoryRequest {
   name: string
+  description?: string | null
   sortOrder?: number
 }
 
+export type UpdateMenuCategoryRequest = Partial<CreateMenuCategoryRequest>
+
+// ── Modifiers ─────────────────────────────────────────────────────────────────
 export interface Modifier {
   id: string
-  businessId: string
-  modifierGroupId: string
+  groupId: string
   name: string
-  priceAdjustment: string
+  priceAdjustment: number
   position: number
   isActive: boolean
 }
@@ -117,52 +158,18 @@ export interface ModifierGroup {
   id: string
   businessId: string
   name: string
-  selectionType: 'SINGLE' | 'MULTIPLE'
+  selectionType: ModifierSelectionType
   isRequired: boolean
-  minSelections: number | null
+  minSelections: number
   maxSelections: number | null
   position: number
   isActive: boolean
   modifiers: Modifier[]
 }
 
-export interface Product {
-  id: string
-  businessId: string
-  categoryId: string
-  name: string
-  description?: string
-  price: string
-  imageUrl?: string
-  isAvailable: boolean
-  allergens: string[]
-  modifierGroups: ModifierGroup[]
-}
-
-export interface CreateProductRequest {
-  name: string
-  description?: string
-  price: string
-  categoryId: string
-  imageUrl?: string
-  isAvailable?: boolean
-  allergens?: string[]
-  modifierGroupIds?: string[]
-}
-
-export interface UpdateProductRequest {
-  name?: string
-  description?: string
-  price?: string
-  categoryId?: string
-  imageUrl?: string
-  isAvailable?: boolean
-  allergens?: string[]
-}
-
 export interface CreateModifierGroupRequest {
   name: string
-  selectionType: 'SINGLE' | 'MULTIPLE'
+  selectionType?: ModifierSelectionType
   isRequired?: boolean
   minSelections?: number
   maxSelections?: number
@@ -170,21 +177,22 @@ export interface CreateModifierGroupRequest {
   isActive?: boolean
 }
 
+export type UpdateModifierGroupRequest = Partial<CreateModifierGroupRequest>
+
 export interface AddModifierRequest {
   name: string
-  priceAdjustment: string
+  priceAdjustment: number
   position?: number
   isActive?: boolean
 }
 
-export interface AttachModifierGroupsRequest {
-  modifierGroupIds: string[]
-}
+export type UpdateModifierRequest = Partial<AddModifierRequest>
 
+// ── Orders ────────────────────────────────────────────────────────────────────
 export interface OrderItemSelectedModifier {
   modifierId: string
   name: string
-  priceAdjustment: string
+  priceAdjustment: number
 }
 
 export interface OrderItem {
@@ -194,6 +202,8 @@ export interface OrderItem {
   unitPrice: string
   notes?: string
   selectedModifiers: OrderItemSelectedModifier[]
+  // Populated when orders are fetched with product relations (e.g. kitchen endpoint)
+  product?: { id: string; name: string; price: number } | null
 }
 
 export interface Order {
@@ -202,136 +212,123 @@ export interface Order {
   tableId: string | null
   waiterId: string | null
   status: OrderStatus
-  paymentMethod: PaymentMethod | null
-  paymentStatus: 'UNPAID' | 'PENDING' | 'PAID' | 'FAILED'
+  type: OrderType
+  paymentStatus: 'UNPAID' | 'PAID'
   totalAmount: string
   items: OrderItem[]
   createdAt: string
+  // Populated when orders are fetched with table relation (e.g. kitchen endpoint)
+  table?: { id: string; number: number } | null
 }
 
+// Matches backend CreateOrderFromQrDto — public QR flow
 export interface CreateOrderItemRequest {
   productId: string
   quantity: number
-  unitPrice: string
   notes?: string
-  selectedModifierIds?: string[]
 }
 
 export interface CreateOrderRequest {
-  customerSessionToken?: string
+  sessionToken?: string
   tableId?: string
   items: CreateOrderItemRequest[]
-  paymentMethod?: PaymentMethod
 }
 
+// Status transitions: CREATED and CONFIRMED are starting states, not valid targets
 export interface UpdateOrderStatusRequest {
-  status: Exclude<OrderStatus, 'PENDING' | 'CONFIRMED'>
+  status: Exclude<OrderStatus, 'CREATED' | 'CONFIRMED'>
 }
 
-export interface UpdateOrderItemsRequest {
-  items: CreateOrderItemRequest[]
-}
-
-export interface KitchenTicketItem {
-  orderItemId: string
-  productId: string
-  productName: string
-  notes?: string
-  quantity: number
-  kitchenStationId?: string
-}
-
-export interface KitchenTicket {
-  id: string
-  orderId: string
-  items: KitchenTicketItem[]
-  status: KitchenTicketStatus
-  createdAt: string
-}
-
-export interface AssignKitchenTicketRequest {
-  stationId: string
-  chefId: string
-}
-
-export interface UpdateKitchenTicketStatusRequest {
-  status: Exclude<KitchenTicketStatus, 'CANCELLED'>
-}
-
+// ── Payments ──────────────────────────────────────────────────────────────────
 export interface Payment {
   id: string
   businessId: string
   orderId: string
   method: PaymentMethod
   status: PaymentStatus
-  amount: string
+  amount: number
   confirmedAt: string | null
-  confirmedBy: string | null
+  confirmedById: string | null
   createdAt: string
 }
 
 export interface CreatePaymentRequest {
   orderId: string
   method: PaymentMethod
-  amount: string
-  metadata?: Record<string, unknown>
+  amount: number
 }
 
-export interface ConfirmPaymentRequest {
-  confirmedBy: string
+// Backend confirms via authenticated user — no request body needed
+export type ConfirmPaymentRequest = Record<string, never>
+
+export interface ProcessPaymentRequest {
+  tipAmount?: number
 }
 
-export interface StaffInvite {
-  id: string
-  businessId: string
-  invitedBy: string
+// ── Staff ─────────────────────────────────────────────────────────────────────
+export interface CreateStaffWithInviteRequest {
+  displayName: string
+  role: StaffRole
   email: string
-  role: Exclude<Role, 'OWNER'>
+}
+
+export interface CreateStaffWithPasswordRequest {
+  displayName: string
+  role: StaffRole
+  email?: string
+  temporaryPassword: string
+}
+
+export interface CreateStaffWithPinRequest {
+  displayName: string
+  role: StaffRole
+  pin: string
+}
+
+export interface StaffLoginWithPasswordRequest {
+  email: string
+  password: string
+}
+
+export interface StaffLoginWithPinRequest {
+  staffId: string
+  pin: string
+}
+
+export interface AcceptInviteRequest {
   token: string
-  expiresAt: string | null
-  isAccepted: boolean
-  createdAt: string
+  newPassword: string
 }
 
-export interface CreateStaffInviteRequest {
-  email: string
-  role: Exclude<Role, 'OWNER'>
-  expiresAt?: string
+export interface ChangePasswordRequest {
+  oldPassword: string
+  newPassword: string
 }
 
+// Matches backend StaffResponseDto (excludes sensitive fields)
 export interface StaffMember {
   id: string
   businessId: string
-  userId: string
-  role: Role
-  email?: string
-  firstName?: string
-  lastName?: string
-  createdAt?: string
-  updatedAt?: string
+  displayName: string
+  role: StaffRole
+  authType: StaffAuthType
+  email?: string | null
+  isActive: boolean
+  mustChangePassword: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface UpdateStaffRoleRequest {
-  role: Role
+  role: StaffRole
 }
 
-export interface BusinessPaymentMethod {
-  id: string
-  businessId: string
-  method: PaymentMethod
-  isActive: boolean
-  config?: Record<string, unknown>
-  createdAt?: string
-  updatedAt?: string
-}
-
-export interface UpsertBusinessPaymentMethodRequest {
-  method: PaymentMethod
-  isActive: boolean
-  config?: Record<string, unknown>
+export interface UpdateStaffRequest {
+  displayName?: string
+  role?: StaffRole
+  isActive?: boolean
 }
 
 export interface ValidationErrorResponse {
   errors: Array<{ field: string; message: string }>
 }
-

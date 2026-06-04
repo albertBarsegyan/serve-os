@@ -1,96 +1,137 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQuery } from '@tanstack/react-query'
-import { CreditCard, DollarSign, Landmark, MapPin, Save, Settings, Smartphone } from 'lucide-react'
-import { useId, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import type { PaymentMethod } from '#/features/platform/api/platform.types.ts'
-import { businessPaymentMethodsQueryOptions } from '#/features/platform/lib/query-options.ts'
-import { useUpsertBusinessPaymentMethodMutation } from '#/features/platform/model/platform-hooks.ts'
-import { cn } from '#/lib/utils'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { Building2, MapPin, Save, Settings } from 'lucide-react'
+import { useEffect, useId, useMemo, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { FeatureSelector } from '#/components/feature-selector'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
-
-const businessSettingsSchema = z.object({
-  name: z.string().trim().min(2, 'Business name is required'),
-  location: z.string().trim().min(2, 'Address is required'),
-  currency: z.string().trim().regex(/^[A-Z]{3}$/, 'Use 3-letter ISO currency code'),
-  language: z.string().trim().min(2, 'Language is required'),
-})
-
-type BusinessSettingsValues = z.infer<typeof businessSettingsSchema>
-
-const paymentMethodMeta: Array<{
-  id: PaymentMethod
-  label: string
-  icon: typeof Landmark
-  desc: string
-}> = [
-  {
-    id: 'CASH',
-    label: 'Cash Payments',
-    icon: Landmark,
-    desc: 'Waiters confirm physical cash handling.',
-  },
-  {
-    id: 'POS',
-    label: 'POS Terminal',
-    icon: Smartphone,
-    desc: 'External card terminal integration.',
-  },
-  {
-    id: 'ONLINE',
-    label: 'Online Payments',
-    icon: CreditCard,
-    desc: 'Stripe/direct bank transfer support.',
-  },
-]
+import type { UpdateBusinessRequest } from '#/features/business/api/business.types'
+import { type BusinessType, businessTypeLabels } from '#/features/business/api/business-domain'
+import {
+  updateBusinessFormSchema,
+  type UpdateBusinessFormValues,
+} from '#/features/business/lib/schemas/update-business-form.schema'
+import {
+  getCityOptions,
+  getCountryNameByCode,
+  getCountryOptions,
+  getCurrencyOptions,
+} from '#/features/business/lib/utils/location-options'
+import {
+  useBusinessesQuery,
+  useUpdateBusinessMutation,
+} from '#/features/business/model/business-hooks'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import { WorkingHoursPicker } from '#/widgets/shared/working-hours-picker.tsx'
 
 export function AdminSettingsContent() {
+  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const { data: businesses = [], isPending: isLoadingBusinesses } = useBusinessesQuery({
+    enabled: true,
+  })
+  const updateMutation = useUpdateBusinessMutation()
+
+  const currentBusiness = useMemo(
+    () => businesses.find((b) => b.id === activeBusiness?.id) ?? null,
+    [businesses, activeBusiness?.id],
+  )
+
   const nameId = useId()
-  const locationId = useId()
+  const typeId = useId()
+  const countryId = useId()
+  const cityId = useId()
   const currencyId = useId()
-  const languageId = useId()
+  const workingHoursId = useId()
 
-  const paymentMethodsQuery = useQuery(businessPaymentMethodsQueryOptions())
-  const upsertMethodMutation = useUpsertBusinessPaymentMethodMutation()
-
-  const methodsByType = useMemo(() => {
-    const map = new Map<PaymentMethod, boolean>()
-    for (const method of paymentMethodsQuery.data ?? []) {
-      map.set(method.method, method.isActive)
-    }
-    return map
-  }, [paymentMethodsQuery.data])
+  const [hasUnsaved, setHasUnsaved] = useState(false)
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
+    reset,
+    control,
     formState: { errors },
-  } = useForm<BusinessSettingsValues>({
-    resolver: zodResolver(businessSettingsSchema),
+  } = useForm<UpdateBusinessFormValues>({
+    resolver: zodResolver(updateBusinessFormSchema),
     defaultValues: {
-      name: 'ServeOS Kitchen',
-      location: '123 Gourmet St, Foodie City',
+      name: '',
+      type: 'RESTAURANT',
+      locationCountry: '',
+      locationCity: '',
       currency: 'USD',
-      language: 'English',
+      features: [],
+      workingHours: '',
     },
   })
 
-  const onSaveBusinessInfo = (values: BusinessSettingsValues) => {
-    // Business PATCH endpoint is not wired in this workspace yet.
-    showSuccess(`Settings validated for ${values.name}`)
-  }
+  const selectedCountry = watch('locationCountry')
+  const selectedType = watch('type')
+  const selectedFeatures = watch('features')
 
-  const togglePaymentMethod = async (method: PaymentMethod, current: boolean) => {
+  const countryOptions = useMemo(() => getCountryOptions(), [])
+  const cityOptions = useMemo(() => getCityOptions(selectedCountry), [selectedCountry])
+  const currencyOptions = useMemo(() => getCurrencyOptions(), [])
+
+  // Populate form once the active business is loaded
+  useEffect(() => {
+    if (!currentBusiness) return
+
+    const [city, country] = currentBusiness.location.split(', ').map((s) => s.trim())
+    const countryCode =
+      countryOptions.find((c) => c.label === country || c.value === country)?.value ?? ''
+
+    reset({
+      name: currentBusiness.name,
+      type: currentBusiness.type,
+      locationCountry: countryCode,
+      locationCity: city ?? '',
+      currency: currentBusiness.currency,
+      features: currentBusiness.features,
+      workingHours:
+        typeof currentBusiness.workingHours === 'string'
+          ? currentBusiness.workingHours
+          : currentBusiness.workingHours
+            ? JSON.stringify(currentBusiness.workingHours, null, 2)
+            : '',
+    })
+    setHasUnsaved(false)
+  }, [currentBusiness, countryOptions, reset])
+
+  const onSubmit = async (values: UpdateBusinessFormValues) => {
+    if (!currentBusiness) return
+
     try {
-      await upsertMethodMutation.mutateAsync({ method, isActive: !current })
-      showSuccess(`${method} payment ${current ? 'disabled' : 'enabled'}`)
+      const countryLabel = getCountryNameByCode(values.locationCountry) ?? values.locationCountry
+      const payload: UpdateBusinessRequest = {
+        name: values.name.trim(),
+        type: values.type as BusinessType,
+        location: `${values.locationCity.trim()}, ${countryLabel.trim()}`,
+        currency: values.currency.toUpperCase(),
+        features: values.features,
+        workingHours: values.workingHours?.trim() || undefined,
+      }
+
+      await updateMutation.mutateAsync({ id: currentBusiness.id, payload })
+      showSuccess('Business settings saved')
+      setHasUnsaved(false)
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
+  }
+
+  if (!activeBusiness) {
+    return (
+      <div className='space-y-4'>
+        <h1 className='text-3xl font-semibold tracking-tight'>Settings</h1>
+        <p className='text-muted-foreground'>
+          No active business selected. Please select a business from the sidebar.
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -98,145 +139,200 @@ export function AdminSettingsContent() {
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
           <h1 className='text-3xl font-semibold tracking-tight'>Settings</h1>
-          <p className='text-muted-foreground'>Configure your restaurant profile and payment systems.</p>
+          <p className='text-muted-foreground'>
+            Configure your business profile and enabled features.
+          </p>
         </div>
-        <Button size='sm' className='rounded-full' onClick={() => void handleSubmit(onSaveBusinessInfo)()}>
-          <Save className='mr-2 h-4 w-4' /> Save Changes
+        <Button
+          size='sm'
+          className='rounded-full'
+          disabled={updateMutation.isPending || isLoadingBusinesses}
+          onClick={() => void handleSubmit(onSubmit)()}
+        >
+          <Save className='mr-2 h-4 w-4' />
+          {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
         </Button>
       </div>
 
-      <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
-        <Card>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-xl bg-accent p-2 text-accent-foreground'>
-                <Settings className='h-5 w-5' />
+      <form
+        className=''
+        onSubmit={(e) => {
+          e.preventDefault()
+          void handleSubmit(onSubmit)()
+        }}
+        onChange={() => setHasUnsaved(true)}
+      >
+        {hasUnsaved && <p className='text-xs text-amber-600 my-2'>You have unsaved changes.</p>}
+        <div className='flex flex-col gap-4 space-y-6 lg:flex-row md:space-y-0'>
+          {/* Business info */}
+
+          <Card>
+            <CardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-xl bg-accent p-2 text-accent-foreground'>
+                  <Settings className='h-5 w-5' />
+                </div>
+                <div>
+                  <CardTitle>Business Information</CardTitle>
+                  <CardDescription>
+                    Core details shown on customer menus and receipts.
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle>Business Information</CardTitle>
-                <CardDescription>
-                  Update your restaurant details displayed on customer menus.
-                </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              {/* Name */}
+              <div className='space-y-2'>
+                <label htmlFor={nameId} className='text-sm font-medium text-muted-foreground'>
+                  Business Name
+                </label>
+                <div className='relative'>
+                  <Building2 className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                  <input
+                    id={nameId}
+                    type='text'
+                    className='h-10 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                    {...register('name')}
+                  />
+                </div>
+                {errors.name && <p className='text-xs text-red-600'>{errors.name.message}</p>}
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className='space-y-4'>
-            <div className='space-y-2'>
-              <label htmlFor={nameId} className='text-sm font-medium text-muted-foreground'>
-                Restaurant Name
-              </label>
-              <input
-                id={nameId}
-                type='text'
-                className='h-10 w-full rounded-xl border border-input bg-background px-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                {...register('name')}
-              />
-              {errors.name && <p className='text-xs text-red-600'>{errors.name.message}</p>}
-            </div>
-            <div className='space-y-2'>
-              <label htmlFor={locationId} className='text-sm font-medium text-muted-foreground'>
-                Address
-              </label>
-              <div className='relative'>
-                <MapPin className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-                <input
-                  id={locationId}
-                  type='text'
-                  className='h-10 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                  {...register('location')}
-                />
+
+              {/* Type */}
+              <div className='space-y-2'>
+                <label htmlFor={typeId} className='text-sm font-medium text-muted-foreground'>
+                  Business Type
+                </label>
+                <select
+                  id={typeId}
+                  className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                  {...register('type')}
+                >
+                  {Object.entries(businessTypeLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                {errors.type && <p className='text-xs text-red-600'>{errors.type.message}</p>}
               </div>
-              {errors.location && <p className='text-xs text-red-600'>{errors.location.message}</p>}
-            </div>
-            <div className='grid grid-cols-2 gap-4'>
+
+              {/* Location */}
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <label htmlFor={countryId} className='text-sm font-medium text-muted-foreground'>
+                    Country
+                  </label>
+                  <div className='relative'>
+                    <MapPin className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                    <select
+                      id={countryId}
+                      className='h-10 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                      {...register('locationCountry')}
+                    >
+                      <option value=''>Select country</option>
+                      {countryOptions.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.locationCountry && (
+                    <p className='text-xs text-red-600'>{errors.locationCountry.message}</p>
+                  )}
+                </div>
+
+                <div className='space-y-2'>
+                  <label htmlFor={cityId} className='text-sm font-medium text-muted-foreground'>
+                    City
+                  </label>
+                  <select
+                    id={cityId}
+                    disabled={!selectedCountry}
+                    className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+                    {...register('locationCity')}
+                  >
+                    <option value=''>
+                      {selectedCountry ? 'Select city' : 'Select country first'}
+                    </option>
+                    {cityOptions.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.locationCity && (
+                    <p className='text-xs text-red-600'>{errors.locationCity.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Currency */}
               <div className='space-y-2'>
                 <label htmlFor={currencyId} className='text-sm font-medium text-muted-foreground'>
                   Currency
                 </label>
-                <div className='relative'>
-                  <DollarSign className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-                  <input
-                    id={currencyId}
-                    type='text'
-                    maxLength={3}
-                    className='h-10 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm uppercase ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                    {...register('currency')}
-                  />
-                </div>
-                {errors.currency && <p className='text-xs text-red-600'>{errors.currency.message}</p>}
-              </div>
-              <div className='space-y-2'>
-                <label htmlFor={languageId} className='text-sm font-medium text-muted-foreground'>
-                  Language
-                </label>
-                <input
-                  id={languageId}
-                  type='text'
-                  className='h-10 w-full rounded-xl border border-input bg-background px-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                  {...register('language')}
-                />
-                {errors.language && <p className='text-xs text-red-600'>{errors.language.message}</p>}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-xl bg-emerald-500/10 p-2 text-emerald-700'>
-                <CreditCard className='h-5 w-5' />
-              </div>
-              <div>
-                <CardTitle>Payment Methods</CardTitle>
-                <CardDescription>
-                  Configure which payment options are available to your customers.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            {paymentMethodMeta.map((method) => {
-              const active = methodsByType.get(method.id) ?? false
-
-              return (
-                <div
-                  key={method.id}
-                  className='flex items-center justify-between rounded-2xl border border-border p-4 transition hover:bg-accent'
+                <select
+                  id={currencyId}
+                  className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                  {...register('currency', { setValueAs: (v) => String(v).toUpperCase() })}
                 >
-                  <div className='flex items-center gap-4'>
-                    <div className='rounded-xl bg-accent p-2.5 text-accent-foreground'>
-                      <method.icon className='h-5 w-5' />
-                    </div>
-                    <div>
-                      <h4 className='font-bold'>{method.label}</h4>
-                      <p className='text-xs text-muted-foreground'>{method.desc}</p>
-                    </div>
-                  </div>
-                  <button
-                    type='button'
-                    onClick={() => {
-                      void togglePaymentMethod(method.id, active)
-                    }}
-                      className={cn(
-                        'relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                        active ? 'bg-primary' : 'bg-muted',
-                      )}
-                    disabled={upsertMethodMutation.isPending}
-                  >
-                    <span
-                      className={cn(
-                        'absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-transform',
-                        active ? 'translate-x-5' : 'translate-x-0',
-                      )}
-                    />
-                  </button>
-                </div>
-              )
-            })}
-          </CardContent>
-        </Card>
-      </div>
+                  <option value=''>Select currency</option>
+                  {currencyOptions.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.currency && (
+                  <p className='text-xs text-red-600'>{errors.currency.message}</p>
+                )}
+              </div>
+              {/* Working hours */}
+              <div className='space-y-2'>
+                <label
+                  htmlFor={workingHoursId}
+                  className='text-sm font-medium text-muted-foreground'
+                >
+                  Working Hours
+                </label>
+                <Controller
+                  name='workingHours'
+                  control={control}
+                  render={({ field }) => (
+                    <WorkingHoursPicker value={field.value || ''} onChange={field.onChange} />
+                  )}
+                />
+
+                {errors.workingHours && (
+                  <p className='text-xs text-red-600'>{errors.workingHours.message}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Features */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Enabled Features</CardTitle>
+              <CardDescription>
+                Control which capabilities are active for this business.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FeatureSelector
+                selectedFeatures={selectedFeatures}
+                onFeaturesChange={(features) => {
+                  setValue('features', features)
+                  setHasUnsaved(true)
+                }}
+                selectedType={selectedType as BusinessType}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </form>
     </div>
   )
 }

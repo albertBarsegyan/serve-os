@@ -1,82 +1,79 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Edit2, Eye, EyeOff, Plus, Search, Trash2 } from 'lucide-react'
+import { Edit2, Eye, EyeOff, Plus, Search, ShoppingBag, Trash2 } from 'lucide-react'
 import { useId, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
-import {
-  createMenuCategorySchema,
-  createProductSchema,
-} from '#/features/platform/lib/schemas/platform.schemas.ts'
-import {
-  menuCategoriesQueryOptions,
-  productsQueryOptions,
-} from '#/features/platform/lib/query-options.ts'
-import {
-  useCreateMenuCategoryMutation,
-  useCreateProductMutation,
-  useDeleteProductMutation,
-  useUpdateProductMutation,
-} from '#/features/platform/model/platform-hooks.ts'
-import { cn } from '#/lib/utils'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import { Modal } from '#/shared/ui/Modal'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui/table'
+import type { MenuCategory } from '#/features/platform/api/platform.types.ts'
+import { menuCategoriesQueryOptions, productsQueryOptions } from '#/features/platform/lib/query-options.ts'
+import {
+  createMenuCategorySchema,
+  updateMenuCategorySchema,
+} from '#/features/platform/lib/schemas/platform.schemas.ts'
+import {
+  useCreateMenuCategoryMutation,
+  useDeleteMenuCategoryMutation,
+  useDeleteProductMutation,
+  useUpdateMenuCategoryMutation,
+} from '#/features/platform/model/platform-hooks.ts'
+import { ProductModal } from '#/features/product/ui/product-modal.tsx'
+import { cn } from '#/lib/utils'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import { Modal } from '#/shared/ui/modal'
 
 type CreateCategoryFormValues = z.infer<typeof createMenuCategorySchema>
-type CreateProductFormValues = z.infer<typeof createProductSchema>
+type UpdateCategoryFormValues = z.infer<typeof updateMenuCategorySchema>
 
 export function AdminMenuContent() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [productModalMode, setProductModalMode] = useState<'create' | 'edit'>('create')
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
 
   const categoryNameId = useId()
+  const categoryDescriptionId = useId()
   const categorySortOrderId = useId()
-  const productNameId = useId()
-  const productPriceId = useId()
-  const productCategoryId = useId()
+  const editNameId = useId()
+  const editDescriptionId = useId()
+  const editSortOrderId = useId()
+
+  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
 
   const categoriesQuery = useQuery(menuCategoriesQueryOptions(true))
   const productsQuery = useQuery(productsQueryOptions())
 
   const createCategoryMutation = useCreateMenuCategoryMutation()
-  const createProductMutation = useCreateProductMutation()
-  const updateProductMutation = useUpdateProductMutation()
+  const updateCategoryMutation = useUpdateMenuCategoryMutation()
+  const deleteCategoryMutation = useDeleteMenuCategoryMutation()
   const deleteProductMutation = useDeleteProductMutation()
 
   const {
-    register: registerCategory,
-    handleSubmit: handleCategorySubmit,
-    reset: resetCategoryForm,
-    formState: { errors: categoryErrors },
+    register: registerCreate,
+    handleSubmit: handleCreateSubmit,
+    reset: resetCreateForm,
+    formState: { errors: createErrors },
   } = useForm<CreateCategoryFormValues>({
     resolver: zodResolver(createMenuCategorySchema),
-    defaultValues: { name: '', sortOrder: 0 },
+    defaultValues: { name: '', description: '', sortOrder: 0 },
   })
 
   const {
-    register: registerProduct,
-    handleSubmit: handleProductSubmit,
-    reset: resetProductForm,
-    formState: { errors: productErrors },
-  } = useForm<CreateProductFormValues>({
-    resolver: zodResolver(createProductSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      price: '0.00',
-      categoryId: '',
-      imageUrl: '',
-      isAvailable: true,
-      allergens: [],
-      modifierGroupIds: [],
-    },
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    reset: resetEditForm,
+    formState: { errors: editErrors },
+  } = useForm<UpdateCategoryFormValues>({
+    resolver: zodResolver(updateMenuCategorySchema),
   })
 
   const categoryOptions = useMemo(() => {
@@ -86,8 +83,6 @@ export function AdminMenuContent() {
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((category) => ({ id: category.id, label: category.name }))
   }, [categoriesQuery.data])
-
-  const categories = useMemo(() => ['All', ...categoryOptions.map((category) => category.label)], [categoryOptions])
 
   const products = productsQuery.data ?? []
 
@@ -104,55 +99,58 @@ export function AdminMenuContent() {
     if (!needle) return byCategory
 
     return byCategory.filter((item) =>
-      [item.name, item.description ?? '', item.price].join(' ').toLowerCase().includes(needle),
+      [item.name, item.description ?? '', String(item.price)]
+        .join(' ')
+        .toLowerCase()
+        .includes(needle),
     )
   }, [activeCategory, categoryOptions, products, search])
 
   const onCategorySubmit = async (values: CreateCategoryFormValues) => {
     try {
-      await createCategoryMutation.mutateAsync(values)
+      await createCategoryMutation.mutateAsync({
+        ...values,
+        description: values.description || null,
+      })
       showSuccess('Category created')
-      resetCategoryForm({ name: '', sortOrder: 0 })
+      resetCreateForm({ name: '', description: '', sortOrder: 0 })
       setIsCategoryModalOpen(false)
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
   }
 
-  const onProductSubmit = async (values: CreateProductFormValues) => {
+  const openEditCategory = (category: MenuCategory) => {
+    setEditingCategory(category)
+    resetEditForm({
+      name: category.name,
+      description: category.description ?? '',
+      sortOrder: category.sortOrder,
+    })
+  }
+
+  const onEditCategorySubmit = async (values: UpdateCategoryFormValues) => {
+    if (!editingCategory) return
     try {
-      const payload = {
-        ...values,
-        description: values.description?.trim() || undefined,
-        imageUrl: values.imageUrl?.trim() || undefined,
-        allergens: values.allergens?.length ? values.allergens : undefined,
-        modifierGroupIds: values.modifierGroupIds?.length ? values.modifierGroupIds : undefined,
-      }
-      await createProductMutation.mutateAsync(payload)
-      showSuccess('Product created')
-      resetProductForm({
-        name: '',
-        description: '',
-        price: '0.00',
-        categoryId: categoryOptions[0]?.id ?? '',
-        imageUrl: '',
-        isAvailable: true,
-        allergens: [],
-        modifierGroupIds: [],
+      await updateCategoryMutation.mutateAsync({
+        categoryId: editingCategory.id,
+        data: { ...values, description: values.description || null },
       })
-      setIsProductModalOpen(false)
+      showSuccess('Category updated')
+      setEditingCategory(null)
+      if (activeCategory === editingCategory.name && values.name) {
+        setActiveCategory(values.name)
+      }
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
   }
 
-  const toggleAvailability = async (productId: string, current: boolean) => {
+  const handleDeleteCategory = async (category: MenuCategory) => {
     try {
-      await updateProductMutation.mutateAsync({
-        productId,
-        data: { isAvailable: !current },
-      })
-      showSuccess('Product updated')
+      await deleteCategoryMutation.mutateAsync(category.id)
+      showSuccess('Category deleted')
+      if (activeCategory === category.name) setActiveCategory('All')
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
@@ -166,6 +164,26 @@ export function AdminMenuContent() {
       showError(getResponseErrorMessage(error))
     }
   }
+
+  const openCreateModal = () => {
+    setProductModalMode('create')
+    setSelectedProductId(null)
+    setIsProductModalOpen(true)
+  }
+
+  const openEditModal = (productId: string) => {
+    setProductModalMode('edit')
+    setSelectedProductId(productId)
+    setIsProductModalOpen(true)
+  }
+
+  const closeProductModal = () => {
+    setIsProductModalOpen(false)
+    setSelectedProductId(null)
+    setProductModalMode('create')
+  }
+
+  const allCategoryData = categoriesQuery.data ?? []
 
   return (
     <div className='space-y-8'>
@@ -183,9 +201,9 @@ export function AdminMenuContent() {
             className='rounded-full'
             onClick={() => setIsCategoryModalOpen(true)}
           >
-            Manage Categories
+            Add Category
           </Button>
-          <Button size='sm' className='rounded-full' onClick={() => setIsProductModalOpen(true)}>
+          <Button size='sm' className='rounded-full' onClick={openCreateModal}>
             <Plus className='mr-2 h-4 w-4' /> Add Product
           </Button>
         </div>
@@ -199,20 +217,52 @@ export function AdminMenuContent() {
             </CardTitle>
           </CardHeader>
           <CardContent className='space-y-1 p-2 pt-0'>
-            {categories.map((category) => (
-              <button
-                type='button'
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={cn(
-                  'w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-all',
-                   activeCategory === category
-                     ? 'bg-accent text-accent-foreground'
-                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                )}
-              >
-                {category}
-              </button>
+            <button
+              type='button'
+              onClick={() => setActiveCategory('All')}
+              className={cn(
+                'w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-all',
+                activeCategory === 'All'
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              All
+            </button>
+            {allCategoryData.map((category) => (
+              <div key={category.id} className='group flex items-center gap-1'>
+                <button
+                  type='button'
+                  onClick={() => setActiveCategory(category.name)}
+                  className={cn(
+                    'flex-1 rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-all',
+                    activeCategory === category.name
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  )}
+                >
+                  {category.name}
+                </button>
+                <div className='flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100'>
+                  <button
+                    type='button'
+                    className='rounded-lg p-1 hover:bg-accent'
+                    title='Edit category'
+                    onClick={() => openEditCategory(category)}
+                  >
+                    <Edit2 className='h-3.5 w-3.5' />
+                  </button>
+                  <button
+                    type='button'
+                    className='rounded-lg p-1 text-destructive hover:bg-destructive/10'
+                    title='Delete category'
+                    onClick={() => void handleDeleteCategory(category)}
+                    disabled={deleteCategoryMutation.isPending}
+                  >
+                    <Trash2 className='h-3.5 w-3.5' />
+                  </button>
+                </div>
+              </div>
             ))}
           </CardContent>
         </Card>
@@ -247,16 +297,35 @@ export function AdminMenuContent() {
               <TableBody>
                 {productsQuery.isPending && (
                   <TableRow>
-                      <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
+                    <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
                       Loading products...
                     </TableCell>
                   </TableRow>
                 )}
 
-                {!productsQuery.isPending && filteredItems.length === 0 && (
+                {!productsQuery.isPending && products.length === 0 && (
                   <TableRow>
-                      <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
-                      No products found.
+                    <TableCell colSpan={5} className='py-16'>
+                      <div className='flex flex-col items-center justify-center text-center'>
+                        <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted'>
+                          <ShoppingBag className='h-6 w-6 text-muted-foreground' />
+                        </div>
+                        <h3 className='mb-1 text-base font-semibold'>No products yet</h3>
+                        <p className='mb-6 max-w-xs text-sm text-muted-foreground'>
+                          You don't have any products yet. Start by adding your first product.
+                        </p>
+                        <Button size='sm' className='rounded-full' onClick={openCreateModal}>
+                          <Plus className='mr-2 h-4 w-4' /> Add your first product
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+
+                {!productsQuery.isPending && products.length > 0 && filteredItems.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
+                      No products match your search.
                     </TableCell>
                   </TableRow>
                 )}
@@ -268,9 +337,12 @@ export function AdminMenuContent() {
                     <TableRow key={item.id}>
                       <TableCell className='pl-8 font-bold'>{item.name}</TableCell>
                       <TableCell>{category?.label ?? 'Uncategorized'}</TableCell>
-                      <TableCell className='font-mono'>${Number(item.price).toFixed(2)}</TableCell>
+                      <TableCell className='font-mono'>{formatPrice(Number(item.price), currency)}</TableCell>
                       <TableCell>
-                          <Badge variant={item.isAvailable ? 'success' : 'outline'} className='gap-1.5'>
+                        <Badge
+                          variant={item.isAvailable ? 'success' : 'outline'}
+                          className='gap-1.5'
+                        >
                           <div
                             className={cn(
                               'h-1.5 w-1.5 rounded-full',
@@ -286,17 +358,21 @@ export function AdminMenuContent() {
                             variant='ghost'
                             size='icon'
                             className='rounded-full'
-                            onClick={() => {
-                              void toggleAvailability(item.id, item.isAvailable)
-                            }}
+                            disabled
+                            title='Availability toggle not yet supported by API'
                           >
                             {item.isAvailable ? (
                               <Eye className='h-4 w-4' />
                             ) : (
-                               <EyeOff className='h-4 w-4 text-muted-foreground' />
+                              <EyeOff className='h-4 w-4 text-muted-foreground' />
                             )}
                           </Button>
-                          <Button variant='ghost' size='icon' className='rounded-full' disabled>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='rounded-full'
+                            onClick={() => openEditModal(item.id)}
+                          >
                             <Edit2 className='h-4 w-4' />
                           </Button>
                           <Button
@@ -320,6 +396,7 @@ export function AdminMenuContent() {
         </Card>
       </div>
 
+      {/* Create category modal */}
       <Modal
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
@@ -332,7 +409,7 @@ export function AdminMenuContent() {
             <Button
               disabled={createCategoryMutation.isPending}
               onClick={() => {
-                void handleCategorySubmit(onCategorySubmit)()
+                void handleCreateSubmit(onCategorySubmit)()
               }}
             >
               {createCategoryMutation.isPending ? 'Saving...' : 'Save'}
@@ -342,22 +419,42 @@ export function AdminMenuContent() {
       >
         <form className='space-y-4'>
           <div className='space-y-1'>
-            <label htmlFor={categoryNameId} className='text-xs font-semibold uppercase text-muted-foreground'>
+            <label
+              htmlFor={categoryNameId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
               Category name
             </label>
             <input
               id={categoryNameId}
               type='text'
               className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...registerCategory('name')}
+              {...registerCreate('name')}
             />
-            {categoryErrors.name && <p className='text-xs text-red-600'>{categoryErrors.name.message}</p>}
+            {createErrors.name && (
+              <p className='text-xs text-red-600'>{createErrors.name.message}</p>
+            )}
           </div>
 
           <div className='space-y-1'>
-              <label
+            <label
+              htmlFor={categoryDescriptionId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Description (optional)
+            </label>
+            <input
+              id={categoryDescriptionId}
+              type='text'
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...registerCreate('description')}
+            />
+          </div>
+
+          <div className='space-y-1'>
+            <label
               htmlFor={categorySortOrderId}
-                className='text-xs font-semibold uppercase text-muted-foreground'
+              className='text-xs font-semibold uppercase text-muted-foreground'
             >
               Sort order
             </label>
@@ -366,95 +463,97 @@ export function AdminMenuContent() {
               type='number'
               min={0}
               className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...registerCategory('sortOrder', { valueAsNumber: true })}
+              {...registerCreate('sortOrder', { valueAsNumber: true })}
             />
-            {categoryErrors.sortOrder && (
-              <p className='text-xs text-red-600'>{categoryErrors.sortOrder.message}</p>
+            {createErrors.sortOrder && (
+              <p className='text-xs text-red-600'>{createErrors.sortOrder.message}</p>
             )}
           </div>
         </form>
       </Modal>
 
+      {/* Edit category modal */}
       <Modal
-        isOpen={isProductModalOpen}
-        onClose={() => setIsProductModalOpen(false)}
-        title='Create product'
+        isOpen={Boolean(editingCategory)}
+        onClose={() => setEditingCategory(null)}
+        title='Edit category'
         footer={
           <>
-            <Button variant='ghost' onClick={() => setIsProductModalOpen(false)}>
+            <Button variant='ghost' onClick={() => setEditingCategory(null)}>
               Cancel
             </Button>
             <Button
-              disabled={createProductMutation.isPending}
-              onClick={() => {
-                void handleProductSubmit(onProductSubmit)()
-              }}
+              disabled={updateCategoryMutation.isPending}
+              onClick={() => void handleEditSubmit(onEditCategorySubmit)()}
             >
-              {createProductMutation.isPending ? 'Saving...' : 'Save'}
+              {updateCategoryMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </>
         }
       >
         <form className='space-y-4'>
           <div className='space-y-1'>
-            <label htmlFor={productNameId} className='text-xs font-semibold uppercase text-muted-foreground'>
-              Product name
-            </label>
-            <input
-              id={productNameId}
-              type='text'
-              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...registerProduct('name')}
-            />
-            {productErrors.name && <p className='text-xs text-red-600'>{productErrors.name.message}</p>}
-          </div>
-
-          <div className='space-y-1'>
             <label
-              htmlFor={productCategoryId}
+              htmlFor={editNameId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Category
+              Category name
             </label>
-            <select
-              id={productCategoryId}
+            <input
+              id={editNameId}
+              type='text'
               className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...registerProduct('categoryId')}
-              defaultValue=''
-            >
-              <option value='' disabled>
-                Select category
-              </option>
-              {categoryOptions.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.label}
-                </option>
-              ))}
-            </select>
-            {productErrors.categoryId && (
-              <p className='text-xs text-red-600'>{productErrors.categoryId.message}</p>
+              {...registerEdit('name')}
+            />
+            {editErrors.name && (
+              <p className='text-xs text-red-600'>{editErrors.name.message}</p>
             )}
           </div>
 
           <div className='space-y-1'>
-            <label htmlFor={productPriceId} className='text-xs font-semibold uppercase text-muted-foreground'>
-              Price
+            <label
+              htmlFor={editDescriptionId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Description (optional)
             </label>
             <input
-              id={productPriceId}
+              id={editDescriptionId}
               type='text'
               className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...registerProduct('price')}
+              {...registerEdit('description')}
             />
-            {productErrors.price && <p className='text-xs text-red-600'>{productErrors.price.message}</p>}
           </div>
 
-          <label className='flex items-center gap-2 text-sm'>
-            <input type='checkbox' {...registerProduct('isAvailable')} />
-            <span>Available immediately</span>
-          </label>
+          <div className='space-y-1'>
+            <label
+              htmlFor={editSortOrderId}
+              className='text-xs font-semibold uppercase text-muted-foreground'
+            >
+              Sort order
+            </label>
+            <input
+              id={editSortOrderId}
+              type='number'
+              min={0}
+              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
+              {...registerEdit('sortOrder', { valueAsNumber: true })}
+            />
+          </div>
         </form>
       </Modal>
+
+      <ProductModal
+        isOpen={isProductModalOpen}
+        onClose={closeProductModal}
+        mode={productModalMode}
+        productId={selectedProductId ?? undefined}
+        initialData={
+          productModalMode === 'edit' && selectedProductId
+            ? products.find((p) => p.id === selectedProductId)
+            : undefined
+        }
+      />
     </div>
   )
 }

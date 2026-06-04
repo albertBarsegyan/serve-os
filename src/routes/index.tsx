@@ -10,16 +10,17 @@ import {
 } from 'lucide-react'
 import Footer from '#/components/footer.tsx'
 import Header from '#/components/header.tsx'
+import { Button } from '#/components/ui/button.tsx'
+import { Card, CardContent } from '#/components/ui/card'
 import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
-import { Button } from '#/shared/ui/Button'
-import { Card, CardContent } from '#/shared/ui/Card'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
+import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
   errorComponent: ({ error }) => <ErrorBoundary error={error} />,
   beforeLoad: ({ location, context }) => {
-    if (location.pathname === '/' && context.authUser)
+    if (location.pathname === sharedRoutePathname.HOME && context.authUser)
       throw redirect({ to: getPostAuthDestination(context.authUser) })
   },
 })

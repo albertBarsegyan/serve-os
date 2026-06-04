@@ -1,12 +1,14 @@
-/** Aligned with backend order lifecycle. */
+/** Matches backend OrderStatus enum exactly. */
 export type OrderStatus =
-	| 'PENDING'
+	| 'CREATED'
 	| 'CONFIRMED'
-	| 'PREPARING'
+	| 'IN_KITCHEN'
 	| 'READY'
 	| 'DELIVERED'
 	| 'CLOSED'
 	| 'CANCELLED'
+	| 'PAYMENT_FAILED'
+	| 'REFUNDED'
 
 export interface OrderLine {
 	productId: string

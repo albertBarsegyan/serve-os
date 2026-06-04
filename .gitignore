@@ -1,13 +1,28 @@
+# Dependencies
 node_modules
-.DS_Store
+.pnpm-store
+
+# Build outputs
 dist
 dist-ssr
-*.local
-.env
-.nitro
-.tanstack
-.wrangler
 .output
+.nitro
 .vinxi
+.wrangler
+.tanstack
+
+# Environment
+.env
+*.local
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
 __unconfig*
 todos.json

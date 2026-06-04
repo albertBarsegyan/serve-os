@@ -97,12 +97,14 @@ Component Updates
 ## Implementation Patterns
 
 ### In Page Routes
+
 ```typescript
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
+import {ErrorBoundary} from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/admin/dashboard')({
-  component: AdminDashboardPage,
-  errorComponent: ({ error }) => <ErrorBoundary error={error} />,
+    component: AdminDashboardPage,
+    errorComponent: ({error}) => <ErrorBoundary error = {error}
+/>,
 })
 ```
 

@@ -1,4 +1,6 @@
 import type { Order, OrderStatus } from '#/entities/order/model/types'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 
 interface OrderTableProps {
 	orders: Order[]
@@ -6,16 +8,18 @@ interface OrderTableProps {
 }
 
 const nextStatusByCurrent: Partial<Record<OrderStatus, OrderStatus>> = {
-	PENDING: 'CONFIRMED',
-	CONFIRMED: 'PREPARING',
-	PREPARING: 'READY',
+	CREATED: 'CONFIRMED',
+	CONFIRMED: 'IN_KITCHEN',
+	IN_KITCHEN: 'READY',
 	READY: 'DELIVERED',
 	DELIVERED: 'CLOSED',
 }
 
-const terminal: OrderStatus[] = ['CLOSED', 'CANCELLED']
+const terminal: OrderStatus[] = ['CLOSED', 'CANCELLED', 'PAYMENT_FAILED', 'REFUNDED']
 
 export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
+	const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+
 	if (orders.length === 0) {
 		return <p className="text-sm text-[var(--sea-ink-soft)]">No active orders.</p>
 	}
@@ -37,7 +41,7 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
 						<tr key={order.id} className="border-b border-[rgba(23,58,64,0.08)]">
 							<td className="py-2">{order.id}</td>
 							<td className="py-2">{order.table}</td>
-							<td className="py-2">${order.total.toFixed(2)}</td>
+							<td className="py-2">{formatPrice(order.total, currency)}</td>
 							<td className="py-2">{order.status}</td>
 							<td className="py-2">
 								<button

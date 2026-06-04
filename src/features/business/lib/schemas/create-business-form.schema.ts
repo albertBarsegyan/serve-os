@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import { businessTypes } from '#/features/business/api/business.types.ts'
-import { businessFeatures } from '#/features/business/api/business-domain.ts'
+import { BusinessFeature } from '#/features/business/api/business-domain.ts'
 
 const businessTypeSchema = z.enum(businessTypes)
-const businessFeatureSchema = z.enum(businessFeatures)
+const businessFeatureSchema = z.enum(BusinessFeature)
 
 const currencySchema = z
   .string()
@@ -34,7 +34,8 @@ const workingHoursJsonSchema = z
 export const createBusinessFormSchema = z.object({
   name: z.string().trim().min(2, 'Business name is required'),
   type: businessTypeSchema,
-  location: z.string().trim().min(2, 'Location is required'),
+  locationCountry: z.string().trim().min(1, 'Country is required'),
+  locationCity: z.string().trim().min(1, 'City is required'),
   currency: currencySchema,
   workingHoursJson: workingHoursJsonSchema,
   features: z.array(businessFeatureSchema),

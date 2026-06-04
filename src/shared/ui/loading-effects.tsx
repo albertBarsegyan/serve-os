@@ -1,0 +1,42 @@
+import { Loader } from 'lucide-react'
+
+interface LoadingSpinnerProps {
+  fullScreen?: boolean
+  message?: string
+}
+
+export function LoadingSpinner({
+  fullScreen = false,
+  message = 'Loading...',
+}: Readonly<LoadingSpinnerProps>) {
+  const content = (
+    <div className='flex flex-col items-center justify-center gap-4'>
+      <Loader className='h-8 w-8 animate-spin text-primary' />
+      {message && <p className='font-medium text-muted-foreground'>{message}</p>}
+    </div>
+  )
+
+  if (fullScreen) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-background'>{content}</div>
+    )
+  }
+
+  return <div className='flex items-center justify-center p-8'>{content}</div>
+}
+
+export function LoadingSkeleton({
+  count = 3,
+  height = 'h-12',
+}: Readonly<{
+  count?: number
+  height?: string
+}>) {
+  return (
+    <div className='space-y-4'>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className={`${height} animate-pulse rounded-lg bg-muted`} />
+      ))}
+    </div>
+  )
+}

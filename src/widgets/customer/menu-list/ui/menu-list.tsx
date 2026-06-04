@@ -1,11 +1,13 @@
 import type { Product } from '#/entities/product/model/types'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
 
 interface MenuListProps {
   products: Product[]
   onAddToCart: (productId: string) => void
+  currency?: string
 }
 
-export function MenuList({ products, onAddToCart }: MenuListProps) {
+export function MenuList({ products, onAddToCart, currency = 'USD' }: MenuListProps) {
   if (products.length === 0) {
     return <p className="text-sm text-[var(--sea-ink-soft)]">Menu is empty.</p>
   }
@@ -20,7 +22,7 @@ export function MenuList({ products, onAddToCart }: MenuListProps) {
           <div>
             <p className="m-0 font-medium text-[var(--sea-ink)]">{product.name}</p>
             <p className="m-0 text-sm text-[var(--sea-ink-soft)]">
-              ${product.price} - {product.category}
+              {formatPrice(product.price, currency)} - {product.category}
             </p>
           </div>
           <button

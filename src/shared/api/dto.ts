@@ -59,14 +59,14 @@ export interface CreateOrderItemBody {
 }
 
 export interface CreateOrderBody {
-  tableId: string
-  sessionToken?: string
+  sessionToken: string
   items: CreateOrderItemBody[]
 }
 
 export interface CreatePaymentBody {
   orderId: string
   method: 'CASH' | 'POS' | 'ONLINE'
+  amount: number
 }
 
 export interface TableScanResponse {

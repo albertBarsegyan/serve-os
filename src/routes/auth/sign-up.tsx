@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
-import { SignUpForm } from '#/features/auth/ui/sign-up-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
+import { SignUpForm } from '#/features/auth/ui/sign-up-form'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/auth/sign-up')({
   component: SignUpPage,

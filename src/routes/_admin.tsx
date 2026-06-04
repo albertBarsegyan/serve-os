@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query'
+import {useQueryClient} from '@tanstack/react-query'
 import {
   createFileRoute,
   Link,
@@ -6,31 +6,42 @@ import {
   redirect,
   useLocation,
   useNavigate,
+  useRouteContext,
 } from '@tanstack/react-router'
+import type {LucideIcon} from 'lucide-react'
 import {
-  Bell,
   ChefHat,
-  ChevronRight,
+  CreditCard,
   LayoutDashboard,
   LogOut,
   Menu,
+  Puzzle,
   Search,
   Settings,
   ShoppingBag,
   Table as TableIcon,
+  UserCircle,
   Users,
   UtensilsCrossed,
+  Wallet,
+  Warehouse,
 } from 'lucide-react'
-import { useState } from 'react'
-import { Button } from '#/components/ui/button'
-import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
-import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
-import { useLogoutMutation } from '#/features/auth/model/auth-hooks.ts'
-import { cn } from '#/lib/utils.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary.tsx'
-import { Modal } from '#/shared/ui/Modal'
+import {useState} from 'react'
+import {Button} from '#/components/ui/button'
+import {Select} from '#/components/ui/select'
+import {authUiMessage} from '#/features/auth/lib/constants/ui-messages.ts'
+import {authUserQueryOptions} from '#/features/auth/lib/query-options.ts'
+import {useLogoutMutation} from '#/features/auth/model/auth-hooks.ts'
+import {useBusinessesQuery, useBusinessSwitcher,} from '#/features/business/model/business-hooks.ts'
+import {cn} from '#/lib/utils.ts'
+import {BusinessFeature, StaffPermission} from '#/shared/lib/permissions/index.ts'
+import {usePermissions} from '#/shared/lib/permissions/use-permissions.ts'
+import {adminRoutePathname} from '#/shared/libs/constants/route-pathname/admin.ts'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import {ErrorBoundary} from '#/shared/ui/error-boundary.tsx'
+import {Modal} from '#/shared/ui/modal'
 
 function AdminErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
@@ -50,27 +61,21 @@ export const Route = createFileRoute('/_admin')({
   errorComponent: AdminErrorComponent,
   beforeLoad: ({ context, location }) => {
     if (!context.authUser) throw redirect({ to: '/auth/sign-in' })
-
-    if (context.authUser.hasBusiness && location.pathname === '/setup')
-      throw redirect({ to: '/dashboard' })
-
-    if (!context.authUser.hasBusiness && location.pathname !== '/setup')
-      throw redirect({ to: '/setup' })
+    if (
+      context.authUser.type === 'owner' &&
+      !context.authUser.hasBusiness &&
+      location.pathname !== adminRoutePathname.SETUP_BUSINESS
+    ) {
+      throw redirect({ to: adminRoutePathname.SETUP_BUSINESS })
+    }
   },
 })
 
-const menuItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Orders', icon: ShoppingBag, href: '/orders' },
-  { label: 'Tables', icon: TableIcon, href: '/tables' },
-  { label: 'Menu', icon: UtensilsCrossed, href: '/menu' },
-  { label: 'Service (KDS)', icon: ChefHat, href: '/kitchen' },
-]
-
-const otherItems = [
-  { label: 'Staff', icon: Users, href: '/staff' },
-  { label: 'Settings', icon: Settings, href: '/settings' },
-]
+interface NavItem {
+  label: string
+  icon: LucideIcon
+  href: string
+}
 
 function SidebarNavLink({
   item,
@@ -78,7 +83,7 @@ function SidebarNavLink({
   isCollapsed,
   onNavigate,
 }: Readonly<{
-  item: (typeof menuItems)[0]
+  item: NavItem
   isActive: boolean
   isCollapsed: boolean
   onNavigate: () => void
@@ -102,6 +107,64 @@ function SidebarNavLink({
   )
 }
 
+function SidebarBusinessSwitcher({ isCollapsed }: Readonly<{ isCollapsed: boolean }>) {
+  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const { data: businesses = [], isLoading } = useBusinessesQuery({ enabled: true })
+  const { switchBusiness, isLoading: isSwitching } = useBusinessSwitcher({
+    navigate: async () => undefined,
+  })
+
+  const selectedBusiness = businesses.find((business) => business.id === activeBusiness?.id)
+
+  const handleChange = (businessId: string) => {
+    const business = businesses.find((item) => item.id === businessId)
+
+    if (!business) return showError('Selected business not found.')
+
+    switchBusiness({ id: business.id, name: business.name, currency: business.currency })
+  }
+
+  return (
+    <div className='rounded-2xl  p-4'>
+      {!isCollapsed && (
+        <p className='mb-3 px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
+          Business
+        </p>
+      )}
+
+      <div className='space-y-2'>
+        <Select
+          value={selectedBusiness?.id ?? ''}
+          onChange={(event) => handleChange(event.target.value)}
+          disabled={isLoading || isSwitching || businesses.length === 0}
+          className={cn('h-11 rounded-xl bg-background text-sm', isCollapsed && 'px-2')}
+        >
+          <option value='' disabled>
+            {isLoading ? 'Loading businesses…' : 'Select a business'}
+          </option>
+          {businesses.map((business) => (
+            <option key={business.id} value={business.id}>
+              {business.name}
+            </option>
+          ))}
+        </Select>
+
+        {!isCollapsed && (
+          <div className='px-1 text-xs text-muted-foreground'>
+            {selectedBusiness ? (
+              <span className='font-medium text-foreground'>
+                Currently in {selectedBusiness.name}
+              </span>
+            ) : (
+              'Choose the business context for this session.'
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function AdminLayout() {
   const isCollapsed = false
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -109,6 +172,50 @@ function AdminLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { authUser } = useRouteContext({ from: '/_admin' })
+  const { isOwner, canSee, hasPermission } = usePermissions()
+
+  const displayName = (() => {
+    if (!authUser) return ''
+    if (authUser.type === 'owner') {
+      return [authUser.firstName, authUser.lastName].filter(Boolean).join(' ') || authUser.email
+    }
+    return authUser.displayName || authUser.email || ''
+  })()
+
+  const menuItems: NavItem[] = [
+    { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    { label: 'Orders', icon: ShoppingBag, href: '/orders' },
+    ...(canSee(BusinessFeature.TABLES) && (isOwner() || hasPermission(StaffPermission.TABLE_VIEW))
+      ? [{ label: 'Tables', icon: TableIcon, href: '/tables' }]
+      : []),
+    ...(isOwner() || hasPermission(StaffPermission.MENU_VIEW)
+      ? [{ label: 'Menu', icon: UtensilsCrossed, href: '/menu' }]
+      : []),
+    ...(isOwner() || hasPermission(StaffPermission.MENU_EDIT)
+      ? [{ label: 'Modifiers', icon: Puzzle, href: '/modifiers' }]
+      : []),
+    ...(canSee(BusinessFeature.KDS) && (isOwner() || hasPermission(StaffPermission.KITCHEN_VIEW))
+      ? [{ label: 'Service (KDS)', icon: ChefHat, href: '/kitchen' }]
+      : []),
+    ...(isOwner() ? [{ label: 'Businesses', icon: Warehouse, href: '/businesses' }] : []),
+  ]
+
+  const otherItems: NavItem[] = [
+    ...(isOwner() || hasPermission(StaffPermission.STAFF_MANAGE)
+      ? [{ label: 'Staff', icon: Users, href: '/staff' }]
+      : []),
+    ...(isOwner() ||
+    hasPermission(StaffPermission.PAYMENT_TAKE) ||
+    hasPermission(StaffPermission.REPORTS_VIEW)
+      ? [{ label: 'Payments', icon: CreditCard, href: '/payments' }]
+      : []),
+    ...(isOwner() ? [{ label: 'Payment Methods', icon: Wallet, href: '/payment-methods' }] : []),
+    ...(isOwner() || hasPermission(StaffPermission.BUSINESS_SETTINGS)
+      ? [{ label: 'Settings', icon: Settings, href: '/settings' }]
+      : []),
+    ...(isOwner() ? [{ label: 'Account', icon: UserCircle, href: '/user-settings' }] : []),
+  ]
 
   const logoutMutation = useLogoutMutation()
 
@@ -155,6 +262,8 @@ function AdminLayout() {
         </div>
 
         <div className='flex-1 space-y-8 overflow-y-auto px-4 py-6'>
+          {isOwner() && <SidebarBusinessSwitcher isCollapsed={isCollapsed} />}
+
           <div>
             {!isCollapsed && (
               <p className='mb-4 px-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
@@ -231,19 +340,22 @@ function AdminLayout() {
           </div>
 
           <div className='flex items-center gap-6'>
-            <div className='flex items-center gap-3 rounded-xl border border-border p-1.5 pr-4'>
-              <div className='h-9 w-9 overflow-hidden rounded-xl bg-muted'>
-                <img src='/logo192.png' alt='User' className='h-full w-full object-cover' />
+            <Link
+              to='/user-settings'
+              className='flex h-12 gap-4 cursor-pointer items-center rounded-xl border px-3 hover:bg-accent'
+            >
+              <div className='h-9 w-9 flex items-center justify-center overflow-hidden rounded-xl bg-muted'>
+                <span>{displayName[0]}</span>
               </div>
               <div className='hidden flex-row items-center gap-2 sm:flex'>
-                <span className='text-sm font-bold'>John Doe</span>
-                <ChevronRight className='h-4 w-4 rotate-90 text-muted-foreground' />
+                <span className='text-sm font-bold'>{displayName}</span>
               </div>
-            </div>
-            <Button variant='ghost' size='icon' className='relative h-11 w-11 rounded-xl bg-muted'>
-              <Bell className='h-5 w-5 text-muted-foreground' />
-              <span className='absolute right-3.5 top-3.5 flex h-2 w-2 rounded-full border-2 border-white bg-red-500' />
-            </Button>
+            </Link>
+
+            {/*<Button variant='ghost' size='icon' className='relative h-11 w-11 rounded-xl bg-muted'>*/}
+            {/*  <Bell className='h-5 w-5 text-muted-foreground' />*/}
+            {/*  <span className='absolute right-3.5 top-3.5 flex h-2 w-2 rounded-full border-2 border-white bg-red-500' />*/}
+            {/*</Button>*/}
           </div>
         </header>
 

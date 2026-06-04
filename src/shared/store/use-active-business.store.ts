@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware'
 export interface ActiveBusiness {
   id: string
   name: string
+  currency: string
 }
 
 export interface ActiveBusinessState {
@@ -12,7 +13,7 @@ export interface ActiveBusinessState {
   clear: () => void
 }
 
-export const useActiveBusinessStore = create<ActiveBusinessState>()(
+const useActiveBusinessStore = create<ActiveBusinessState>()(
   persist(
     (set) => ({
       active: null,
@@ -34,3 +35,4 @@ export const useActiveBusinessStore = create<ActiveBusinessState>()(
 )
 
 export default useActiveBusinessStore
+

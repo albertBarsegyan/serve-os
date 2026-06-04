@@ -1,62 +1,70 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { CATEGORIES_QUERY_KEY } from '#/entities/product/api/category-hooks.ts'
 import type {
+  AcceptInviteRequest,
   AddModifierRequest,
-  AssignKitchenTicketRequest,
-  AttachModifierGroupsRequest,
+  ChangePasswordRequest,
   ConfirmPaymentRequest,
-  CreateCustomerSessionRequest,
   CreateMenuCategoryRequest,
   CreateModifierGroupRequest,
   CreateOrderRequest,
   CreatePaymentRequest,
   CreateProductRequest,
-  CreateStaffInviteRequest,
+  CreateStaffWithInviteRequest,
+  CreateStaffWithPasswordRequest,
+  CreateStaffWithPinRequest,
   CreateTableRequest,
-  UpdateKitchenTicketStatusRequest,
-  UpdateOrderItemsRequest,
+  ProcessPaymentRequest,
+  ScanSessionRequest,
+  StaffLoginWithPasswordRequest,
+  StaffLoginWithPinRequest,
+  UpdateMenuCategoryRequest,
+  UpdateModifierGroupRequest,
+  UpdateModifierRequest,
   UpdateOrderStatusRequest,
   UpdateProductRequest,
+  UpdateStaffRequest,
   UpdateStaffRoleRequest,
   UpdateTableRequest,
-  UpsertBusinessPaymentMethodRequest,
 } from '#/features/platform/api/platform.types.ts'
 import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys.ts'
 import {
   acceptStaffInvite,
   addModifierToGroup,
-  assignKitchenTicket,
-  attachModifierGroupsToProduct,
+  changePassword,
+  closeSession,
   confirmPayment,
-  createCustomerSession,
   createMenuCategory,
   createModifierGroup,
   createOrder,
   createPayment,
   createProduct,
-  createStaffInvite,
+  createStaffWithInvite,
+  createStaffWithPassword,
+  createStaffWithPin,
   createTable,
+  deleteMenuCategory,
+  deleteModifier,
+  deleteModifierGroup,
   deleteProduct,
   deleteTable,
+  loginStaffWithPassword,
+  loginStaffWithPin,
+  logoutStaff,
+  processCashPayment,
+  processPosPayment,
   removeStaff,
-  updateKitchenTicketStatus,
-  updateOrderItems,
+  scanSession,
+  syncProductModifierGroups,
+  updateMenuCategory,
+  updateModifier,
+  updateModifierGroup,
   updateOrderStatus,
   updateProduct,
+  updateStaff,
   updateStaffRole,
   updateTable,
-  upsertBusinessPaymentMethod,
 } from '#/shared/api/platform/platform-api.ts'
-
-export function useCreateCustomerSessionMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (data: CreateCustomerSessionRequest) => createCustomerSession(data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.customerSessions() })
-    },
-  })
-}
 
 export function useCreateTableMutation() {
   const queryClient = useQueryClient()
@@ -77,7 +85,9 @@ export function useUpdateTableMutation() {
       updateTable(tableId, data),
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tableById(variables.tableId) })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.tableById(variables.tableId),
+      })
     },
   })
 }
@@ -93,14 +103,63 @@ export function useDeleteTableMutation() {
   })
 }
 
+export function useScanSessionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: ScanSessionRequest) => scanSession(data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.sessions() })
+    },
+  })
+}
+
+export function useCloseSessionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (sessionId: string) => closeSession(sessionId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.sessions() })
+    },
+  })
+}
+
 export function useCreateMenuCategoryMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (data: CreateMenuCategoryRequest) => createMenuCategory(data),
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: [CATEGORIES_QUERY_KEY, data.businessId] })
+      await queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(false) })
+      await queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+    },
+  })
+}
+
+export function useUpdateMenuCategoryMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ categoryId, data }: { categoryId: string; data: UpdateMenuCategoryRequest }) =>
+      updateMenuCategory(categoryId, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(false) })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+    },
+  })
+}
+
+export function useDeleteMenuCategoryMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (categoryId: string) => deleteMenuCategory(categoryId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(false) })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
     },
   })
 }
@@ -142,13 +201,67 @@ export function useDeleteProductMutation() {
   })
 }
 
+export function useSyncProductModifierGroupsMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ productId, groupIds }: { productId: string; groupIds: string[] }) =>
+      syncProductModifierGroups(productId, groupIds),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+    },
+  })
+}
+
 export function useCreateModifierGroupMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: CreateModifierGroupRequest) => createModifierGroup(data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.modifierGroups() })
+    mutationFn: ({ businessId, data }: { businessId: string; data: CreateModifierGroupRequest }) =>
+      createModifierGroup(businessId, data),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifierGroups(variables.businessId),
+      })
+    },
+  })
+}
+
+export function useUpdateModifierGroupMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      businessId,
+      groupId,
+      data,
+    }: {
+      businessId: string
+      groupId: string
+      data: UpdateModifierGroupRequest
+    }) => updateModifierGroup(businessId, groupId, data),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifierGroups(variables.businessId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifierGroupById(variables.businessId, variables.groupId),
+      })
+    },
+  })
+}
+
+export function useDeleteModifierGroupMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ businessId, groupId }: { businessId: string; groupId: string }) =>
+      deleteModifierGroup(businessId, groupId),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifierGroups(variables.businessId),
+      })
     },
   })
 }
@@ -157,23 +270,72 @@ export function useAddModifierToGroupMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ groupId, data }: { groupId: string; data: AddModifierRequest }) =>
-      addModifierToGroup(groupId, data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.modifierGroups() })
+    mutationFn: ({
+      businessId,
+      groupId,
+      data,
+    }: {
+      businessId: string
+      groupId: string
+      data: AddModifierRequest
+    }) => addModifierToGroup(businessId, groupId, data),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifiers(variables.businessId, variables.groupId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifierGroups(variables.businessId),
+      })
     },
   })
 }
 
-export function useAttachModifierGroupsToProductMutation() {
+export function useUpdateModifierMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ productId, data }: { productId: string; data: AttachModifierGroupsRequest }) =>
-      attachModifierGroupsToProduct(productId, data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.modifierGroups() })
+    mutationFn: ({
+      businessId,
+      groupId,
+      modifierId,
+      data,
+    }: {
+      businessId: string
+      groupId: string
+      modifierId: string
+      data: UpdateModifierRequest
+    }) => updateModifier(businessId, groupId, modifierId, data),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifiers(variables.businessId, variables.groupId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifierGroups(variables.businessId),
+      })
+    },
+  })
+}
+
+export function useDeleteModifierMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      businessId,
+      groupId,
+      modifierId,
+    }: {
+      businessId: string
+      groupId: string
+      modifierId: string
+    }) => deleteModifier(businessId, groupId, modifierId),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifiers(variables.businessId, variables.groupId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.modifierGroups(variables.businessId),
+      })
     },
   })
 }
@@ -185,7 +347,6 @@ export function useCreateOrderMutation() {
     mutationFn: (data: CreateOrderRequest) => createOrder(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
-      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'kitchen-tickets'] })
     },
   })
 }
@@ -198,44 +359,35 @@ export function useUpdateOrderStatusMutation() {
       updateOrderStatus(orderId, data),
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.orderById(variables.orderId) })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.orderById(variables.orderId),
+      })
     },
   })
 }
 
-export function useUpdateOrderItemsMutation() {
+export function useProcessCashPaymentMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ orderId, data }: { orderId: string; data: UpdateOrderItemsRequest }) =>
-      updateOrderItems(orderId, data),
-    onSuccess: (_, variables) => {
+    mutationFn: ({ orderId, data }: { orderId: string; data: ProcessPaymentRequest }) =>
+      processCashPayment(orderId, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.payments() })
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.orderById(variables.orderId) })
     },
   })
 }
 
-export function useAssignKitchenTicketMutation() {
+export function useProcessPosPaymentMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ ticketId, data }: { ticketId: string; data: AssignKitchenTicketRequest }) =>
-      assignKitchenTicket(ticketId, data),
+    mutationFn: ({ orderId, data }: { orderId: string; data: ProcessPaymentRequest }) =>
+      processPosPayment(orderId, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'kitchen-tickets'] })
-    },
-  })
-}
-
-export function useUpdateKitchenTicketStatusMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ ticketId, data }: { ticketId: string; data: UpdateKitchenTicketStatusRequest }) =>
-      updateKitchenTicketStatus(ticketId, data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'kitchen-tickets'] })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.payments() })
+      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
     },
   })
 }
@@ -265,26 +417,92 @@ export function useConfirmPaymentMutation() {
   })
 }
 
-export function useCreateStaffInviteMutation() {
+export function useCreateStaffWithInviteMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: CreateStaffInviteRequest) => createStaffInvite(data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.staffInvites() })
+    mutationFn: ({
+      businessId,
+      data,
+    }: {
+      businessId: string
+      data: CreateStaffWithInviteRequest
+    }) => createStaffWithInvite(businessId, data),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staff(variables.businessId),
+      })
     },
   })
 }
 
-export function useAcceptStaffInviteMutation() {
+export function useCreateStaffWithPasswordMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (token: string) => acceptStaffInvite(token),
-    onSuccess: (_, token) => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.staffInvites() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.inviteByToken(token) })
+    mutationFn: ({
+      businessId,
+      data,
+    }: {
+      businessId: string
+      data: CreateStaffWithPasswordRequest
+    }) => createStaffWithPassword(businessId, data),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staff(variables.businessId),
+      })
     },
+  })
+}
+
+export function useCreateStaffWithPinMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ businessId, data }: { businessId: string; data: CreateStaffWithPinRequest }) =>
+      createStaffWithPin(businessId, data),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staff(variables.businessId),
+      })
+    },
+  })
+}
+
+export function useLoginStaffWithPasswordMutation() {
+  return useMutation({
+    mutationFn: ({
+      businessId,
+      data,
+    }: {
+      businessId: string
+      data: StaffLoginWithPasswordRequest
+    }) => loginStaffWithPassword(businessId, data),
+  })
+}
+
+export function useLoginStaffWithPinMutation() {
+  return useMutation({
+    mutationFn: ({ businessId, data }: { businessId: string; data: StaffLoginWithPinRequest }) =>
+      loginStaffWithPin(businessId, data),
+  })
+}
+
+export function useLogoutStaffMutation() {
+  return useMutation({
+    mutationFn: (businessId: string) => logoutStaff(businessId),
+  })
+}
+
+export function useAcceptStaffInviteMutation() {
+  return useMutation({
+    mutationFn: (data: AcceptInviteRequest) => acceptStaffInvite(data),
+  })
+}
+
+export function useChangePasswordMutation() {
+  return useMutation({
+    mutationFn: (data: ChangePasswordRequest) => changePassword(data),
   })
 }
 
@@ -292,11 +510,46 @@ export function useUpdateStaffRoleMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ staffId, data }: { staffId: string; data: UpdateStaffRoleRequest }) =>
-      updateStaffRole(staffId, data),
+    mutationFn: ({
+      businessId,
+      staffId,
+      data,
+    }: {
+      businessId: string
+      staffId: string
+      data: UpdateStaffRoleRequest
+    }) => updateStaffRole(businessId, staffId, data),
     onSuccess: (_, variables) => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.staff() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.staffById(variables.staffId) })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staff(variables.businessId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staffById(variables.businessId, variables.staffId),
+      })
+    },
+  })
+}
+
+export function useUpdateStaffMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      businessId,
+      staffId,
+      data,
+    }: {
+      businessId: string
+      staffId: string
+      data: UpdateStaffRequest
+    }) => updateStaff(businessId, staffId, data),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staff(variables.businessId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staffById(variables.businessId, variables.staffId),
+      })
     },
   })
 }
@@ -305,21 +558,12 @@ export function useRemoveStaffMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (staffId: string) => removeStaff(staffId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.staff() })
+    mutationFn: ({ businessId, staffId }: { businessId: string; staffId: string }) =>
+      removeStaff(businessId, staffId),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staff(variables.businessId),
+      })
     },
   })
 }
-
-export function useUpsertBusinessPaymentMethodMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (data: UpsertBusinessPaymentMethodRequest) => upsertBusinessPaymentMethod(data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.businessPaymentMethods() })
-    },
-  })
-}
-

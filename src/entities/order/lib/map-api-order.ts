@@ -2,13 +2,15 @@ import type { Order, OrderLine, OrderStatus } from '#/entities/order/model/types
 import type { ApiOrder, ApiOrderItem } from '#/shared/api/dto'
 
 const STATUS_SET = new Set<string>([
-	'PENDING',
+	'CREATED',
 	'CONFIRMED',
-	'PREPARING',
+	'IN_KITCHEN',
 	'READY',
 	'DELIVERED',
 	'CLOSED',
 	'CANCELLED',
+	'PAYMENT_FAILED',
+	'REFUNDED',
 ])
 
 function toStatus(raw: string): OrderStatus {
@@ -16,7 +18,7 @@ function toStatus(raw: string): OrderStatus {
 	if (STATUS_SET.has(upper)) {
 		return upper as OrderStatus
 	}
-	return 'PENDING'
+	return 'CREATED'
 }
 
 function tableLabel(o: ApiOrder): string {

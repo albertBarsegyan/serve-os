@@ -1,20 +1,17 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
-import { useId, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Button } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
-import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
-import {
-  type SignInFormValues,
-  signInSchema,
-} from '#/features/auth/lib/schemas/sign-in-form.schema.ts'
-import { useSignInMutation } from '#/features/auth/model/auth-hooks'
-import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {Link, useNavigate} from '@tanstack/react-router'
+import {Eye, EyeOff, Lock, Mail} from 'lucide-react'
+import {useId, useState} from 'react'
+import {useForm} from 'react-hook-form'
+import {Button} from '#/components/ui/button'
+import {Input} from '#/components/ui/input'
+import {Label} from '#/components/ui/label'
+import {authUiMessage} from '#/features/auth/lib/constants/ui-messages.ts'
+import {type SignInFormValues, signInSchema,} from '#/features/auth/lib/schemas/sign-in-form.schema.ts'
+import {useSignInMutation} from '#/features/auth/model/auth-hooks'
+import {getPostAuthDestination} from '#/features/business/lib/utils/business-routing.ts'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
 
 export function SignInForm() {
   const emailId = useId()
@@ -33,10 +30,11 @@ export function SignInForm() {
 
   const onSubmit = async (values: SignInFormValues) => {
     try {
-      const authUser = await signInMutation.mutateAsync({ data: values })
+      const { user } = await signInMutation.mutateAsync({ data: values })
 
       showSuccess(authUiMessage.SUCCESS_SIGN_IN)
-      await navigate({ to: getPostAuthDestination(authUser.user) })
+
+      await navigate({ to: getPostAuthDestination(user) })
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }

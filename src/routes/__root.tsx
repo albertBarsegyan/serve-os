@@ -6,9 +6,8 @@ import { Toaster } from 'sonner'
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { getLocale } from '#/paraglide/runtime'
-import BusinessSelectorProvider from '#/shared/ui/business-selector-provider'
-import { ErrorBoundary } from '#/shared/ui/ErrorBoundary'
-import { NotFoundPage } from '#/shared/ui/NotFoundPage'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
+import { NotFoundContent } from '#/shared/ui/not-found-content'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import TanStackQueryProvider from '../integrations/tanstack-query/root-provider'
 import appCss from '../styles.css?url'
@@ -53,10 +52,10 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   }),
   shellComponent: RootDocument,
   errorComponent: RootErrorComponent,
-  notFoundComponent: NotFoundPage,
+  notFoundComponent: NotFoundContent,
 })
 
-function RootErrorComponent({ error }: { error: Error }) {
+function RootErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
     <html lang={getLocale()} suppressHydrationWarning>
       <head>
@@ -80,23 +79,21 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className='font-sans antialiased wrap-anywhere selection:bg-[var(--selection-bg)]'>
         <TanStackQueryProvider>
-          <BusinessSelectorProvider>
-            {children}
+          {children}
 
-            <Toaster richColors />
-            <TanStackDevtools
-              config={{
-                position: 'bottom-right',
-              }}
-              plugins={[
-                {
-                  name: 'Tanstack Router',
-                  render: <TanStackRouterDevtoolsPanel />,
-                },
-                TanStackQueryDevtools,
-              ]}
-            />
-          </BusinessSelectorProvider>
+          <Toaster richColors />
+          <TanStackDevtools
+            config={{
+              position: 'bottom-right',
+            }}
+            plugins={[
+              {
+                name: 'Tanstack Router',
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+              TanStackQueryDevtools,
+            ]}
+          />
         </TanStackQueryProvider>
         <Scripts />
       </body>
