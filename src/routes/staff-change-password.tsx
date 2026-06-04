@@ -13,6 +13,7 @@ import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
+import { Logo } from '#/shared/ui/logo.tsx'
 
 const changePasswordFormSchema = z
   .object({
@@ -71,12 +72,7 @@ function StaffChangePasswordPage() {
     <div className='flex min-h-screen flex-col justify-center bg-background py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
         <Link to='/' className='mb-6 flex items-center justify-center gap-2'>
-          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm'>
-            S
-          </div>
-          <span className='text-2xl font-semibold tracking-tight text-foreground uppercase'>
-            ServeOS
-          </span>
+          <Logo size='lg' />
         </Link>
       </div>
 

@@ -1,4 +1,5 @@
-import { Link } from '@tanstack/react-router'
+import {Link} from '@tanstack/react-router'
+import {Logo} from '#/shared/ui/logo.tsx'
 
 export default function Header() {
   return (
@@ -6,12 +7,8 @@ export default function Header() {
       <nav className='page-wrap flex items-center justify-between py-3 sm:py-4'>
         <div className='flex items-center gap-8'>
           <h2 className='m-0 flex-shrink-0 text-base font-semibold tracking-tight'>
-            <Link
-              to='/'
-              className='inline-flex items-center gap-2 rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1.5 text-sm text-[var(--sea-ink)] no-underline shadow-sm sm:px-4 sm:py-2'
-            >
-              <span className='h-3 w-3 rounded-full bg-[linear-gradient(90deg,var(--brand-magenta),var(--brand-rose))]' />
-              ServeOS
+            <Link to='/'>
+              <Logo size='md' showText={false} />
             </Link>
           </h2>
 

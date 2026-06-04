@@ -19,6 +19,7 @@ import {
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
+import { Logo } from '#/shared/ui/logo.tsx'
 
 type SearchParams = { businessId: string }
 type Tab = 'pin' | 'password'
@@ -280,12 +281,7 @@ function StaffAuthLayout({ children }: { children: React.ReactNode }) {
     <div className='flex min-h-screen flex-col justify-center bg-background py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
         <Link to='/' className='mb-6 flex items-center justify-center gap-2'>
-          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm'>
-            S
-          </div>
-          <span className='text-2xl font-semibold tracking-tight text-foreground uppercase'>
-            ServeOS
-          </span>
+          <Logo size='lg' />
         </Link>
       </div>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>{children}</div>

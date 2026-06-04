@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { Logo } from '#/shared/ui/logo.tsx'
 
 export default function Footer() {
   const year = new Date().getFullYear()
@@ -7,9 +8,8 @@ export default function Footer() {
     <footer className='mt-20 border-t border-[var(--line)] bg-[var(--surface)] px-4 pb-14 pt-20 text-[var(--sea-ink-soft)]'>
       <div className='page-wrap grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4'>
         <div className='col-span-1 lg:col-span-2'>
-          <div className='mb-6 flex items-center gap-2 font-bold text-[var(--sea-ink)]'>
-            <span className='h-3 w-3 rounded-full bg-[linear-gradient(90deg,var(--brand-magenta),var(--brand-rose))]' />
-            ServeOS
+          <div className='mb-6'>
+            <Logo size='sm' />
           </div>
           <p className='mb-6 max-w-xs text-sm leading-relaxed'>
             The modern operating system for hospitality. Streamlining ordering, service flow, and

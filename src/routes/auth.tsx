@@ -2,18 +2,14 @@ import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
+import { Logo } from '#/shared/ui/logo.tsx'
 
 function AuthErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
     <div className='flex min-h-screen flex-col justify-center bg-background py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
         <Link to='/' className='mb-6 flex items-center justify-center gap-2'>
-          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm'>
-            S
-          </div>
-          <span className='text-2xl font-semibold tracking-tight text-foreground uppercase'>
-            ServeOS
-          </span>
+          <Logo size='lg' />
         </Link>
       </div>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
@@ -40,12 +36,7 @@ function AuthLayout() {
     <div className='flex min-h-screen flex-col justify-center bg-background py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
         <Link to='/' className='mb-6 flex items-center justify-center gap-2'>
-          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm'>
-            S
-          </div>
-          <span className='text-2xl font-semibold tracking-tight text-foreground uppercase'>
-            ServeOS
-          </span>
+          <Logo size='lg' />
         </Link>
       </div>
 

@@ -41,13 +41,14 @@ import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
 import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import {ErrorBoundary} from '#/shared/ui/error-boundary.tsx'
+import {Logo} from '#/shared/ui/logo.tsx'
 import {Modal} from '#/shared/ui/modal'
 
 function AdminErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
     <div className='flex min-h-screen flex-col bg-background'>
       <header className='flex h-20 items-center border-b border-border bg-card px-8'>
-        <h1 className='text-lg font-semibold tracking-tight text-foreground'>ServeOS Admin</h1>
+        <Logo size='sm' />
       </header>
       <main className='flex-1 overflow-y-auto p-8'>
         <ErrorBoundary error={error} />
@@ -254,10 +255,7 @@ function AdminLayout() {
             to='/'
             className='flex items-center gap-3 font-semibold tracking-tight text-foreground'
           >
-            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground'>
-              S
-            </div>
-            {!isCollapsed && <span className='text-xl uppercase'>ServeOS</span>}
+            <Logo size='md' />
           </Link>
         </div>
 
