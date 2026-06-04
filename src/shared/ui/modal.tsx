@@ -1,7 +1,7 @@
-import {X} from 'lucide-react'
-import {useEffect} from 'react'
-import {Button} from '#/components/ui/button'
-import {cn} from '#/lib/utils.ts'
+import { X } from 'lucide-react'
+import { useEffect } from 'react'
+import { Button } from '#/components/ui/button'
+import { cn } from '#/lib/utils.ts'
 
 interface ModalProps {
   isOpen: boolean

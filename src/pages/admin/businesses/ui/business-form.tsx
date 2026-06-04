@@ -1,14 +1,17 @@
-import {zodResolver} from '@hookform/resolvers/zod'
-import {useQueryClient} from '@tanstack/react-query'
-import {Building2, MapPin} from 'lucide-react'
-import {useEffect, useId, useMemo} from 'react'
-import {useForm} from 'react-hook-form'
-import {FeatureSelector} from '#/components/feature-selector'
-import {Button} from '#/components/ui/button'
-import {Input} from '#/components/ui/input'
-import {Label} from '#/components/ui/label'
-import type {CreateBusinessRequest, UpdateBusinessRequest,} from '#/features/business/api/business.types'
-import {businessTypeLabels} from '#/features/business/api/business-domain'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
+import { Building2, MapPin } from 'lucide-react'
+import { useEffect, useId, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
+import { FeatureSelector } from '#/components/feature-selector'
+import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
+import { Label } from '#/components/ui/label'
+import type {
+  CreateBusinessRequest,
+  UpdateBusinessRequest,
+} from '#/features/business/api/business.types'
+import { businessTypeLabels } from '#/features/business/api/business-domain'
 import {
   updateBusinessFormSchema,
   type UpdateBusinessFormValues,
@@ -24,9 +27,9 @@ import {
   useCreateBusinessMutation,
   useUpdateBusinessMutation,
 } from '#/features/business/model/business-hooks'
-import {showError, showSuccess} from '#/shared/libs/hooks/toast'
-import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils'
-import {Modal} from '#/shared/ui/modal'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
+import { Modal } from '#/shared/ui/modal'
 
 interface BusinessFormProps {
   mode: 'add' | 'edit'
