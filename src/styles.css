@@ -8,23 +8,23 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  /* Brand palette — three greens pulled from the logo */
-  --brand-primary: oklch(0.508 0.157 144);  /* #117B1C — deep primary (circle, dish, wordmark) */
-  --brand-leaf:    oklch(0.684 0.207 138);  /* #4DB50E — bright leaf green */
-  --brand-mid:     oklch(0.588 0.181 141);  /* #2C951A — mid transition */
+  /* Brand palette — three greens sampled from the light logo (lime-green, hue ~133–137) */
+  --brand-primary: oklch(0.543 0.152 137); /* #3F8218 — deep logo green (wordmark / primary) */
+  --brand-leaf: oklch(0.697 0.194 133); /* #6AB50C — bright leaf green (logo core) */
+  --brand-mid: oklch(0.624 0.18 136); /* #4F9E11 — mid transition (logo deep) */
 
-  /* Green scale 50–950 anchored on the three brand greens */
-  --green-50:  oklch(0.977 0.020 145);
-  --green-100: oklch(0.952 0.044 144);
-  --green-200: oklch(0.908 0.082 143);
-  --green-300: oklch(0.848 0.130 141);
-  --green-400: oklch(0.776 0.175 139);
-  --green-500: oklch(0.684 0.207 138);  /* = --brand-leaf  #4DB50E */
-  --green-600: oklch(0.588 0.181 141);  /* = --brand-mid   #2C951A */
-  --green-700: oklch(0.508 0.157 144);  /* = --brand-primary #117B1C */
-  --green-800: oklch(0.402 0.120 145);
-  --green-900: oklch(0.295 0.085 146);
-  --green-950: oklch(0.224 0.062 146);
+  /* Green scale 50–950 anchored on the logo's lime-green hue */
+  --green-50: oklch(0.977 0.02 133); /* #F2FBED */
+  --green-100: oklch(0.951 0.046 133); /* #E3F6D7 */
+  --green-200: oklch(0.905 0.085 133); /* #CAECB2 */
+  --green-300: oklch(0.843 0.13 133); /* #AADE84 */
+  --green-400: oklch(0.772 0.17 132); /* #8BCB4D */
+  --green-500: oklch(0.697 0.194 133); /* = --brand-leaf  #6AB50C */
+  --green-600: oklch(0.624 0.18 136); /* = --brand-mid   #4F9E11 */
+  --green-700: oklch(0.543 0.152 137); /* = --brand-primary #3F8218 */
+  --green-800: oklch(0.43 0.118 139); /* #285E16 */
+  --green-900: oklch(0.32 0.084 141); /* #163D10 */
+  --green-950: oklch(0.235 0.06 143); /* #0A2509 */
 
   /* Legacy semantic names → green mapping */
   --sea-ink: var(--green-800);
@@ -33,13 +33,13 @@
   --lagoon-deep: var(--brand-mid);
   --palm: var(--green-500);
   --sand: var(--green-50);
-  --foam: oklch(0.988 0.010 145);
+  --foam: oklch(0.988 0.01 138);
   --surface: color-mix(in oklab, white 76%, var(--foam) 24%);
   --surface-strong: color-mix(in oklab, white 92%, var(--foam) 8%);
   --line: color-mix(in oklab, var(--brand-primary) 14%, transparent);
   --inset-glint: rgba(255, 255, 255, 0.82);
   --kicker: color-mix(in oklab, var(--brand-mid) 92%, black 8%);
-  --bg-base: oklch(0.958 0.024 144);
+  --bg-base: oklch(0.958 0.024 138);
   --header-bg: color-mix(in oklab, var(--foam) 84%, white 16%);
   --chip-bg: rgba(255, 255, 255, 0.82);
   --chip-line: color-mix(in oklab, var(--brand-primary) 18%, transparent);
@@ -62,17 +62,17 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.148 0.004 228.8);
   --primary: var(--green-700);
-  --primary-foreground: oklch(0.988 0.008 145);
+  --primary-foreground: oklch(0.988 0.008 138);
   --secondary: var(--green-50);
   --secondary-foreground: var(--green-800);
   --muted: var(--green-50);
-  --muted-foreground: oklch(0.520 0.058 143);
+  --muted-foreground: oklch(0.52 0.058 138);
   --accent: var(--green-100);
   --accent-foreground: var(--green-800);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0.01 303);
-  --border: oklch(0.918 0.030 143);
-  --input: oklch(0.918 0.030 143);
+  --border: oklch(0.918 0.03 138);
+  --input: oklch(0.918 0.03 138);
   --ring: var(--green-600);
   --chart-1: var(--green-300);
   --chart-2: var(--green-400);
@@ -83,15 +83,15 @@
   --sidebar: var(--green-50);
   --sidebar-foreground: var(--green-900);
   --sidebar-primary: var(--green-700);
-  --sidebar-primary-foreground: oklch(0.988 0.008 145);
+  --sidebar-primary-foreground: oklch(0.988 0.008 138);
   --sidebar-accent: var(--green-100);
   --sidebar-accent-foreground: var(--green-800);
-  --sidebar-border: oklch(0.918 0.030 143);
+  --sidebar-border: oklch(0.918 0.03 138);
   --sidebar-ring: var(--green-600);
 }
 
 @theme inline {
-  --font-sans: 'Roboto Variable', sans-serif;
+  --font-sans: "Roboto Variable", sans-serif;
   --color-brand-primary: var(--brand-primary);
   --color-brand-leaf: var(--brand-leaf);
   --color-brand-mid: var(--brand-mid);
@@ -206,7 +206,9 @@ pre code {
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--card-foreground);
-  box-shadow: 0 1px 0 color-mix(in oklab, var(--border) 35%, transparent) inset, 0 1px 3px rgb(0 0 0 / 0.04);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, var(--border) 35%, transparent) inset,
+    0 1px 3px rgb(0 0 0 / 0.04);
 }
 
 .feature-card {
@@ -219,6 +221,36 @@ pre code {
 .feature-card:hover {
   transform: translateY(-2px);
   border-color: color-mix(in oklab, var(--ring) 45%, transparent);
+}
+
+/* Applied for the duration of a theme switch to animate color changes everywhere */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    color 250ms ease,
+    background-color 250ms ease,
+    border-color 250ms ease,
+    fill 250ms ease,
+    stroke 250ms ease !important;
+  transition-delay: 0ms !important;
+}
+
+@keyframes theme-icon-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  40% {
+    transform: rotate(180deg) scale(0.7);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+.theme-icon-animate {
+  animation: theme-icon-spin 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 button,
@@ -272,6 +304,19 @@ a {
   animation: rise-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.page-enter {
+  animation: page-enter 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-fade-in-up {
   animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -318,35 +363,66 @@ a {
 }
 
 .dark {
-  --background: oklch(0.138 0.030 145);
-  --foreground: oklch(0.940 0.010 145);
-  --card: oklch(0.185 0.038 145);
-  --card-foreground: oklch(0.940 0.010 145);
-  --popover: oklch(0.185 0.038 145);
-  --popover-foreground: oklch(0.940 0.010 145);
-  --primary: var(--green-400);
-  --primary-foreground: oklch(0.138 0.030 145);
-  --secondary: oklch(0.240 0.048 144);
-  --secondary-foreground: oklch(0.940 0.010 145);
-  --muted: oklch(0.240 0.048 144);
-  --muted-foreground: oklch(0.660 0.088 141);
-  --accent: oklch(0.240 0.048 144);
-  --accent-foreground: oklch(0.940 0.010 145);
+  /* Dark theme sampled from the dark hero illustration:
+     deep forest green-black surfaces + bright lime accent (#97D140 / #87C838) */
+  --background: oklch(0.175 0.03 156); /* #05140B — deepest forest green-black (page bg) */
+  --foreground: oklch(0.945 0.012 138);
+  --card: oklch(0.225 0.036 157); /* #0C2115 — dashboard card surface */
+  --card-foreground: oklch(0.945 0.012 138);
+  --popover: oklch(0.225 0.036 157);
+  --popover-foreground: oklch(0.945 0.012 138);
+  --primary: oklch(0.794 0.182 129); /* #97D140 — bright lime accent from illustration */
+  --primary-foreground: oklch(0.175 0.03 156);
+  --secondary: oklch(0.26 0.04 158); /* #112A1C — raised panel */
+  --secondary-foreground: oklch(0.945 0.012 138);
+  --muted: oklch(0.26 0.04 158);
+  --muted-foreground: oklch(0.705 0.085 135); /* #89AC76 — muted sage text */
+  --accent: oklch(0.3 0.052 153);
+  --accent-foreground: oklch(0.945 0.012 138);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: var(--green-500);
+  --ring: oklch(0.762 0.184 131); /* #87C838 — focus lime */
   --chart-1: var(--green-300);
   --chart-2: var(--green-400);
   --chart-3: var(--green-500);
   --chart-4: var(--green-600);
   --chart-5: var(--green-700);
-  --sidebar: oklch(0.185 0.038 145);
-  --sidebar-foreground: oklch(0.940 0.010 145);
-  --sidebar-primary: var(--green-400);
-  --sidebar-primary-foreground: oklch(0.138 0.030 145);
-  --sidebar-accent: oklch(0.240 0.048 144);
-  --sidebar-accent-foreground: oklch(0.940 0.010 145);
+  --sidebar: oklch(0.205 0.034 156);
+  --sidebar-foreground: oklch(0.945 0.012 138);
+  --sidebar-primary: oklch(0.794 0.182 129);
+  --sidebar-primary-foreground: oklch(0.175 0.03 156);
+  --sidebar-accent: oklch(0.26 0.04 158);
+  --sidebar-accent-foreground: oklch(0.945 0.012 138);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: var(--green-500);
+  --sidebar-ring: oklch(0.762 0.184 131);
+
+  /* Custom semantic overrides for dark mode */
+  --sea-ink: var(--green-200);
+  --sea-ink-soft: var(--green-400);
+  --lagoon: color-mix(in oklab, var(--brand-mid) 55%, oklch(0.175 0.03 156));
+  --lagoon-deep: var(--green-500);
+  --palm: var(--green-400);
+  --sand: oklch(0.26 0.04 158);
+  --foam: oklch(0.205 0.034 156);
+  --surface: oklch(0.225 0.036 157);
+  --surface-strong: oklch(0.26 0.04 158);
+  --line: oklch(1 0 0 / 10%);
+  --inset-glint: rgba(255, 255, 255, 0.06);
+  --kicker: var(--green-400);
+  --bg-base: oklch(0.175 0.03 156);
+  --header-bg: color-mix(in oklab, oklch(0.175 0.03 156) 88%, transparent);
+  --chip-bg: oklch(1 0 0 / 6%);
+  --chip-line: oklch(1 0 0 / 10%);
+  --link-bg-hover: oklch(1 0 0 / 8%);
+  --hero-a: color-mix(in oklab, var(--brand-mid) 18%, transparent);
+  --hero-b: color-mix(in oklab, var(--brand-primary) 14%, transparent);
+  --accent-soft: color-mix(in oklab, var(--brand-mid) 14%, transparent);
+  --accent-soft-hover: color-mix(in oklab, var(--brand-mid) 22%, transparent);
+  --accent-border: color-mix(in oklab, var(--brand-mid) 30%, transparent);
+  --shadow-brand: color-mix(in oklab, var(--brand-primary) 8%, transparent);
+  --selection-bg: color-mix(in oklab, var(--brand-mid) 28%, transparent);
+  --pill-selected-bg: color-mix(in oklab, var(--brand-mid) 26%, transparent);
+  --hero-blob: color-mix(in oklab, var(--brand-mid) 22%, transparent);
+  --hero-blob-alt: color-mix(in oklab, var(--green-400) 18%, transparent);
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '#/lib/utils.ts'
 
 interface LazyImageProps {
@@ -19,10 +19,18 @@ export function LazyImage({
   imgClassName,
 }: Readonly<LazyImageProps>) {
   const [loaded, setLoaded] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setLoaded(true)
+    }
+  }, [])
 
   return (
     <div className={cn('overflow-hidden', className)}>
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         width={width}

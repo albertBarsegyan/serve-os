@@ -109,7 +109,6 @@ export default function Footer() {
       <div className='page-wrap mt-16 flex flex-col items-center justify-between gap-4 border-t border-[var(--line)] pt-8 text-center text-xs sm:flex-row sm:text-left'>
         <p className='m-0'>&copy; {year} ServeOS. All rights reserved.</p>
         <div className='flex gap-6'>
-          <p className='m-0'>Built with TanStack Start</p>
           <p className='m-0'>Privacy</p>
           <p className='m-0'>Terms</p>
         </div>

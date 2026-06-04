@@ -10,7 +10,10 @@ import {
 } from '@tanstack/react-router'
 import type {LucideIcon} from 'lucide-react'
 import {
+  Building2,
+  Check,
   ChefHat,
+  ChevronDown,
   CreditCard,
   LayoutDashboard,
   LogOut,
@@ -26,9 +29,9 @@ import {
   Wallet,
   Warehouse,
 } from 'lucide-react'
-import {useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
+import {ThemeSwitcher} from '#/components/theme-switcher.tsx'
 import {Button} from '#/components/ui/button'
-import {Select} from '#/components/ui/select'
 import {authUiMessage} from '#/features/auth/lib/constants/ui-messages.ts'
 import {authUserQueryOptions} from '#/features/auth/lib/query-options.ts'
 import {useLogoutMutation} from '#/features/auth/model/auth-hooks.ts'
@@ -108,60 +111,85 @@ function SidebarNavLink({
   )
 }
 
-function SidebarBusinessSwitcher({ isCollapsed }: Readonly<{ isCollapsed: boolean }>) {
+function BusinessSwitcher() {
   const activeBusiness = useActiveBusinessStore((s) => s.active)
   const { data: businesses = [], isLoading } = useBusinessesQuery({ enabled: true })
   const { switchBusiness, isLoading: isSwitching } = useBusinessSwitcher({
     navigate: async () => undefined,
   })
+  const [isOpen, setIsOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
-  const selectedBusiness = businesses.find((business) => business.id === activeBusiness?.id)
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
-  const handleChange = (businessId: string) => {
-    const business = businesses.find((item) => item.id === businessId)
-
-    if (!business) return showError('Selected business not found.')
-
-    switchBusiness({ id: business.id, name: business.name, currency: business.currency })
-  }
+  const selectedBusiness = businesses.find((b) => b.id === activeBusiness?.id)
 
   return (
-    <div className='rounded-2xl  p-4'>
-      {!isCollapsed && (
-        <p className='mb-3 px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
-          Business
-        </p>
-      )}
+    <div ref={ref} className='relative'>
+      <button
+        type='button'
+        onClick={() => setIsOpen((o) => !o)}
+        disabled={isLoading || isSwitching}
+        className='cursor-pointer flex items-center gap-2 h-12 px-3 rounded-xl border border-input bg-background text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50'
+      >
+        <Building2 className='h-4 w-4 shrink-0 text-muted-foreground' />
+        <span className='hidden sm:block max-w-[140px] truncate text-foreground'>
+          {isLoading ? 'Loading…' : (selectedBusiness?.name ?? 'Select business')}
+        </span>
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
+            isOpen && 'rotate-180',
+          )}
+        />
+      </button>
 
-      <div className='space-y-2'>
-        <Select
-          value={selectedBusiness?.id ?? ''}
-          onChange={(event) => handleChange(event.target.value)}
-          disabled={isLoading || isSwitching || businesses.length === 0}
-          className={cn('h-11 rounded-xl bg-background text-sm', isCollapsed && 'px-2')}
-        >
-          <option value='' disabled>
-            {isLoading ? 'Loading businesses…' : 'Select a business'}
-          </option>
-          {businesses.map((business) => (
-            <option key={business.id} value={business.id}>
-              {business.name}
-            </option>
-          ))}
-        </Select>
-
-        {!isCollapsed && (
-          <div className='px-1 text-xs text-muted-foreground'>
-            {selectedBusiness ? (
-              <span className='font-medium text-foreground'>
-                Currently in {selectedBusiness.name}
-              </span>
-            ) : (
-              'Choose the business context for this session.'
-            )}
+      {isOpen && (
+        <div className='absolute right-0 top-full mt-2 w-60 rounded-2xl border border-border bg-card shadow-xl z-50 overflow-hidden'>
+          <div className='px-3 pt-3 pb-1'>
+            <p className='text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
+              Switch business
+            </p>
           </div>
-        )}
-      </div>
+          <div className='p-2 space-y-0.5'>
+            {businesses.map((business) => {
+              const isActive = business.id === activeBusiness?.id
+              return (
+                <button
+                  key={business.id}
+                  type='button'
+                  onClick={() => {
+                    switchBusiness({
+                      id: business.id,
+                      name: business.name,
+                      currency: business.currency,
+                    })
+                    setIsOpen(false)
+                  }}
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors text-left',
+                    isActive
+                      ? 'bg-accent text-accent-foreground font-semibold'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  )}
+                >
+                  <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold uppercase'>
+                    {business.name[0]}
+                  </div>
+                  <span className='flex-1 truncate'>{business.name}</span>
+                  {isActive && <Check className='h-4 w-4 shrink-0 text-primary' />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -255,13 +283,11 @@ function AdminLayout() {
             to='/'
             className='flex items-center gap-3 font-semibold tracking-tight text-foreground'
           >
-            <Logo size='md' />
+            <Logo size='md' showText />
           </Link>
         </div>
 
         <div className='flex-1 space-y-8 overflow-y-auto px-4 py-6'>
-          {isOwner() && <SidebarBusinessSwitcher isCollapsed={isCollapsed} />}
-
           <div>
             {!isCollapsed && (
               <p className='mb-4 px-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
@@ -317,7 +343,7 @@ function AdminLayout() {
       {/* Main Content */}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Header */}
-        <header className='flex h-20 items-center justify-between bg-white px-8'>
+        <header className='flex h-20 items-center justify-between bg-card px-8'>
           <div className='flex flex-1 items-center gap-4'>
             <Button
               variant='ghost'
@@ -337,7 +363,10 @@ function AdminLayout() {
             </div>
           </div>
 
-          <div className='flex items-center gap-6'>
+          <div className='flex items-center gap-3'>
+            <ThemeSwitcher />
+            {isOwner() && <BusinessSwitcher />}
+
             <Link
               to='/user-settings'
               className='flex h-12 gap-4 cursor-pointer items-center rounded-xl border px-3 hover:bg-accent'
@@ -349,17 +378,14 @@ function AdminLayout() {
                 <span className='text-sm font-bold'>{displayName}</span>
               </div>
             </Link>
-
-            {/*<Button variant='ghost' size='icon' className='relative h-11 w-11 rounded-xl bg-muted'>*/}
-            {/*  <Bell className='h-5 w-5 text-muted-foreground' />*/}
-            {/*  <span className='absolute right-3.5 top-3.5 flex h-2 w-2 rounded-full border-2 border-white bg-red-500' />*/}
-            {/*</Button>*/}
           </div>
         </header>
 
         {/* Page Content */}
         <main className='flex-1 overflow-y-auto p-8 scrollbar-hide'>
-          <Outlet />
+          <div key={location.pathname} className='page-enter'>
+            <Outlet />
+          </div>
         </main>
       </div>
       <Modal

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, redirect, useLocation } from '@tanstack/react-router'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
@@ -32,6 +32,8 @@ export const Route = createFileRoute('/auth')({
 })
 
 function AuthLayout() {
+  const location = useLocation()
+
   return (
     <div className='flex min-h-screen flex-col justify-center bg-background py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
@@ -41,7 +43,9 @@ function AuthLayout() {
       </div>
 
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <Outlet />
+        <div key={location.pathname} className='page-enter'>
+          <Outlet />
+        </div>
       </div>
 
       <div className='mt-8 text-center text-sm text-muted-foreground'>

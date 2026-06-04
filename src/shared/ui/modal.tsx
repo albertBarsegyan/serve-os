@@ -44,7 +44,7 @@ export function Modal({
         onClick={onClose}
       />
 
-      <div className='relative w-full max-w-lg animate-in fade-in zoom-in duration-200 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg sm:p-8'>
+      <div className='relative w-full max-w-4xl animate-in fade-in zoom-in duration-200 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg sm:p-8'>
         <div className='mb-6 flex items-center justify-between'>
           <h2 className='text-xl font-bold'>{title}</h2>
           <Button variant='ghost' size='icon' onClick={onClose} className='rounded-full'>
