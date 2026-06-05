@@ -1,6 +1,7 @@
 import {zodResolver} from '@hookform/resolvers/zod'
 import {useQuery} from '@tanstack/react-query'
-import {Edit2, LayoutGrid, MoreVertical, Plus, QrCode, Trash2, Users} from 'lucide-react'
+import {Check, Copy, Edit2, LayoutGrid, Plus, QrCode, Trash2, Users} from 'lucide-react'
+import {QRCodeSVG} from 'qrcode.react'
 import {useId, useMemo, useState} from 'react'
 import {useForm} from 'react-hook-form'
 import type {z} from 'zod'
@@ -22,6 +23,11 @@ import {Modal} from '#/shared/ui/modal'
 type CreateTableFormValues = z.infer<typeof createTableSchema>
 type UpdateTableFormValues = z.infer<typeof updateTableSchema>
 
+interface SelectedTable {
+  label: string
+  qrCode: string
+}
+
 export function AdminTablesContent() {
   const skeletonCards = useMemo(
     () => ['table-skeleton-a', 'table-skeleton-b', 'table-skeleton-c', 'table-skeleton-d'],
@@ -31,7 +37,8 @@ export function AdminTablesContent() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingTable, setEditingTable] = useState<TableEntity | null>(null)
   const [isQrModalOpen, setIsQrModalOpen] = useState(false)
-  const [selectedTable, setSelectedTable] = useState<{ label: string; qrCode: string } | null>(null)
+  const [selectedTable, setSelectedTable] = useState<SelectedTable | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const numberId = useId()
   const capacityId = useId()
@@ -98,6 +105,15 @@ export function AdminTablesContent() {
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
     }
+  }
+
+  const qrUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/customer/menu/?id=${selectedTable?.qrCode}`
+
+  const copyToClipboard = () => {
+    globalThis.navigator.clipboard.writeText(qrUrl)
+    showSuccess('QR code URL copied to clipboard')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -335,23 +351,72 @@ export function AdminTablesContent() {
       {/* QR modal */}
       <Modal
         isOpen={isQrModalOpen}
-        onClose={() => setIsQrModalOpen(false)}
-        title={`QR Code for ${selectedTable?.label ?? ''}`}
+        onClose={() => {
+          setIsQrModalOpen(false)
+          setCopied(false)
+        }}
+        title={`QR Code — ${selectedTable?.label ?? ''}`}
         footer={
-          <Button onClick={() => setIsQrModalOpen(false)} className='rounded-full'>
+          <Button
+            variant='ghost'
+            onClick={() => {
+              setIsQrModalOpen(false)
+              setCopied(false)
+            }}
+            className='rounded-full'
+          >
             Close
           </Button>
         }
       >
-        <div className='space-y-3 py-2 text-sm text-muted-foreground'>
-          <p>Table token:</p>
-          <code className='inline-block rounded-lg bg-muted px-3 py-2 text-xs'>
-            {selectedTable?.qrCode ?? '—'}
-          </code>
-          <p>Use this token to generate and print your QR asset in your backend/ops tooling.</p>
-          <div className='flex items-center gap-2 text-xs'>
-            <MoreVertical className='h-3 w-3' />
-            <span>Static QR preview disabled for deterministic rendering.</span>
+        <div className='flex flex-col items-center gap-6 py-2'>
+          {/* QR code */}
+          <div className='rounded-2xl border border-border bg-white p-5 shadow-sm'>
+            <QRCodeSVG value={qrUrl} size={200} level='M' includeMargin={false} />
+          </div>
+
+          {/* Label + hint */}
+          <div className='text-center'>
+            <p className='text-base font-semibold'>{selectedTable?.label}</p>
+            <p className='mt-0.5 text-xs text-muted-foreground'>
+              Scan to open the menu for this table
+            </p>
+          </div>
+
+          {/* URL row + copy */}
+          <div className='w-full space-y-2'>
+            <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+              Table URL
+            </p>
+            <div className='flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2'>
+              <span className='min-w-0 flex-1 truncate text-xs text-foreground/70'>{qrUrl}</span>
+              <Button
+                size='icon'
+                variant='ghost'
+                className='h-7 w-7 shrink-0 rounded-lg hover:bg-background'
+                onClick={copyToClipboard}
+                title='Copy URL'
+              >
+                {copied ? (
+                  <Check className='h-3.5 w-3.5 text-green-500' />
+                ) : (
+                  <Copy className='h-3.5 w-3.5' />
+                )}
+              </Button>
+            </div>
+            <Button variant='outline' className='w-full rounded-xl' onClick={copyToClipboard}>
+              {copied ? (
+                <>
+                  <Check className='mr-2 h-4 w-4 text-green-500' />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className='mr-2 h-4 w-4' />
+                  Copy QR code URL
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </Modal>

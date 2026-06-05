@@ -21,12 +21,12 @@ import type {
   ProcessPaymentRequest,
   Product,
   ScanSessionRequest,
+  ScanSessionResponse,
   SessionBill,
   StaffLoginWithPasswordRequest,
   StaffLoginWithPinRequest,
   StaffMember,
   TableEntity,
-  TableSession,
   UpdateMenuCategoryRequest,
   UpdateModifierGroupRequest,
   UpdateModifierRequest,
@@ -36,7 +36,7 @@ import type {
   UpdateStaffRoleRequest,
   UpdateTableRequest,
 } from '#/features/platform/api/platform.types.ts'
-import { clientApiInstance } from '#/shared/api/client-instance.ts'
+import {clientApiInstance} from '#/shared/api/client-instance.ts'
 
 type ListResponse<T> = T[] | { data?: T[] }
 
@@ -69,8 +69,8 @@ export function deleteTable(tableId: string): Promise<{ message: string }> {
 
 // --- Table Sessions ---
 
-export function scanSession(data: ScanSessionRequest): Promise<TableSession> {
-  return clientApiInstance.post('sessions/scan', { json: data }).json<TableSession>()
+export function scanSession(data: ScanSessionRequest): Promise<ScanSessionResponse> {
+  return clientApiInstance.post('sessions/scan', { json: data }).json<ScanSessionResponse>()
 }
 
 export function closeSession(sessionId: string): Promise<void> {

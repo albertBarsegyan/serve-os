@@ -1,0 +1,37 @@
+services:
+  app:
+    networks:
+      - serve_os_shared
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        API_BASE_URL: ${API_BASE_URL}
+
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      NITRO_HOST: 0.0.0.0
+      NITRO_PORT: 3000
+      API_BASE_URL: ${API_BASE_URL}
+
+    ports:
+      - "3000:3000"
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    restart: unless-stopped
+
+networks:
+  serve_os_shared:
+    driver: bridge
+    name: serve_os_shared

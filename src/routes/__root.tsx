@@ -67,7 +67,7 @@ function RootErrorComponent({ error }: Readonly<{ error: Error }>) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className='font-sans antialiased wrap-anywhere selection:bg-[var(--selection-bg)]'>
+      <body className='font-sans antialiased wrap-anywhere selection:bg-(--selection-bg)'>
         <ErrorBoundary error={error} />
         <Scripts />
       </body>
@@ -75,14 +75,19 @@ function RootErrorComponent({ error }: Readonly<{ error: Error }>) {
   )
 }
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ children }: Readonly<{ children: React.ReactNode }>) {
+  // useEffect(() => {
+  //   document.body.classList.add('page-loaded')
+  // }, [])
+
   return (
     <html lang={getLocale()} suppressHydrationWarning>
       <head>
+        {/** biome-ignore lint/security/noDangerouslySetInnerHtml: <this loads secure theme script> */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className='font-sans antialiased wrap-anywhere selection:bg-[var(--selection-bg)]'>
+      <body className='font-sans antialiased wrap-anywhere selection:bg-(--selection-bg)'>
         <TanStackQueryProvider>
           {children}
 

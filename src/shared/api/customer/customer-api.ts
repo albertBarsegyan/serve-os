@@ -1,70 +1,57 @@
-import { mapApiOrder } from '#/entities/order/lib/map-api-order'
-import type { Order } from '#/entities/order/model/types'
-import { mapApiProduct } from '#/entities/product/lib/map-api-product'
-import type { Product } from '#/entities/product/model/types'
 import { clientApiInstance } from '#/shared/api/client-instance'
-import type {
-  ApiCategory,
-  ApiOrder,
-  ApiProduct,
-  CreateOrderBody,
-  CreatePaymentBody,
-  TableScanResponse,
-} from '#/shared/api/dto'
+import type { CustomerCategory } from './menu.types'
 
-function guestParams(businessId: string) {
-  return { businessId }
+export interface CustomerOrderItem {
+  productId: string
+  quantity: number
+  notes?: string
+  selectedModifiers?: Array<{
+    modifierId: string
+    name: string
+    priceAdjustment: number
+  }>
 }
 
-/**
- * Fetches the public menu. Pass `businessId` from the QR / table scan flow.
- * Tries `GET /menu/products` first, then `GET /menu/categories` (flattened).
- */
-export async function fetchMenuProducts(businessId: string): Promise<Product[]> {
-  const params = guestParams(businessId)
-  const tenantId = businessId
-
-  const tryProducts = await clientApiInstance
-    .get('menu/products', { searchParams: params })
-    .json<ApiProduct[] | { data?: ApiProduct[] }>()
-    .catch(() => null)
-
-  if (Array.isArray(tryProducts)) {
-    return tryProducts.map((p) => mapApiProduct(p, tenantId))
-  }
-  if (tryProducts && 'data' in tryProducts && Array.isArray(tryProducts.data)) {
-    return tryProducts.data.map((p) => mapApiProduct(p, tenantId))
-  }
-
-  const categories = await clientApiInstance
-    .get('menu/categories', { searchParams: params })
-    .json<ApiCategory[] | { data?: ApiCategory[] }>()
-
-  const list = Array.isArray(categories) ? categories : (categories.data ?? [])
-  return list.flatMap((cat) =>
-    (cat.products ?? []).map((p) => mapApiProduct(p, tenantId, cat.name)),
-  )
+export interface CustomerOrderResponse {
+  id: string
+  businessId: string
+  tableId: string | null
+  status: string
+  totalAmount: string
+  createdAt: string
 }
 
-export async function createOrder(businessId: string, body: CreateOrderBody): Promise<Order> {
-  const created = await clientApiInstance
-    .post('orders', {
-      searchParams: guestParams(businessId),
-      json: body,
-    })
-    .json<ApiOrder>()
-  return mapApiOrder(created, businessId)
+export interface CustomerPaymentResponse {
+  id: string
+  orderId: string
+  businessId: string
+  method: string
+  status: string
+  amount: number
+  createdAt: string
 }
 
-export function createPayment(businessId: string, body: CreatePaymentBody): Promise<unknown> {
+export function fetchCustomerMenu(businessId: string): Promise<CustomerCategory[]> {
   return clientApiInstance
-    .post('payments', {
-      searchParams: guestParams(businessId),
-      json: body,
-    })
-    .json()
+    .get('menu/customer', { searchParams: { businessId } })
+    .json<CustomerCategory[]>()
 }
 
-export function scanTable(qrCode: string): Promise<TableScanResponse> {
-  return clientApiInstance.get(`tables/scan/${encodeURIComponent(qrCode)}`).json()
+export function createCustomerOrder(
+  sessionToken: string,
+  items: CustomerOrderItem[],
+): Promise<CustomerOrderResponse> {
+  return clientApiInstance
+    .post('orders', { json: { sessionToken, items } })
+    .json<CustomerOrderResponse>()
+}
+
+export function createCustomerPayment(
+  orderId: string,
+  method: 'CASH' | 'POS' | 'ONLINE',
+  amount: number,
+): Promise<CustomerPaymentResponse> {
+  return clientApiInstance
+    .post('payments', { json: { orderId, method, amount } })
+    .json<CustomerPaymentResponse>()
 }

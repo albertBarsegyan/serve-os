@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Building2, MapPin, Save, Settings } from 'lucide-react'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { SearchSelect } from '#/shared/ui/search-select'
 import { FeatureSelector } from '#/components/feature-selector'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
@@ -203,17 +204,20 @@ export function AdminSettingsContent() {
                 <label htmlFor={typeId} className='text-sm font-medium text-muted-foreground'>
                   Business Type
                 </label>
-                <select
-                  id={typeId}
-                  className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                  {...register('type')}
-                >
-                  {Object.entries(businessTypeLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  name='type'
+                  control={control}
+                  render={({ field }) => (
+                    <SearchSelect
+                      id={typeId}
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={Object.entries(businessTypeLabels).map(([value, label]) => ({ value, label }))}
+                      placeholder='Select type'
+                      className='rounded-xl'
+                    />
+                  )}
+                />
                 {errors.type && <p className='text-xs text-red-600'>{errors.type.message}</p>}
               </div>
 
@@ -223,21 +227,21 @@ export function AdminSettingsContent() {
                   <label htmlFor={countryId} className='text-sm font-medium text-muted-foreground'>
                     Country
                   </label>
-                  <div className='relative'>
-                    <MapPin className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-                    <select
-                      id={countryId}
-                      className='h-10 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                      {...register('locationCountry')}
-                    >
-                      <option value=''>Select country</option>
-                      {countryOptions.map((c) => (
-                        <option key={c.value} value={c.value}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <Controller
+                    name='locationCountry'
+                    control={control}
+                    render={({ field }) => (
+                      <SearchSelect
+                        id={countryId}
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={countryOptions}
+                        placeholder='Select country'
+                        className='rounded-xl'
+                        startIcon={<MapPin className='h-4 w-4' />}
+                      />
+                    )}
+                  />
                   {errors.locationCountry && (
                     <p className='text-xs text-red-600'>{errors.locationCountry.message}</p>
                   )}
@@ -247,21 +251,21 @@ export function AdminSettingsContent() {
                   <label htmlFor={cityId} className='text-sm font-medium text-muted-foreground'>
                     City
                   </label>
-                  <select
-                    id={cityId}
-                    disabled={!selectedCountry}
-                    className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
-                    {...register('locationCity')}
-                  >
-                    <option value=''>
-                      {selectedCountry ? 'Select city' : 'Select country first'}
-                    </option>
-                    {cityOptions.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Controller
+                    name='locationCity'
+                    control={control}
+                    render={({ field }) => (
+                      <SearchSelect
+                        id={cityId}
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={cityOptions}
+                        placeholder={selectedCountry ? 'Select city' : 'Select country first'}
+                        disabled={!selectedCountry}
+                        className='rounded-xl'
+                      />
+                    )}
+                  />
                   {errors.locationCity && (
                     <p className='text-xs text-red-600'>{errors.locationCity.message}</p>
                   )}
@@ -273,18 +277,20 @@ export function AdminSettingsContent() {
                 <label htmlFor={currencyId} className='text-sm font-medium text-muted-foreground'>
                   Currency
                 </label>
-                <select
-                  id={currencyId}
-                  className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                  {...register('currency', { setValueAs: (v) => String(v).toUpperCase() })}
-                >
-                  <option value=''>Select currency</option>
-                  {currencyOptions.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  name='currency'
+                  control={control}
+                  render={({ field }) => (
+                    <SearchSelect
+                      id={currencyId}
+                      value={field.value}
+                      onChange={(v) => field.onChange(v.toUpperCase())}
+                      options={currencyOptions}
+                      placeholder='Select currency'
+                      className='rounded-xl'
+                    />
+                  )}
+                />
                 {errors.currency && (
                   <p className='text-xs text-red-600'>{errors.currency.message}</p>
                 )}

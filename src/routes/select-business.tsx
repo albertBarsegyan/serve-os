@@ -1,12 +1,15 @@
-import {createFileRoute, redirect, useNavigate} from '@tanstack/react-router'
-import {Button} from '#/components/ui/button'
-import {Card, CardDescription, CardFooter, CardHeader, CardTitle} from '#/components/ui/card'
-import {useBusinessesQuery, useBusinessSwitcher,} from '#/features/business/model/business-hooks.ts'
-import logoBg from '#/shared/assets/logo-clean.png'
-import {adminRoutePathname} from '#/shared/libs/constants/route-pathname/admin.ts'
-import {sharedRoutePathname} from '#/shared/libs/constants/route-pathname/shared.ts'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { Button } from '#/components/ui/button'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '#/components/ui/card'
+import {
+  useBusinessesQuery,
+  useBusinessSwitcher,
+} from '#/features/business/model/business-hooks.ts'
+import logoBg from '#/shared/assets/logo.png'
+import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
+import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
-import {LazyImage} from '#/shared/ui/lazy-image.tsx'
+import { LazyImage } from '#/shared/ui/lazy-image.tsx'
 
 export const Route = createFileRoute('/select-business')({
   component: SelectBusinessRoute,

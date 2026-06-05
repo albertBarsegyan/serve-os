@@ -2,11 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { Building2, MapPin } from 'lucide-react'
 import { useEffect, useId, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { FeatureSelector } from '#/components/feature-selector'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import { SearchSelect } from '#/shared/ui/search-select'
 import type {
   CreateBusinessRequest,
   UpdateBusinessRequest,
@@ -61,6 +62,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
     reset,
   } = useForm<UpdateBusinessFormValues>({
@@ -174,17 +176,19 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
           <Label htmlFor={typeId} className='text-sm font-medium'>
             Business Type
           </Label>
-          <select
-            id={typeId}
-            className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-            {...register('type')}
-          >
-            {Object.entries(businessTypeLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <Controller
+            name='type'
+            control={control}
+            render={({ field }) => (
+              <SearchSelect
+                id={typeId}
+                value={field.value}
+                onChange={field.onChange}
+                options={Object.entries(businessTypeLabels).map(([value, label]) => ({ value, label }))}
+                placeholder='Select type'
+              />
+            )}
+          />
           {errors.type && <p className='text-xs text-red-500'>{errors.type.message}</p>}
         </div>
 
@@ -193,23 +197,20 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
             <Label htmlFor={countryId} className='text-sm font-medium'>
               Country
             </Label>
-            <div className='relative'>
-              <MapPin className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-              <select
-                id={countryId}
-                className='h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                {...register('locationCountry')}
-              >
-                <option key='select-country' value=''>
-                  Select country
-                </option>
-                {countryOptions.map((country) => (
-                  <option key={country.label} value={country.value}>
-                    {country.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Controller
+              name='locationCountry'
+              control={control}
+              render={({ field }) => (
+                <SearchSelect
+                  id={countryId}
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={countryOptions}
+                  placeholder='Select country'
+                  startIcon={<MapPin className='h-4 w-4' />}
+                />
+              )}
+            />
             {errors.locationCountry && (
               <p className='text-xs text-red-500'>{errors.locationCountry.message}</p>
             )}
@@ -219,21 +220,20 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
             <Label htmlFor={cityId} className='text-sm font-medium'>
               City
             </Label>
-            <select
-              id={cityId}
-              disabled={!selectedCountry}
-              className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
-              {...register('locationCity')}
-            >
-              <option key='select-city' value=''>
-                {selectedCountry ? 'Select city' : 'Select country first'}
-              </option>
-              {cityOptions.map((city) => (
-                <option key={city.label} value={city.value}>
-                  {city.label}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name='locationCity'
+              control={control}
+              render={({ field }) => (
+                <SearchSelect
+                  id={cityId}
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={cityOptions}
+                  placeholder={selectedCountry ? 'Select city' : 'Select country first'}
+                  disabled={!selectedCountry}
+                />
+              )}
+            />
             {errors.locationCity && (
               <p className='text-xs text-red-500'>{errors.locationCity.message}</p>
             )}
@@ -244,20 +244,19 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
           <Label htmlFor={currencyId} className='text-sm font-medium'>
             Currency
           </Label>
-          <select
-            id={currencyId}
-            className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-            {...register('currency', {
-              setValueAs: (value) => String(value).toUpperCase(),
-            })}
-          >
-            <option value=''>Select currency</option>
-            {currencyOptions.map((currency) => (
-              <option key={currency.value} value={currency.value}>
-                {currency.label}
-              </option>
-            ))}
-          </select>
+          <Controller
+            name='currency'
+            control={control}
+            render={({ field }) => (
+              <SearchSelect
+                id={currencyId}
+                value={field.value}
+                onChange={(v) => field.onChange(v.toUpperCase())}
+                options={currencyOptions}
+                placeholder='Select currency'
+              />
+            )}
+          />
           {errors.currency && <p className='text-xs text-red-500'>{errors.currency.message}</p>}
         </div>
 

@@ -16,9 +16,7 @@ export function useAddToCart() {
       }
 
       return previous.map((item) =>
-        item.productId === productId
-          ? { ...item, quantity: item.quantity + 1 }
-          : item,
+        item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item,
       )
     })
   }

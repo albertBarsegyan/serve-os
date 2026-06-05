@@ -2,7 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { Edit2, Plus, Trash2 } from 'lucide-react'
 import { useId, useState } from 'react'
-import { useForm, type UseFormReturn } from 'react-hook-form'
+import { Controller, useForm, type UseFormReturn } from 'react-hook-form'
+import { SearchSelect } from '#/shared/ui/search-select'
 import type { z } from 'zod'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -495,14 +496,22 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
         >
           Selection type
         </label>
-        <select
-          id={selectionTypeId}
-          className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-          {...form.register('selectionType')}
-        >
-          <option value='SINGLE'>Single choice</option>
-          <option value='MULTIPLE'>Multiple choice</option>
-        </select>
+        <Controller
+          name='selectionType'
+          control={form.control}
+          render={({ field }) => (
+            <SearchSelect
+              id={selectionTypeId}
+              value={field.value ?? 'SINGLE'}
+              onChange={field.onChange}
+              options={[
+                { value: 'SINGLE', label: 'Single choice' },
+                { value: 'MULTIPLE', label: 'Multiple choice' },
+              ]}
+              className='rounded-xl'
+            />
+          )}
+        />
       </div>
 
       <div className='grid grid-cols-2 gap-4'>

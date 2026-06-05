@@ -5,20 +5,10 @@ interface CustomerMenuPageProps {
   tableId: string
   sessionToken: string
   sessionId: string
+  tableName: string
+  businessName: string
 }
 
-export function CustomerMenuPage({
-  businessId,
-  tableId,
-  sessionToken,
-  sessionId,
-}: Readonly<CustomerMenuPageProps>) {
-  return (
-    <CustomerMenuContent
-      businessId={businessId}
-      tableId={tableId}
-      sessionToken={sessionToken}
-      sessionId={sessionId}
-    />
-  )
+export function CustomerMenuPage(props: Readonly<CustomerMenuPageProps>) {
+  return <CustomerMenuContent {...props} />
 }

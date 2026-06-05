@@ -24,6 +24,7 @@ import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
 import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
 import {stringToCommaSeparated} from '#/shared/libs/utils/naming.utils.ts'
 import {WorkingHoursPicker} from '#/widgets/shared/working-hours-picker'
+import {SearchSelect} from '#/shared/ui/search-select'
 
 export const Route = createFileRoute('/setup')({
   component: AdminSetupRoute,
@@ -197,17 +198,20 @@ function AdminSetupRoute() {
                 >
                   Business type
                 </Label>
-                <select
-                  id={typeId}
-                  className='h-14 w-full rounded-xl border border-input bg-background px-4 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                  {...register('type')}
-                >
-                  {Object.entries(businessTypeLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  name='type'
+                  control={control}
+                  render={({ field }) => (
+                    <SearchSelect
+                      id={typeId}
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={Object.entries(businessTypeLabels).map(([value, label]) => ({ value, label }))}
+                      placeholder='Select type'
+                      className='h-14 rounded-xl'
+                    />
+                  )}
+                />
               </div>
 
               <div className='space-y-2'>
@@ -217,22 +221,20 @@ function AdminSetupRoute() {
                 >
                   Currency
                 </Label>
-                <select
-                  id={currencyId}
-                  className={`h-14 w-full rounded-xl border border-input bg-background px-4 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                    errors.currency ? 'border-red-400 ring-2 ring-red-100' : ''
-                  }`}
-                  {...register('currency', {
-                    setValueAs: (value) => String(value).toUpperCase(),
-                  })}
-                >
-                  <option value=''>Select currency</option>
-                  {currencyOptions.map((currency) => (
-                    <option key={currency.value} value={currency.value}>
-                      {currency.label}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  name='currency'
+                  control={control}
+                  render={({ field }) => (
+                    <SearchSelect
+                      id={currencyId}
+                      value={field.value}
+                      onChange={(v) => field.onChange(v.toUpperCase())}
+                      options={currencyOptions}
+                      placeholder='Select currency'
+                      className={`h-14 rounded-xl ${errors.currency ? 'border-red-400 ring-2 ring-red-100' : ''}`}
+                    />
+                  )}
+                />
                 {errors.currency && (
                   <p className='text-xs text-red-500'>{errors.currency.message}</p>
                 )}
@@ -254,23 +256,21 @@ function AdminSetupRoute() {
                     >
                       Country
                     </Label>
-                    <div className='relative'>
-                      <MapPin className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
-                      <select
-                        id={countryId}
-                        className={`h-14 w-full rounded-xl border border-input bg-background pl-12 pr-4 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                          errors.locationCountry ? 'border-red-400 ring-2 ring-red-100' : ''
-                        }`}
-                        {...register('locationCountry')}
-                      >
-                        <option value=''>Select country</option>
-                        {countryOptions.map((country) => (
-                          <option key={country.value} value={country.value}>
-                            {country.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <Controller
+                      name='locationCountry'
+                      control={control}
+                      render={({ field }) => (
+                        <SearchSelect
+                          id={countryId}
+                          value={field.value}
+                          onChange={field.onChange}
+                          options={countryOptions}
+                          placeholder='Select country'
+                          className={`h-14 rounded-xl ${errors.locationCountry ? 'border-red-400 ring-2 ring-red-100' : ''}`}
+                          startIcon={<MapPin className='h-5 w-5' />}
+                        />
+                      )}
+                    />
                     {errors.locationCountry && (
                       <p className='text-xs text-red-500'>{errors.locationCountry.message}</p>
                     )}
@@ -280,23 +280,21 @@ function AdminSetupRoute() {
                     <Label htmlFor={cityId} className='text-xs font-medium text-muted-foreground'>
                       City
                     </Label>
-                    <select
-                      id={cityId}
-                      disabled={!selectedCountry}
-                      className={`h-14 w-full rounded-xl border border-input bg-background px-4 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                        errors.locationCity ? 'border-red-400 ring-2 ring-red-100' : ''
-                      }`}
-                      {...register('locationCity')}
-                    >
-                      <option value=''>
-                        {selectedCountry ? 'Select city' : 'Select a country first'}
-                      </option>
-                      {cityOptions.map((city) => (
-                        <option key={city.value} value={city.value}>
-                          {city.label}
-                        </option>
-                      ))}
-                    </select>
+                    <Controller
+                      name='locationCity'
+                      control={control}
+                      render={({ field }) => (
+                        <SearchSelect
+                          id={cityId}
+                          value={field.value}
+                          onChange={field.onChange}
+                          options={cityOptions}
+                          placeholder={selectedCountry ? 'Select city' : 'Select a country first'}
+                          disabled={!selectedCountry}
+                          className={`h-14 rounded-xl ${errors.locationCity ? 'border-red-400 ring-2 ring-red-100' : ''}`}
+                        />
+                      )}
+                    />
                     {errors.locationCity && (
                       <p className='text-xs text-red-500'>{errors.locationCity.message}</p>
                     )}

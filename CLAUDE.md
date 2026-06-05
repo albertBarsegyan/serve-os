@@ -14,10 +14,18 @@ pnpm format       # biome format only
 pnpm add:component  # add a shadcn component: pnpm add:component button
 ```
 
-Docker:
+Docker (dev):
 ```bash
 pnpm docker:dev   # build + run via docker compose with .env.local
 pnpm docker:stop  # stop containers
+```
+
+Docker (prod):
+```bash
+pnpm docker:prod:build  # build prod image using docker-compose.prod.yml + .env.production
+pnpm docker:prod:up     # start prod containers in detached mode
+pnpm docker:prod:down   # stop prod containers
+pnpm docker:prod:logs   # tail prod container logs
 ```
 
 Required environment variables:

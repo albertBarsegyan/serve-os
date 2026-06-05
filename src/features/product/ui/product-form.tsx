@@ -8,7 +8,7 @@ import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
-import { Select } from '#/components/ui/select'
+import { SearchSelect } from '#/shared/ui/search-select'
 import { Textarea } from '#/components/ui/textarea'
 import type { ModifierGroup } from '#/features/platform/api/platform.types'
 import { modifierGroupsQueryOptions } from '#/features/platform/lib/query-options'
@@ -309,18 +309,15 @@ export function ProductForm({
           name='categoryId'
           control={control}
           render={({ field }) => (
-            <Select
+            <SearchSelect
               id='categoryId'
               value={field.value || ''}
-              onChange={(e) => field.onChange(e.target.value)}
-            >
-              <option value=''>Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </Select>
+              onChange={field.onChange}
+              options={[
+                { value: '', label: 'Select a category' },
+                ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+              ]}
+            />
           )}
         />
         {errors.categoryId && (
@@ -475,17 +472,12 @@ export function ProductForm({
             name='availablePeriod'
             control={control}
             render={({ field }) => (
-              <Select
+              <SearchSelect
                 id='availablePeriod'
                 value={field.value || 'all_day'}
-                onChange={(e) => field.onChange(e.target.value)}
-              >
-                {servicePeriods.map((period) => (
-                  <option key={period} value={period}>
-                    {period.replace('_', ' ').toUpperCase()}
-                  </option>
-                ))}
-              </Select>
+                onChange={field.onChange}
+                options={servicePeriods.map((p) => ({ value: p, label: p.replace('_', ' ').toUpperCase() }))}
+              />
             )}
           />
         </div>
@@ -726,19 +718,15 @@ export function ProductForm({
 
             <div>
               <Label htmlFor='newGroupSelectionType'>Selection type</Label>
-              <Select
+              <SearchSelect
                 id='newGroupSelectionType'
                 value={newGroup.selectionType}
-                onChange={(e) =>
-                  setNewGroup((prev) => ({
-                    ...prev,
-                    selectionType: e.target.value as 'SINGLE' | 'MULTIPLE',
-                  }))
-                }
-              >
-                <option value='SINGLE'>Single choice</option>
-                <option value='MULTIPLE'>Multiple choice</option>
-              </Select>
+                onChange={(v) => setNewGroup((prev) => ({ ...prev, selectionType: v as 'SINGLE' | 'MULTIPLE' }))}
+                options={[
+                  { value: 'SINGLE', label: 'Single choice' },
+                  { value: 'MULTIPLE', label: 'Multiple choice' },
+                ]}
+              />
             </div>
 
             <div className='flex items-center space-x-2'>

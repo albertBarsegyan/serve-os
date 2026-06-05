@@ -120,7 +120,7 @@ export function AdminKitchenContent() {
                 <col.icon className={cn('h-5 w-5', col.color)} />
                 <h3 className='text-lg font-semibold'>{col.title}</h3>
               </div>
-              <Badge variant='secondary' className='rounded-full'>
+              <Badge variant='default' className='rounded-full'>
                 {activeOrders.filter((o) => orderColumn(o.status) === col.key).length}
               </Badge>
             </div>

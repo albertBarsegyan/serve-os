@@ -3,18 +3,18 @@ export { BusinessFeature } from '#/features/business/api/business-domain.ts'
 
 // ── Re-exports: product types (authoritative source for Product shapes) ───────
 export type {
+  Allergen,
+  CreateProductRequest,
+  DietaryFlag,
   ProductResponse as Product,
   ProductVariantResponse,
-  CreateProductRequest,
-  UpdateProductRequest,
   ServicePeriod,
-  DietaryFlag,
-  Allergen,
+  UpdateProductRequest,
 } from '#/features/product/api/product.types.ts'
 export {
-  servicePeriods,
-  dietaryFlags,
   allergens,
+  dietaryFlags,
+  servicePeriods,
 } from '#/features/product/api/product.types.ts'
 
 // ── Staff roles — matches backend StaffRole enum exactly ─────────────────────
@@ -69,18 +69,17 @@ export interface ApiListQuery {
 }
 
 // ── Table sessions ────────────────────────────────────────────────────────────
-export interface TableSession {
-  id: string
-  businessId: string
-  tableId: string
-  token: string
-  isActive: boolean
-  createdAt: string
+export interface ScanSessionRequest {
+  qrCode: string
 }
 
-export interface ScanSessionRequest {
+export interface ScanSessionResponse {
+  sessionToken: string
+  tableSessionId: string
   businessId: string
   tableId: string
+  tableName: string
+  businessName: string
 }
 
 export interface SessionBillItem {

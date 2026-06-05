@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { Copy, Edit2, Search, Trash2, UserPlus } from 'lucide-react'
 import { useId, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -35,6 +35,7 @@ import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { Modal } from '#/shared/ui/modal'
+import { SearchSelect } from '#/shared/ui/search-select'
 
 type InviteFormValues = z.infer<typeof createStaffWithInviteSchema>
 type PasswordFormValues = z.infer<typeof createStaffWithPasswordSchema>
@@ -44,7 +45,8 @@ type UpdateStaffFormValues = z.infer<typeof updateStaffSchema>
 type CreateMode = 'invite' | 'password' | 'pin'
 
 const roleOptions: StaffRole[] = ['MANAGER', 'WAITER', 'CASHIER', 'KITCHEN']
-const allRoles: StaffRole[] = ['MANAGER', 'WAITER', 'CASHIER', 'KITCHEN']
+
+const roleSelectOptions = roleOptions.map((r) => ({ value: r, label: r }))
 
 export function AdminStaffPage() {
   const [search, setSearch] = useState('')
@@ -259,6 +261,7 @@ export function AdminStaffPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className='pl-8'>Name</TableHead>
+                <TableHead>Staff ID</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
@@ -268,7 +271,7 @@ export function AdminStaffPage() {
             <TableBody>
               {isPending && (
                 <TableRow>
-                  <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
+                  <TableCell colSpan={6} className='h-24 text-center text-muted-foreground'>
                     Loading staff...
                   </TableCell>
                 </TableRow>
@@ -276,7 +279,7 @@ export function AdminStaffPage() {
 
               {!isPending && filteredStaff.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
+                  <TableCell colSpan={6} className='h-24 text-center text-muted-foreground'>
                     No staff members found.
                   </TableCell>
                 </TableRow>
@@ -287,21 +290,28 @@ export function AdminStaffPage() {
                   <TableCell className='pl-8 font-bold'>
                     {member.displayName || member.id.slice(0, 8)}
                   </TableCell>
+                  <TableCell>
+                    <button
+                      type='button'
+                      title='Copy full Staff ID'
+                      onClick={() => {
+                        navigator.clipboard.writeText(member.id)
+                        showSuccess('Staff ID copied')
+                      }}
+                      className='flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                    >
+                      {member.id.slice(0, 8)}
+                      <Copy className='h-3 w-3 shrink-0' />
+                    </button>
+                  </TableCell>
                   <TableCell className='text-muted-foreground'>{member.email ?? '-'}</TableCell>
                   <TableCell>
-                    <select
-                      className='h-8 rounded-lg border border-input bg-background px-2 text-xs font-medium'
+                    <SearchSelect
                       value={member.role}
-                      onChange={(event) => {
-                        void changeRole(member.id, event.target.value as StaffRole)
-                      }}
-                    >
-                      {allRoles.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(v) => void changeRole(member.id, v as StaffRole)}
+                      options={roleSelectOptions}
+                      className='h-8 rounded-lg text-xs font-medium'
+                    />
                   </TableCell>
                   <TableCell>
                     <Badge variant={member.isActive ? 'success' : 'outline'} className='capitalize'>
@@ -384,17 +394,19 @@ export function AdminStaffPage() {
             >
               Role
             </label>
-            <select
-              id={editRoleId}
-              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...editForm.register('role')}
-            >
-              {roleOptions.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name='role'
+              control={editForm.control}
+              render={({ field }) => (
+                <SearchSelect
+                  id={editRoleId}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  options={roleSelectOptions}
+                  className='rounded-xl'
+                />
+              )}
+            />
           </div>
 
           <label htmlFor={editActiveId} className='flex items-center gap-2 text-sm'>
@@ -473,17 +485,19 @@ export function AdminStaffPage() {
             >
               Role
             </label>
-            <select
-              id={roleId}
-              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...inviteForm.register('role')}
-            >
-              {roleOptions.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name='role'
+              control={inviteForm.control}
+              render={({ field }) => (
+                <SearchSelect
+                  id={roleId}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  options={roleSelectOptions}
+                  className='rounded-xl'
+                />
+              )}
+            />
           </div>
         </form>
       </Modal>
@@ -548,17 +562,19 @@ export function AdminStaffPage() {
             >
               Role
             </label>
-            <select
-              id={roleId2}
-              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...passwordForm.register('role')}
-            >
-              {roleOptions.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name='role'
+              control={passwordForm.control}
+              render={({ field }) => (
+                <SearchSelect
+                  id={roleId2}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  options={roleSelectOptions}
+                  className='rounded-xl'
+                />
+              )}
+            />
           </div>
           <div className='space-y-1'>
             <label
@@ -626,17 +642,19 @@ export function AdminStaffPage() {
             >
               Role
             </label>
-            <select
-              id={roleId3}
-              className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
-              {...pinForm.register('role')}
-            >
-              {roleOptions.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name='role'
+              control={pinForm.control}
+              render={({ field }) => (
+                <SearchSelect
+                  id={roleId3}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  options={roleSelectOptions}
+                  className='rounded-xl'
+                />
+              )}
+            />
           </div>
           <div className='space-y-1'>
             <label

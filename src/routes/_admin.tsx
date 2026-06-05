@@ -1,14 +1,12 @@
-import {useQueryClient} from '@tanstack/react-query'
 import {
   createFileRoute,
   Link,
   Outlet,
   redirect,
   useLocation,
-  useNavigate,
   useRouteContext,
 } from '@tanstack/react-router'
-import type {LucideIcon} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import {
   Building2,
   Check,
@@ -29,23 +27,25 @@ import {
   Wallet,
   Warehouse,
 } from 'lucide-react'
-import {useEffect, useRef, useState} from 'react'
-import {ThemeSwitcher} from '#/components/theme-switcher.tsx'
-import {Button} from '#/components/ui/button'
-import {authUiMessage} from '#/features/auth/lib/constants/ui-messages.ts'
-import {authUserQueryOptions} from '#/features/auth/lib/query-options.ts'
-import {useLogoutMutation} from '#/features/auth/model/auth-hooks.ts'
-import {useBusinessesQuery, useBusinessSwitcher,} from '#/features/business/model/business-hooks.ts'
-import {cn} from '#/lib/utils.ts'
-import {BusinessFeature, StaffPermission} from '#/shared/lib/permissions/index.ts'
-import {usePermissions} from '#/shared/lib/permissions/use-permissions.ts'
-import {adminRoutePathname} from '#/shared/libs/constants/route-pathname/admin.ts'
-import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
-import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import { useEffect, useRef, useState } from 'react'
+import { ThemeSwitcher } from '#/components/theme-switcher.tsx'
+import { Button } from '#/components/ui/button'
+import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
+import { useLogoutMutation } from '#/features/auth/model/auth-hooks.ts'
+import {
+  useBusinessesQuery,
+  useBusinessSwitcher,
+} from '#/features/business/model/business-hooks.ts'
+import { cn } from '#/lib/utils.ts'
+import { BusinessFeature, StaffPermission } from '#/shared/lib/permissions/index.ts'
+import { usePermissions } from '#/shared/lib/permissions/use-permissions.ts'
+import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
-import {ErrorBoundary} from '#/shared/ui/error-boundary.tsx'
-import {Logo} from '#/shared/ui/logo.tsx'
-import {Modal} from '#/shared/ui/modal'
+import { ErrorBoundary } from '#/shared/ui/error-boundary.tsx'
+import { Logo } from '#/shared/ui/logo.tsx'
+import { Modal } from '#/shared/ui/modal'
 
 function AdminErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
@@ -199,8 +199,7 @@ function AdminLayout() {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const location = useLocation()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+
   const { authUser } = useRouteContext({ from: '/_admin' })
   const { isOwner, canSee, hasPermission } = usePermissions()
 
@@ -251,9 +250,6 @@ function AdminLayout() {
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync()
-
-      await navigate({ to: '/' })
-      queryClient.removeQueries({ queryKey: authUserQueryOptions().queryKey })
       showSuccess(authUiMessage.SUCCESS_LOGOUT)
     } catch (error) {
       showError(getResponseErrorMessage(error))

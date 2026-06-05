@@ -1,5 +1,5 @@
 import { Clock } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
 import { Input } from '#/components/ui/input'
@@ -67,6 +67,10 @@ export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps)
   }
 
   const [hours, setHours] = useState<WorkingHoursEntry[]>(parseWorkingHours())
+
+  useEffect(() => {
+    setHours(parseWorkingHours())
+  }, [value])
 
   // Serialize hours to JSON
   const serializeHours = (entries: WorkingHoursEntry[]): string => {

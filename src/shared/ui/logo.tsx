@@ -1,5 +1,5 @@
 import { cn } from '#/lib/utils.ts'
-import logoSrc from '#/shared/assets/logo-clean.png'
+import logoSrc from '#/shared/assets/logo.png'
 import { LazyImage } from './lazy-image.tsx'
 
 interface LogoProps {

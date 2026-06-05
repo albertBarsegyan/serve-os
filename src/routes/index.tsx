@@ -1,14 +1,16 @@
-import {createFileRoute, redirect} from '@tanstack/react-router'
-import {BarChart3, ChefHat, CreditCard, LayoutDashboard, QrCode, Zap} from 'lucide-react'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { BarChart3, ChefHat, CreditCard, LayoutDashboard, QrCode, Zap } from 'lucide-react'
 import Footer from '#/components/footer.tsx'
 import Header from '#/components/header.tsx'
-import {Button} from '#/components/ui/button.tsx'
-import {Card, CardContent} from '#/components/ui/card'
-import {getPostAuthDestination} from '#/features/business/lib/utils/business-routing.ts'
-import {sharedRoutePathname} from '#/shared/libs/constants/route-pathname/shared.ts'
+import { Button } from '#/components/ui/button.tsx'
+import { Card, CardContent } from '#/components/ui/card'
+import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
+import darkImage from '#/shared/assets/illustrations/dark.png'
+import lightImage from '#/shared/assets/illustrations/light.png'
+import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
-import {ErrorBoundary} from '#/shared/ui/error-boundary'
-import {LazyImage} from '#/shared/ui/lazy-image.tsx'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
+import { LazyImage } from '#/shared/ui/lazy-image.tsx'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -22,10 +24,7 @@ export const Route = createFileRoute('/')({
 function LandingPage() {
   const theme = useThemeStore((s) => s.theme)
 
-  const imagePath =
-    theme === 'light'
-      ? 'src/shared/assets/illustrations/light.png'
-      : 'src/shared/assets/illustrations/dark.png'
+  const imagePath = theme === 'light' ? lightImage : darkImage
 
   return (
     <div className='min-h-screen bg-(--header-bg) text-foreground'>

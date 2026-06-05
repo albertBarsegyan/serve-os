@@ -15,9 +15,9 @@ import {
 import {cn} from '#/lib/utils'
 import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
 import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
-import {Modal} from '#/shared/ui/modal'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import {formatPrice} from '#/shared/libs/utils/price.utils'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import {Modal} from '#/shared/ui/modal'
 
 const ALL_STATUSES: OrderStatus[] = [
   'CREATED',
@@ -193,7 +193,9 @@ function OrderDetailModal({
           {/* Total */}
           <div className='flex items-center justify-between rounded-xl bg-muted px-4 py-3'>
             <span className='text-sm font-semibold'>Total</span>
-            <span className='font-mono font-bold'>{formatPrice(Number(order.totalAmount), currency)}</span>
+            <span className='font-mono font-bold'>
+              {formatPrice(Number(order.totalAmount), currency)}
+            </span>
           </div>
 
           {/* Payment actions */}
@@ -329,7 +331,8 @@ export function AdminOrdersContent() {
           <Button variant='outline' size='sm' className='rounded-full' type='button'>
             <Filter className='mr-2 h-4 w-4' /> Filter
           </Button>
-          <Button size='sm' className='rounded-full' type='button' variant='secondary'>
+
+          <Button disabled={!orders.length} size='sm' className='rounded-full' type='button'>
             Export CSV
           </Button>
         </div>
@@ -469,16 +472,10 @@ export function AdminOrdersContent() {
                             if (next) void moveOrderForward(order.id, next)
                           }}
                         >
-                          To{' '}
-                          {String(nextStatus[order.status]).toLowerCase().replaceAll('_', ' ')}
+                          To {String(nextStatus[order.status]).toLowerCase().replaceAll('_', ' ')}
                         </Button>
                       )}
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='rounded-full'
-                        type='button'
-                      >
+                      <Button variant='ghost' size='icon' className='rounded-full' type='button'>
                         <MoreHorizontal className='h-4 w-4' />
                       </Button>
                     </div>
@@ -491,7 +488,11 @@ export function AdminOrdersContent() {
       </Card>
 
       {detailOrderId && (
-        <OrderDetailModal orderId={detailOrderId} onClose={() => setDetailOrderId(null)} currency={currency} />
+        <OrderDetailModal
+          orderId={detailOrderId}
+          onClose={() => setDetailOrderId(null)}
+          currency={currency}
+        />
       )}
     </div>
   )
