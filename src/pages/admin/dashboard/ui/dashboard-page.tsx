@@ -3,12 +3,21 @@ import { CreditCard, ShoppingBag, TrendingUp, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import { ordersQueryOptions, paymentsQueryOptions, staffQueryOptions } from '#/features/platform/lib/query-options.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import {
+  ordersQueryOptions,
+  paymentsQueryOptions,
+  staffQueryOptions,
+} from '#/features/platform/lib/query-options.ts'
+import { StaffPermission } from '#/shared/lib/permissions/index.ts'
+import { usePermissions } from '#/shared/lib/permissions/use-permissions.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 
 function formatStatus(s: string) {
-  return s.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+  return s
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 export function AdminDashboardPage() {
@@ -16,16 +25,24 @@ export function AdminDashboardPage() {
   const businessName = useActiveBusinessStore((s) => s.active?.name)
   const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
 
+  const { isOwner, hasPermission } = usePermissions()
+  const canViewPayments =
+    isOwner() ||
+    hasPermission(StaffPermission.PAYMENT_TAKE) ||
+    hasPermission(StaffPermission.REPORTS_VIEW)
+  const canViewStaff = isOwner() || hasPermission(StaffPermission.STAFF_MANAGE)
+
   const { data: orders = [], isPending: ordersLoading } = useQuery(ordersQueryOptions())
-  const { data: payments = [], isPending: paymentsLoading } = useQuery(paymentsQueryOptions())
-  const { data: staff = [] } = useQuery(staffQueryOptions(businessId))
+  const { data: payments = [], isPending: paymentsLoading } = useQuery({
+    ...paymentsQueryOptions(),
+    enabled: canViewPayments,
+  })
+  const { data: staff = [] } = useQuery({ ...staffQueryOptions(businessId), enabled: canViewStaff })
 
   const stats = useMemo(() => {
     const today = new Date().toDateString()
 
-    const todayOrders = orders.filter(
-      (o) => new Date(o.createdAt).toDateString() === today,
-    )
+    const todayOrders = orders.filter((o) => new Date(o.createdAt).toDateString() === today)
 
     const confirmedPayments = payments.filter((p) => p.status === 'CONFIRMED')
     const totalRevenue = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0)
@@ -60,7 +77,7 @@ export function AdminDashboardPage() {
     [orders],
   )
 
-  const isLoading = ordersLoading || paymentsLoading
+  const isLoading = ordersLoading || (canViewPayments && paymentsLoading)
 
   return (
     <div className='space-y-8'>
@@ -81,31 +98,29 @@ export function AdminDashboardPage() {
             <ShoppingBag className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-3xl font-black'>
-              {isLoading ? '—' : stats.todayOrders}
-            </div>
-            <p className='mt-1 text-xs text-muted-foreground'>
-              {stats.totalOrders} total all-time
-            </p>
+            <div className='text-3xl font-black'>{isLoading ? '—' : stats.todayOrders}</div>
+            <p className='mt-1 text-xs text-muted-foreground'>{stats.totalOrders} total all-time</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>
-              Today's Revenue
-            </CardTitle>
-            <TrendingUp className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-black'>
-              {isLoading ? '—' : formatPrice(stats.todayRevenue, currency)}
-            </div>
-            <p className='mt-1 text-xs text-muted-foreground'>
-              {formatPrice(stats.totalRevenue, currency)} total confirmed
-            </p>
-          </CardContent>
-        </Card>
+        {canViewPayments && (
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium text-muted-foreground'>
+                Today's Revenue
+              </CardTitle>
+              <TrendingUp className='h-4 w-4 text-muted-foreground' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-3xl font-black'>
+                {isLoading ? '—' : formatPrice(stats.todayRevenue, currency)}
+              </div>
+              <p className='mt-1 text-xs text-muted-foreground'>
+                {formatPrice(stats.totalRevenue, currency)} total confirmed
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
@@ -115,32 +130,32 @@ export function AdminDashboardPage() {
             <ShoppingBag className='h-4 w-4 text-amber-500' />
           </CardHeader>
           <CardContent>
-            <div className='text-3xl font-black'>
-              {isLoading ? '—' : stats.activeOrders}
-            </div>
+            <div className='text-3xl font-black'>{isLoading ? '—' : stats.activeOrders}</div>
             <p className='mt-1 text-xs text-muted-foreground'>in progress right now</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>
-              Pending Payments
-            </CardTitle>
-            <CreditCard className='h-4 w-4 text-amber-500' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-black'>
-              {isLoading ? '—' : formatPrice(stats.pendingRevenue, currency)}
-            </div>
-            <p className='mt-1 text-xs text-muted-foreground'>awaiting confirmation</p>
-          </CardContent>
-        </Card>
+        {canViewPayments && (
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium text-muted-foreground'>
+                Pending Payments
+              </CardTitle>
+              <CreditCard className='h-4 w-4 text-amber-500' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-3xl font-black'>
+                {isLoading ? '—' : formatPrice(stats.pendingRevenue, currency)}
+              </div>
+              <p className='mt-1 text-xs text-muted-foreground'>awaiting confirmation</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+      <div className={canViewStaff ? 'grid grid-cols-1 gap-6 lg:grid-cols-3' : 'space-y-6'}>
         {/* Recent orders */}
-        <Card className='lg:col-span-2'>
+        <Card className={canViewStaff ? 'lg:col-span-2' : ''}>
           <CardHeader className='flex flex-row items-center justify-between'>
             <CardTitle className='text-base'>Recent Orders</CardTitle>
             <Badge variant='outline' className='text-xs'>
@@ -159,10 +174,7 @@ export function AdminDashboardPage() {
             ) : (
               <div className='divide-y divide-border'>
                 {recentOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className='flex items-center justify-between px-6 py-3'
-                  >
+                  <div key={order.id} className='flex items-center justify-between px-6 py-3'>
                     <div className='flex items-center gap-3'>
                       <span className='font-mono text-xs font-semibold text-muted-foreground'>
                         #{order.id.slice(0, 8).toUpperCase()}
@@ -212,32 +224,34 @@ export function AdminDashboardPage() {
         </Card>
 
         {/* Staff summary */}
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between'>
-            <CardTitle className='text-base'>Staff</CardTitle>
-            <Users className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent className='space-y-3'>
-            {staff.length === 0 ? (
-              <p className='text-sm text-muted-foreground'>No staff yet.</p>
-            ) : (
-              staff.slice(0, 6).map((member) => (
-                <div key={member.id} className='flex items-center justify-between'>
-                  <div>
-                    <p className='text-sm font-medium'>{member.displayName}</p>
-                    <p className='text-xs text-muted-foreground'>{member.role}</p>
+        {canViewStaff && (
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between'>
+              <CardTitle className='text-base'>Staff</CardTitle>
+              <Users className='h-4 w-4 text-muted-foreground' />
+            </CardHeader>
+            <CardContent className='space-y-3'>
+              {staff.length === 0 ? (
+                <p className='text-sm text-muted-foreground'>No staff yet.</p>
+              ) : (
+                staff.slice(0, 6).map((member) => (
+                  <div key={member.id} className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-sm font-medium'>{member.displayName}</p>
+                      <p className='text-xs text-muted-foreground'>{member.role}</p>
+                    </div>
+                    <Badge variant={member.isActive ? 'success' : 'outline'} className='text-xs'>
+                      {member.isActive ? 'active' : 'inactive'}
+                    </Badge>
                   </div>
-                  <Badge variant={member.isActive ? 'success' : 'outline'} className='text-xs'>
-                    {member.isActive ? 'active' : 'inactive'}
-                  </Badge>
-                </div>
-              ))
-            )}
-            {staff.length > 6 && (
-              <p className='text-xs text-muted-foreground'>+{staff.length - 6} more</p>
-            )}
-          </CardContent>
-        </Card>
+                ))
+              )}
+              {staff.length > 6 && (
+                <p className='text-xs text-muted-foreground'>+{staff.length - 6} more</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

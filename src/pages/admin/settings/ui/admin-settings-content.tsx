@@ -1,13 +1,12 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Building2, MapPin, Save, Settings } from 'lucide-react'
-import { useEffect, useId, useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { SearchSelect } from '#/shared/ui/search-select'
-import { FeatureSelector } from '#/components/feature-selector'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
-import type { UpdateBusinessRequest } from '#/features/business/api/business.types'
-import { type BusinessType, businessTypeLabels } from '#/features/business/api/business-domain'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {Building2, MapPin, Save, Settings} from 'lucide-react'
+import {useEffect, useId, useMemo, useState} from 'react'
+import {Controller, useForm} from 'react-hook-form'
+import {FeatureSelector} from '#/components/feature-selector'
+import {Button} from '#/components/ui/button'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '#/components/ui/card'
+import type {UpdateBusinessRequest} from '#/features/business/api/business.types'
+import {type BusinessType, businessTypeLabels} from '#/features/business/api/business-domain'
 import {
   updateBusinessFormSchema,
   type UpdateBusinessFormValues,
@@ -18,14 +17,12 @@ import {
   getCountryOptions,
   getCurrencyOptions,
 } from '#/features/business/lib/utils/location-options'
-import {
-  useBusinessesQuery,
-  useUpdateBusinessMutation,
-} from '#/features/business/model/business-hooks'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
+import {useBusinessesQuery, useUpdateBusinessMutation,} from '#/features/business/model/business-hooks'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
-import { WorkingHoursPicker } from '#/widgets/shared/working-hours-picker.tsx'
+import {SearchSelect} from '#/shared/ui/search-select'
+import {WorkingHoursPicker} from '#/widgets/shared/working-hours-picker.tsx'
 
 export function AdminSettingsContent() {
   const activeBusiness = useActiveBusinessStore((s) => s.active)
@@ -212,7 +209,10 @@ export function AdminSettingsContent() {
                       id={typeId}
                       value={field.value}
                       onChange={field.onChange}
-                      options={Object.entries(businessTypeLabels).map(([value, label]) => ({ value, label }))}
+                      options={Object.entries(businessTypeLabels).map(([value, label]) => ({
+                        value,
+                        label,
+                      }))}
                       placeholder='Select type'
                       className='rounded-xl'
                     />
@@ -333,7 +333,7 @@ export function AdminSettingsContent() {
                   setValue('features', features)
                   setHasUnsaved(true)
                 }}
-                selectedType={selectedType as BusinessType}
+                selectedType={selectedType}
               />
             </CardContent>
           </Card>

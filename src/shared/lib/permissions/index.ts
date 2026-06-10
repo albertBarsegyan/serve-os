@@ -26,12 +26,13 @@ export const StaffPermission = {
   REPORTS_VIEW: 'reports_view',
   MENU_VIEW: 'menu_view',
   MENU_EDIT: 'menu_edit',
+  MENU_AVAILABILITY: 'menu_availability',
 } as const
 export type StaffPermission = (typeof StaffPermission)[keyof typeof StaffPermission]
 
+export type { BusinessFeature as BusinessFeatureValue } from '#/features/business/api/business-domain.ts'
 // Re-export from authoritative frontend source to avoid duplication
 export { BusinessFeature } from '#/features/business/api/business-domain.ts'
-export type { BusinessFeature as BusinessFeatureValue } from '#/features/business/api/business-domain.ts'
 
 // Mirror of backend ROLE_PERMISSION_MAP (src/common/enums/staff-permission.enum.ts)
 export const ROLE_PERMISSION_MAP: Record<StaffRole, StaffPermission[]> = {
@@ -50,10 +51,10 @@ export const ROLE_PERMISSION_MAP: Record<StaffRole, StaffPermission[]> = {
   ],
 
   [StaffRole.KITCHEN]: [
-    StaffPermission.ORDER_VIEW,
     StaffPermission.KITCHEN_VIEW,
     StaffPermission.KITCHEN_UPDATE,
     StaffPermission.MENU_VIEW,
+    StaffPermission.MENU_AVAILABILITY,
   ],
 
   [StaffRole.CASHIER]: [

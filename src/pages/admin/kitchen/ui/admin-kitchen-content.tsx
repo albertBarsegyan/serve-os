@@ -129,13 +129,7 @@ export function AdminKitchenContent() {
               {activeOrders
                 .filter((o) => orderColumn(o.status) === col.key)
                 .map((order) => (
-                  <Card
-                    key={order.id}
-                    className={cn(
-                      'border-l-4 transition-all hover:shadow-lg',
-                      col.key === 'queue' ? 'border-l-amber-500' : 'border-l-transparent',
-                    )}
-                  >
+                  <Card key={order.id} className={cn('border transition-all hover:shadow-lg')}>
                     <CardHeader className='flex flex-row items-center justify-between pb-2'>
                       <div className='flex flex-col'>
                         <span className='text-sm font-bold'>
@@ -188,7 +182,7 @@ export function AdminKitchenContent() {
                           <Button
                             type='button'
                             variant='outline'
-                            className='w-full rounded-xl border-emerald-500 text-emerald-600 hover:bg-emerald-50'
+                            className='w-full rounded-xl border-emerald-500 text-emerald-600'
                             disabled={updateStatusMutation.isPending}
                             onClick={() => advance(order.id, 'DELIVERED')}
                           >

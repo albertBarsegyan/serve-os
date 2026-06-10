@@ -144,11 +144,14 @@ export interface CreateMenuCategoryRequest {
 export type UpdateMenuCategoryRequest = Partial<CreateMenuCategoryRequest>
 
 // ── Modifiers ─────────────────────────────────────────────────────────────────
+export type ModifierPriceType = 'adjustment' | 'fixed'
+
 export interface Modifier {
   id: string
   groupId: string
   name: string
   priceAdjustment: number
+  priceType: ModifierPriceType
   position: number
   isActive: boolean
 }
@@ -181,6 +184,7 @@ export type UpdateModifierGroupRequest = Partial<CreateModifierGroupRequest>
 export interface AddModifierRequest {
   name: string
   priceAdjustment: number
+  priceType?: ModifierPriceType
   position?: number
   isActive?: boolean
 }
@@ -214,6 +218,8 @@ export interface Order {
   type: OrderType
   paymentStatus: 'UNPAID' | 'PAID'
   totalAmount: string
+  customerName?: string | null
+  notes?: string | null
   items: OrderItem[]
   createdAt: string
   // Populated when orders are fetched with table relation (e.g. kitchen endpoint)
@@ -231,6 +237,26 @@ export interface CreateOrderRequest {
   sessionToken?: string
   tableId?: string
   items: CreateOrderItemRequest[]
+}
+
+// Staff-initiated order creation
+export interface CreateStaffOrderItemRequest {
+  productId: string
+  quantity: number
+  notes?: string
+  selectedModifiers?: Array<{
+    modifierId: string
+    name: string
+    priceAdjustment: number
+  }>
+}
+
+export interface CreateStaffOrderRequest {
+  type: OrderType
+  tableId?: string
+  items: CreateStaffOrderItemRequest[]
+  customerName?: string
+  notes?: string
 }
 
 // Status transitions: CREATED and CONFIRMED are starting states, not valid targets

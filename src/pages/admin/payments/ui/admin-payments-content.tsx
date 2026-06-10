@@ -3,7 +3,7 @@ import { CheckCircle2, CreditCard, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import {
   Table,
   TableBody,
@@ -14,18 +14,14 @@ import {
 } from '#/components/ui/table'
 import type { PaymentMethod, PaymentStatus } from '#/features/platform/api/platform.types.ts'
 import { paymentsQueryOptions } from '#/features/platform/lib/query-options.ts'
-import {
-  useConfirmPaymentMutation,
-} from '#/features/platform/model/platform-hooks.ts'
+import { useConfirmPaymentMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 
-function statusBadgeVariant(
-  status: PaymentStatus,
-): 'success' | 'warning' | 'outline' {
+function statusBadgeVariant(status: PaymentStatus): 'success' | 'warning' | 'outline' {
   if (status === 'CONFIRMED') return 'success'
   if (status === 'PENDING') return 'warning'
   return 'outline'
@@ -56,9 +52,7 @@ export function AdminPaymentsContent() {
 
   const filteredPayments = useMemo(() => {
     const byStatus =
-      activeFilter === 'all'
-        ? payments
-        : payments.filter((p) => p.status === activeFilter)
+      activeFilter === 'all' ? payments : payments.filter((p) => p.status === activeFilter)
 
     const needle = search.trim().toLowerCase()
     if (!needle) return byStatus
@@ -82,9 +76,7 @@ export function AdminPaymentsContent() {
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
           <h1 className='text-3xl font-semibold tracking-tight'>Payments</h1>
-          <p className='text-muted-foreground'>
-            Review and confirm payments across all orders.
-          </p>
+          <p className='text-muted-foreground'>Review and confirm payments across all orders.</p>
         </div>
         <div className='flex items-center gap-2'>
           <Badge variant='outline' className='h-8 rounded-full bg-muted px-4 text-xs font-semibold'>
@@ -194,12 +186,13 @@ export function AdminPaymentsContent() {
                       minute: '2-digit',
                     })}
                   </TableCell>
+
                   <TableCell className='pr-8 text-right'>
                     {payment.status === 'PENDING' && (
                       <Button
                         size='sm'
                         variant='secondary'
-                        className='rounded-full'
+                        className='rounded-full text-primary-foreground'
                         disabled={confirmMutation.isPending}
                         onClick={() => void handleConfirm(payment.id)}
                       >

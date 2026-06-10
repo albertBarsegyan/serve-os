@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CATEGORIES_QUERY_KEY } from '#/entities/product/api/category-hooks.ts'
+import {useMutation, useQueryClient} from '@tanstack/react-query'
+import {CATEGORIES_QUERY_KEY} from '#/entities/product/api/category-hooks.ts'
+import {authUserQueryOptions} from '#/features/auth/lib/query-options.ts'
 import type {
   AcceptInviteRequest,
   AddModifierRequest,
@@ -10,6 +11,7 @@ import type {
   CreateOrderRequest,
   CreatePaymentRequest,
   CreateProductRequest,
+  CreateStaffOrderRequest,
   CreateStaffWithInviteRequest,
   CreateStaffWithPasswordRequest,
   CreateStaffWithPinRequest,
@@ -27,7 +29,7 @@ import type {
   UpdateStaffRoleRequest,
   UpdateTableRequest,
 } from '#/features/platform/api/platform.types.ts'
-import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys.ts'
+import {platformQueryKeys} from '#/features/platform/lib/constants/platform-query-keys.ts'
 import {
   acceptStaffInvite,
   addModifierToGroup,
@@ -39,6 +41,7 @@ import {
   createOrder,
   createPayment,
   createProduct,
+  createStaffOrder,
   createStaffWithInvite,
   createStaffWithPassword,
   createStaffWithPin,
@@ -55,6 +58,7 @@ import {
   processPosPayment,
   removeStaff,
   scanSession,
+  setProductAvailability,
   syncProductModifierGroups,
   updateMenuCategory,
   updateModifier,
@@ -194,6 +198,19 @@ export function useDeleteProductMutation() {
 
   return useMutation({
     mutationFn: (productId: string) => deleteProduct(productId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+    },
+  })
+}
+
+export function useSetProductAvailabilityMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ productId, isAvailable }: { productId: string; isAvailable: boolean }) =>
+      setProductAvailability(productId, isAvailable),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
@@ -351,6 +368,17 @@ export function useCreateOrderMutation() {
   })
 }
 
+export function useCreateStaffOrderMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: CreateStaffOrderRequest) => createStaffOrder(data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
+    },
+  })
+}
+
 export function useUpdateOrderStatusMutation() {
   const queryClient = useQueryClient()
 
@@ -470,6 +498,7 @@ export function useCreateStaffWithPinMutation() {
 }
 
 export function useLoginStaffWithPasswordMutation() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({
       businessId,
@@ -478,13 +507,23 @@ export function useLoginStaffWithPasswordMutation() {
       businessId: string
       data: StaffLoginWithPasswordRequest
     }) => loginStaffWithPassword(businessId, data),
+    onSuccess: (data) => {
+      if (!('requiresPasswordChange' in data)) {
+        queryClient.setQueryData(authUserQueryOptions().queryKey, data)
+      }
+    },
   })
 }
 
 export function useLoginStaffWithPinMutation() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: ({ businessId, data }: { businessId: string; data: StaffLoginWithPinRequest }) =>
       loginStaffWithPin(businessId, data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(authUserQueryOptions().queryKey, data)
+    },
   })
 }
 

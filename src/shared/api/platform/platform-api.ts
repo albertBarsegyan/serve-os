@@ -1,40 +1,43 @@
+import type {ResponsePromise} from 'ky'
+import type {StaffAuthUser} from '#/features/auth/api/auth.types.ts'
 import type {
-  AcceptInviteRequest,
-  AddModifierRequest,
-  ChangePasswordRequest,
-  ConfirmPaymentRequest,
-  CreateMenuCategoryRequest,
-  CreateModifierGroupRequest,
-  CreateOrderRequest,
-  CreatePaymentRequest,
-  CreateProductRequest,
-  CreateStaffWithInviteRequest,
-  CreateStaffWithPasswordRequest,
-  CreateStaffWithPinRequest,
-  CreateTableRequest,
-  MenuCategory,
-  Modifier,
-  ModifierGroup,
-  Order,
-  OrderStatus,
-  Payment,
-  ProcessPaymentRequest,
-  Product,
-  ScanSessionRequest,
-  ScanSessionResponse,
-  SessionBill,
-  StaffLoginWithPasswordRequest,
-  StaffLoginWithPinRequest,
-  StaffMember,
-  TableEntity,
-  UpdateMenuCategoryRequest,
-  UpdateModifierGroupRequest,
-  UpdateModifierRequest,
-  UpdateOrderStatusRequest,
-  UpdateProductRequest,
-  UpdateStaffRequest,
-  UpdateStaffRoleRequest,
-  UpdateTableRequest,
+    AcceptInviteRequest,
+    AddModifierRequest,
+    ChangePasswordRequest,
+    ConfirmPaymentRequest,
+    CreateMenuCategoryRequest,
+    CreateModifierGroupRequest,
+    CreateOrderRequest,
+    CreatePaymentRequest,
+    CreateProductRequest,
+    CreateStaffOrderRequest,
+    CreateStaffWithInviteRequest,
+    CreateStaffWithPasswordRequest,
+    CreateStaffWithPinRequest,
+    CreateTableRequest,
+    MenuCategory,
+    Modifier,
+    ModifierGroup,
+    Order,
+    OrderStatus,
+    Payment,
+    ProcessPaymentRequest,
+    Product,
+    ScanSessionRequest,
+    ScanSessionResponse,
+    SessionBill,
+    StaffLoginWithPasswordRequest,
+    StaffLoginWithPinRequest,
+    StaffMember,
+    TableEntity,
+    UpdateMenuCategoryRequest,
+    UpdateModifierGroupRequest,
+    UpdateModifierRequest,
+    UpdateOrderStatusRequest,
+    UpdateProductRequest,
+    UpdateStaffRequest,
+    UpdateStaffRoleRequest,
+    UpdateTableRequest,
 } from '#/features/platform/api/platform.types.ts'
 import {clientApiInstance} from '#/shared/api/client-instance.ts'
 
@@ -105,8 +108,8 @@ export function updateMenuCategory(
     .json<MenuCategory>()
 }
 
-export function deleteMenuCategory(categoryId: string): Promise<void> {
-  return clientApiInstance.delete(`menu/categories/${categoryId}`).json<void>()
+export function deleteMenuCategory(categoryId: string): ResponsePromise<void> {
+  return clientApiInstance.delete(`menu/categories/${categoryId}`)
 }
 
 // --- Products ---
@@ -132,6 +135,12 @@ export function listProducts(filters?: {
 
 export function updateProduct(productId: string, data: UpdateProductRequest): Promise<Product> {
   return clientApiInstance.patch(`menu/products/${productId}`, { json: data }).json<Product>()
+}
+
+export function setProductAvailability(productId: string, isAvailable: boolean): Promise<Product> {
+  return clientApiInstance
+    .patch(`menu/products/${productId}/availability`, { json: { isAvailable } })
+    .json<Product>()
 }
 
 export function deleteProduct(productId: string): Promise<{ message: string }> {
@@ -230,6 +239,10 @@ export function createOrder(data: CreateOrderRequest): Promise<Order> {
   return clientApiInstance.post('orders', { json: data }).json<Order>()
 }
 
+export function createStaffOrder(data: CreateStaffOrderRequest): Promise<Order> {
+  return clientApiInstance.post('orders/staff', { json: data }).json<Order>()
+}
+
 export function updateOrderStatus(orderId: string, data: UpdateOrderStatusRequest): Promise<Order> {
   return clientApiInstance.patch(`orders/${orderId}/status`, { json: data }).json<Order>()
 }
@@ -308,24 +321,29 @@ export function createStaffWithPin(
     .json<StaffMember>()
 }
 
-// Backend returns { accessToken } and also sets staff_access_token cookie.
-// The cookie is the primary auth mechanism; the body field is supplementary.
+export type StaffLoginSuccess = { tokens: { accessToken: string }; user: StaffAuthUser }
+export type StaffLoginRequiresPasswordChange = {
+  requiresPasswordChange: true
+  staffId: string
+  tokens: { accessToken: string }
+}
+
 export function loginStaffWithPassword(
   businessId: string,
   data: StaffLoginWithPasswordRequest,
-): Promise<{ accessToken: string } | { requirePasswordChange: boolean }> {
+): Promise<StaffLoginSuccess | StaffLoginRequiresPasswordChange> {
   return clientApiInstance
     .post(`businesses/${businessId}/staff/login`, { json: data })
-    .json<{ accessToken: string } | { requirePasswordChange: boolean }>()
+    .json<StaffLoginSuccess | StaffLoginRequiresPasswordChange>()
 }
 
 export function loginStaffWithPin(
   businessId: string,
   data: StaffLoginWithPinRequest,
-): Promise<{ accessToken: string }> {
+): Promise<StaffLoginSuccess> {
   return clientApiInstance
     .post(`businesses/${businessId}/staff/login/pin`, { json: data })
-    .json<{ accessToken: string }>()
+    .json<StaffLoginSuccess>()
 }
 
 export function logoutStaff(businessId: string): Promise<void> {
@@ -340,11 +358,11 @@ export function changePassword(data: ChangePasswordRequest): Promise<void> {
   return clientApiInstance.post('staff/change-password', { json: data }).json<void>()
 }
 
-export function listStaff(businessId: string): Promise<StaffMember[]> {
-  return clientApiInstance
+export async function listStaff(businessId: string): Promise<StaffMember[]> {
+  const payload = await clientApiInstance
     .get(`businesses/${businessId}/staff`)
     .json<ListResponse<StaffMember>>()
-    .then(unwrapList)
+  return unwrapList(payload)
 }
 
 export function getStaffById(businessId: string, staffId: string): Promise<StaffMember> {

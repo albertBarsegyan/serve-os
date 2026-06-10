@@ -33,6 +33,7 @@ export const createProductFormSchema = z.object({
     .optional(),
   availablePeriod: z.enum(servicePeriods).optional(),
   sortOrder: z.coerce.number().optional(),
+  isAvailable: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
   dietaryFlags: z.array(z.enum(dietaryFlags)).optional(),
   allergens: z.array(z.enum(allergens)).optional(),

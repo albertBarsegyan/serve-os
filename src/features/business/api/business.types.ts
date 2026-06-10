@@ -34,11 +34,12 @@ export interface UpdateBusinessRequest {
 export interface BusinessResponse {
   id: string
   name: string
-  type: BusinessType
+  type: keyof typeof BusinessType
   features: BusinessFeature[]
   location: string
   currency: string
   workingHours?: string
+  slug: string
   isActive: boolean
   createdAt: string
   updatedAt: string

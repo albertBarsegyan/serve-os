@@ -8,7 +8,7 @@ export const updateBusinessRequestSchema = z.object({
   payload: z.object({
     name: z.string().min(1).optional(),
 
-    type: z.enum(businessTypes).optional(),
+    type: z.enum(businessTypes),
 
     location: z.string().min(1).optional(),
 

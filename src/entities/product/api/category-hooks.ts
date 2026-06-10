@@ -70,8 +70,8 @@ export function useDeleteCategory() {
   return useMutation({
     mutationFn: ({ businessId, categoryId }: { businessId: string; categoryId: string }) =>
       deleteCategoryServerFn({ data: { businessId, categoryId } }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: [CATEGORIES_QUERY_KEY, variables.businessId],
       })
     },

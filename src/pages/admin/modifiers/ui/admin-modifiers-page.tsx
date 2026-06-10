@@ -16,7 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import type { Modifier, ModifierGroup } from '#/features/platform/api/platform.types.ts'
+import type {
+  Modifier,
+  ModifierGroup,
+  ModifierPriceType,
+} from '#/features/platform/api/platform.types.ts'
 import {
   modifierGroupsQueryOptions,
   modifiersQueryOptions,
@@ -85,6 +89,7 @@ export function AdminModifiersPage() {
     resolver: zodResolver(addModifierSchema),
     defaultValues: {
       name: '',
+      priceType: 'adjustment',
       priceAdjustment: 0,
       isActive: true,
     },
@@ -115,6 +120,7 @@ export function AdminModifiersPage() {
     setEditingModifier(modifier)
     updateModifierForm.reset({
       name: modifier.name,
+      priceType: modifier.priceType,
       priceAdjustment: modifier.priceAdjustment,
       isActive: modifier.isActive,
       position: modifier.position,
@@ -170,6 +176,7 @@ export function AdminModifiersPage() {
       showSuccess('Modifier added')
       addModifierForm.reset({
         name: '',
+        priceType: 'adjustment',
         priceAdjustment: 0,
         isActive: true,
       })
@@ -307,7 +314,7 @@ export function AdminModifiersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className='pl-8'>Name</TableHead>
-                    <TableHead>Price Adjustment</TableHead>
+                    <TableHead>Price</TableHead>
                     <TableHead>Position</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className='pr-8 text-right'>Actions</TableHead>
@@ -334,9 +341,14 @@ export function AdminModifiersPage() {
                     <TableRow key={modifier.id}>
                       <TableCell className='pl-8 font-bold'>{modifier.name}</TableCell>
                       <TableCell className='font-mono'>
-                        {Number(modifier.priceAdjustment) === 0
+                        {Number(modifier.priceAdjustment) === 0 && modifier.priceType !== 'fixed'
                           ? 'Free'
-                          : `+${formatPrice(Number(modifier.priceAdjustment), currency)}`}
+                          : modifier.priceType === 'fixed'
+                            ? formatPrice(Number(modifier.priceAdjustment), currency)
+                            : `+${formatPrice(Number(modifier.priceAdjustment), currency)}`}
+                        {modifier.priceType === 'fixed' && (
+                          <span className='ml-1 text-xs text-muted-foreground'>(fixed)</span>
+                        )}
                       </TableCell>
                       <TableCell className='text-muted-foreground'>{modifier.position}</TableCell>
                       <TableCell>
@@ -573,10 +585,13 @@ function ModifierForm({
   form: UseFormReturn<UpdateModifierValues>
 }>) {
   const nameId = useId()
+  const priceTypeId = useId()
   const priceId = useId()
   const positionId = useId()
   const activeId = useId()
   const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+
+  const priceType = form.watch('priceType') ?? 'adjustment'
 
   return (
     <form className='space-y-4'>
@@ -596,15 +611,40 @@ function ModifierForm({
       </div>
 
       <div className='space-y-1'>
+        <label
+          htmlFor={priceTypeId}
+          className='text-xs font-semibold uppercase text-muted-foreground'
+        >
+          Price type
+        </label>
+        <Controller
+          name='priceType'
+          control={form.control}
+          render={({ field }) => (
+            <SearchSelect
+              id={priceTypeId}
+              value={field.value ?? 'adjustment'}
+              onChange={(v) => field.onChange(v as ModifierPriceType)}
+              options={[
+                { value: 'adjustment', label: 'Price adjustment (added to base price)' },
+                { value: 'fixed', label: 'Fixed price (overrides base price)' },
+              ]}
+              className='rounded-xl'
+            />
+          )}
+        />
+      </div>
+
+      <div className='space-y-1'>
         <label htmlFor={priceId} className='text-xs font-semibold uppercase text-muted-foreground'>
-          Price adjustment ({currency})
+          {priceType === 'fixed' ? `Fixed price (${currency})` : `Price adjustment (${currency})`}
         </label>
         <input
           id={priceId}
           type='number'
           step='0.01'
           min='0'
-          placeholder='0.00'
+          placeholder={priceType === 'fixed' ? '0.00' : '+0.00'}
           className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm font-mono'
           {...form.register('priceAdjustment', { valueAsNumber: true })}
         />

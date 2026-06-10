@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AdminPaymentsPage } from '#/pages/admin/payments/ui/admin-payments-page'
-import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import { StaffPermission } from '#/shared/lib/permissions/index.ts'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/_admin/payments')({
   component: AdminPaymentsPage,

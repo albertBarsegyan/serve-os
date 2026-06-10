@@ -62,7 +62,7 @@ function StaffAcceptInvitePage() {
       await acceptMutation.mutateAsync({ token, newPassword: values.newPassword })
       showSuccess('Password set — you can now log in.')
 
-      await navigate({ to: '/staff-login', search: { businessId: activeBusiness?.id as string } })
+      await navigate({ to: `/b/${activeBusiness?.slug}/staff-login` })
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }

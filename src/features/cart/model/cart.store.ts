@@ -18,7 +18,7 @@ export interface CartItem {
 }
 
 export function cartItemUnitPrice(item: CartItem): number {
-  return item.basePrice + item.selectedModifiers.reduce((s, m) => s + m.priceAdjustment, 0)
+  return item.basePrice + item.selectedModifiers.reduce((s, m) => s + Number(m.priceAdjustment), 0)
 }
 
 export function cartItemTotal(item: CartItem): number {

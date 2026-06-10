@@ -29,7 +29,6 @@ import {
   useCreateStaffWithPinMutation,
   useRemoveStaffMutation,
   useUpdateStaffMutation,
-  useUpdateStaffRoleMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -67,18 +66,20 @@ export function AdminStaffPage() {
   const displayNameId3 = useId()
   const roleId3 = useId()
 
-  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
+  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  console.log('activeBusiness', activeBusiness)
+  const activeBusinessId = activeBusiness?.id ?? ''
 
-  const { data: staffMembers = [], isPending } = useQuery(staffQueryOptions(businessId))
+  const { data: staffMembers = [], isPending } = useQuery(staffQueryOptions(activeBusinessId))
 
   const createWithInviteMutation = useCreateStaffWithInviteMutation()
   const createWithPasswordMutation = useCreateStaffWithPasswordMutation()
   const createWithPinMutation = useCreateStaffWithPinMutation()
-  const updateRoleMutation = useUpdateStaffRoleMutation()
+
   const updateStaffMutation = useUpdateStaffMutation()
   const removeStaffMutation = useRemoveStaffMutation()
 
-  const staffSignInLink = `${window.location.origin}/staff-login?businessId=${businessId}`
+  const staffSignInLink = `${globalThis.location.origin}/b/${activeBusiness?.slug}/staff-login`
 
   const inviteForm = useForm<InviteFormValues>({
     resolver: zodResolver(createStaffWithInviteSchema),
@@ -136,7 +137,7 @@ export function AdminStaffPage() {
 
   const onInviteSubmit = async (values: InviteFormValues) => {
     try {
-      await createWithInviteMutation.mutateAsync({ businessId, data: values })
+      await createWithInviteMutation.mutateAsync({ businessId: activeBusinessId, data: values })
       showSuccess('Invite sent')
       closeModal()
     } catch (error) {
@@ -147,7 +148,7 @@ export function AdminStaffPage() {
   const onPasswordSubmit = async (values: PasswordFormValues) => {
     try {
       const payload = { ...values, email: values.email || undefined }
-      await createWithPasswordMutation.mutateAsync({ businessId, data: payload })
+      await createWithPasswordMutation.mutateAsync({ businessId: activeBusinessId, data: payload })
       showSuccess('Staff member created')
       closeModal()
     } catch (error) {
@@ -157,7 +158,7 @@ export function AdminStaffPage() {
 
   const onPinSubmit = async (values: PinFormValues) => {
     try {
-      await createWithPinMutation.mutateAsync({ businessId, data: values })
+      await createWithPinMutation.mutateAsync({ businessId: activeBusinessId, data: values })
       showSuccess('Staff member created')
       closeModal()
     } catch (error) {
@@ -169,7 +170,7 @@ export function AdminStaffPage() {
     if (!editingMember) return
     try {
       await updateStaffMutation.mutateAsync({
-        businessId,
+        businessId: activeBusinessId,
         staffId: editingMember.id,
         data: values,
       })
@@ -180,18 +181,9 @@ export function AdminStaffPage() {
     }
   }
 
-  const changeRole = async (staffId: string, role: StaffRole) => {
-    try {
-      await updateRoleMutation.mutateAsync({ businessId, staffId, data: { role } })
-      showSuccess('Role updated')
-    } catch (error) {
-      showError(getResponseErrorMessage(error))
-    }
-  }
-
   const handleRemoveStaff = async (staffId: string) => {
     try {
-      await removeStaffMutation.mutateAsync({ businessId, staffId })
+      await removeStaffMutation.mutateAsync({ businessId: activeBusinessId, staffId })
       showSuccess('Staff member removed')
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -305,14 +297,8 @@ export function AdminStaffPage() {
                     </button>
                   </TableCell>
                   <TableCell className='text-muted-foreground'>{member.email ?? '-'}</TableCell>
-                  <TableCell>
-                    <SearchSelect
-                      value={member.role}
-                      onChange={(v) => void changeRole(member.id, v as StaffRole)}
-                      options={roleSelectOptions}
-                      className='h-8 rounded-lg text-xs font-medium'
-                    />
-                  </TableCell>
+                  <TableCell>{member.role}</TableCell>
+
                   <TableCell>
                     <Badge variant={member.isActive ? 'success' : 'outline'} className='capitalize'>
                       {member.isActive ? 'active' : 'inactive'}

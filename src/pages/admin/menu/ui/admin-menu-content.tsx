@@ -1,15 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Edit2, Eye, EyeOff, Plus, Search, ShoppingBag, Trash2 } from 'lucide-react'
+import { Edit2, Plus, Search, ShoppingBag, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react'
 import { useId, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
 import type { MenuCategory } from '#/features/platform/api/platform.types.ts'
-import { menuCategoriesQueryOptions, productsQueryOptions } from '#/features/platform/lib/query-options.ts'
+import {
+  menuCategoriesQueryOptions,
+  productsQueryOptions,
+} from '#/features/platform/lib/query-options.ts'
 import {
   createMenuCategorySchema,
   updateMenuCategorySchema,
@@ -18,10 +28,13 @@ import {
   useCreateMenuCategoryMutation,
   useDeleteMenuCategoryMutation,
   useDeleteProductMutation,
+  useSetProductAvailabilityMutation,
   useUpdateMenuCategoryMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { ProductModal } from '#/features/product/ui/product-modal.tsx'
 import { cn } from '#/lib/utils'
+import { StaffPermission } from '#/shared/lib/permissions/index.ts'
+import { usePermissions } from '#/shared/lib/permissions/use-permissions.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
@@ -39,6 +52,7 @@ export function AdminMenuContent() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [productModalMode, setProductModalMode] = useState<'create' | 'edit'>('create')
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const [defaultCategoryId, setDefaultCategoryId] = useState<string | undefined>(undefined)
 
   const categoryNameId = useId()
   const categoryDescriptionId = useId()
@@ -48,6 +62,9 @@ export function AdminMenuContent() {
   const editSortOrderId = useId()
 
   const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const { isOwner, hasPermission } = usePermissions()
+  const canEditMenu = isOwner() || hasPermission(StaffPermission.MENU_EDIT)
+  const canToggleAvailability = isOwner() || hasPermission(StaffPermission.MENU_AVAILABILITY)
 
   const categoriesQuery = useQuery(menuCategoriesQueryOptions(true))
   const productsQuery = useQuery(productsQueryOptions())
@@ -56,6 +73,7 @@ export function AdminMenuContent() {
   const updateCategoryMutation = useUpdateMenuCategoryMutation()
   const deleteCategoryMutation = useDeleteMenuCategoryMutation()
   const deleteProductMutation = useDeleteProductMutation()
+  const setAvailabilityMutation = useSetProductAvailabilityMutation()
 
   const {
     register: registerCreate,
@@ -168,6 +186,11 @@ export function AdminMenuContent() {
   const openCreateModal = () => {
     setProductModalMode('create')
     setSelectedProductId(null)
+    const categoryId =
+      activeCategory !== 'All'
+        ? categoryOptions.find((o) => o.label === activeCategory)?.id
+        : undefined
+    setDefaultCategoryId(categoryId)
     setIsProductModalOpen(true)
   }
 
@@ -181,6 +204,7 @@ export function AdminMenuContent() {
     setIsProductModalOpen(false)
     setSelectedProductId(null)
     setProductModalMode('create')
+    setDefaultCategoryId(undefined)
   }
 
   const allCategoryData = categoriesQuery.data ?? []
@@ -194,19 +218,21 @@ export function AdminMenuContent() {
             Create and organize your digital menu categories and products.
           </p>
         </div>
-        <div className='flex items-center gap-3'>
-          <Button
-            variant='outline'
-            size='sm'
-            className='rounded-full'
-            onClick={() => setIsCategoryModalOpen(true)}
-          >
-            Add Category
-          </Button>
-          <Button size='sm' className='rounded-full' onClick={openCreateModal}>
-            <Plus className='mr-2 h-4 w-4' /> Add Product
-          </Button>
-        </div>
+        {canEditMenu && (
+          <div className='flex items-center gap-3'>
+            <Button
+              variant='outline'
+              size='sm'
+              className='rounded-full'
+              onClick={() => setIsCategoryModalOpen(true)}
+            >
+              Add Category
+            </Button>
+            <Button size='sm' className='rounded-full' onClick={openCreateModal}>
+              <Plus className='mr-2 h-4 w-4' /> Add Product
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className='flex flex-col gap-6 lg:flex-row'>
@@ -243,25 +269,27 @@ export function AdminMenuContent() {
                 >
                   {category.name}
                 </button>
-                <div className='flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100'>
-                  <button
-                    type='button'
-                    className='rounded-lg p-1 hover:bg-accent'
-                    title='Edit category'
-                    onClick={() => openEditCategory(category)}
-                  >
-                    <Edit2 className='h-3.5 w-3.5' />
-                  </button>
-                  <button
-                    type='button'
-                    className='rounded-lg p-1 text-destructive hover:bg-destructive/10'
-                    title='Delete category'
-                    onClick={() => void handleDeleteCategory(category)}
-                    disabled={deleteCategoryMutation.isPending}
-                  >
-                    <Trash2 className='h-3.5 w-3.5' />
-                  </button>
-                </div>
+                {canEditMenu && (
+                  <div className='flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100'>
+                    <button
+                      type='button'
+                      className='rounded-lg p-1 hover:bg-accent'
+                      title='Edit category'
+                      onClick={() => openEditCategory(category)}
+                    >
+                      <Edit2 className='h-3.5 w-3.5' />
+                    </button>
+                    <button
+                      type='button'
+                      className='rounded-lg p-1 text-destructive hover:bg-destructive/10'
+                      title='Delete category'
+                      onClick={() => void handleDeleteCategory(category)}
+                      disabled={deleteCategoryMutation.isPending}
+                    >
+                      <Trash2 className='h-3.5 w-3.5' />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </CardContent>
@@ -312,11 +340,15 @@ export function AdminMenuContent() {
                         </div>
                         <h3 className='mb-1 text-base font-semibold'>No products yet</h3>
                         <p className='mb-6 max-w-xs text-sm text-muted-foreground'>
-                          You don't have any products yet. Start by adding your first product.
+                          {canEditMenu
+                            ? "You don't have any products yet. Start by adding your first product."
+                            : 'No products have been added yet.'}
                         </p>
-                        <Button size='sm' className='rounded-full' onClick={openCreateModal}>
-                          <Plus className='mr-2 h-4 w-4' /> Add your first product
-                        </Button>
+                        {canEditMenu && (
+                          <Button size='sm' className='rounded-full' onClick={openCreateModal}>
+                            <Plus className='mr-2 h-4 w-4' /> Add your first product
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -337,7 +369,9 @@ export function AdminMenuContent() {
                     <TableRow key={item.id}>
                       <TableCell className='pl-8 font-bold'>{item.name}</TableCell>
                       <TableCell>{category?.label ?? 'Uncategorized'}</TableCell>
-                      <TableCell className='font-mono'>{formatPrice(Number(item.price), currency)}</TableCell>
+                      <TableCell className='font-mono'>
+                        {formatPrice(Number(item.price), currency)}
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={item.isAvailable ? 'success' : 'outline'}
@@ -354,37 +388,49 @@ export function AdminMenuContent() {
                       </TableCell>
                       <TableCell className='pr-8 text-right'>
                         <div className='flex justify-end gap-1'>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='rounded-full'
-                            disabled
-                            title='Availability toggle not yet supported by API'
-                          >
-                            {item.isAvailable ? (
-                              <Eye className='h-4 w-4' />
-                            ) : (
-                              <EyeOff className='h-4 w-4 text-muted-foreground' />
-                            )}
-                          </Button>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='rounded-full'
-                            onClick={() => openEditModal(item.id)}
-                          >
-                            <Edit2 className='h-4 w-4' />
-                          </Button>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive'
-                            onClick={() => {
-                              void removeProduct(item.id)
-                            }}
-                          >
-                            <Trash2 className='h-4 w-4' />
-                          </Button>
+                          {canToggleAvailability && (
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='rounded-full'
+                              title={item.isAvailable ? 'Mark as unavailable' : 'Mark as available'}
+                              disabled={setAvailabilityMutation.isPending}
+                              onClick={() =>
+                                setAvailabilityMutation.mutate({
+                                  productId: item.id,
+                                  isAvailable: !item.isAvailable,
+                                })
+                              }
+                            >
+                              {item.isAvailable ? (
+                                <ToggleRight className='h-4 w-4 text-emerald-500' />
+                              ) : (
+                                <ToggleLeft className='h-4 w-4 text-muted-foreground' />
+                              )}
+                            </Button>
+                          )}
+                          {canEditMenu && (
+                            <>
+                              <Button
+                                variant='ghost'
+                                size='icon'
+                                className='rounded-full'
+                                onClick={() => openEditModal(item.id)}
+                              >
+                                <Edit2 className='h-4 w-4' />
+                              </Button>
+                              <Button
+                                variant='ghost'
+                                size='icon'
+                                className='rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive'
+                                onClick={() => {
+                                  void removeProduct(item.id)
+                                }}
+                              >
+                                <Trash2 className='h-4 w-4' />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -505,9 +551,7 @@ export function AdminMenuContent() {
               className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
               {...registerEdit('name')}
             />
-            {editErrors.name && (
-              <p className='text-xs text-red-600'>{editErrors.name.message}</p>
-            )}
+            {editErrors.name && <p className='text-xs text-red-600'>{editErrors.name.message}</p>}
           </div>
 
           <div className='space-y-1'>
@@ -548,6 +592,7 @@ export function AdminMenuContent() {
         onClose={closeProductModal}
         mode={productModalMode}
         productId={selectedProductId ?? undefined}
+        defaultCategoryId={defaultCategoryId}
         initialData={
           productModalMode === 'edit' && selectedProductId
             ? products.find((p) => p.id === selectedProductId)

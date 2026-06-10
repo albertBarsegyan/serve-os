@@ -1,19 +1,18 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { Lock } from 'lucide-react'
-import { useId } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
-import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
-import { useChangePasswordMutation } from '#/features/platform/model/platform-hooks'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
-import { ErrorBoundary } from '#/shared/ui/error-boundary'
-import { Logo } from '#/shared/ui/logo.tsx'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {createFileRoute, Link, useNavigate} from '@tanstack/react-router'
+import {Lock} from 'lucide-react'
+import {useId} from 'react'
+import {useForm} from 'react-hook-form'
+import {z} from 'zod'
+import {Button} from '#/components/ui/button'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '#/components/ui/card'
+import {Input} from '#/components/ui/input'
+import {Label} from '#/components/ui/label'
+import {useChangePasswordMutation} from '#/features/platform/model/platform-hooks'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils'
+import {ErrorBoundary} from '#/shared/ui/error-boundary'
+import {Logo} from '#/shared/ui/logo.tsx'
 
 const changePasswordFormSchema = z
   .object({
@@ -29,12 +28,15 @@ const changePasswordFormSchema = z
 type FormValues = z.infer<typeof changePasswordFormSchema>
 
 export const Route = createFileRoute('/staff-change-password')({
+  validateSearch: (raw: Record<string, unknown>): { slug: string } => ({
+    slug: typeof raw.slug === 'string' ? raw.slug : '',
+  }),
   component: StaffChangePasswordPage,
   errorComponent: ({ error }) => <ErrorBoundary error={error} />,
 })
 
 function StaffChangePasswordPage() {
-  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const { slug } = Route.useSearch()
   const navigate = useNavigate()
   const changeMutation = useChangePasswordMutation()
 
@@ -59,10 +61,7 @@ function StaffChangePasswordPage() {
       })
 
       showSuccess('Password changed. Please log in again.')
-      await navigate({
-        to: '/staff-login',
-        search: { businessId: activeBusiness?.id as string },
-      })
+      await navigate({ to: '/b/$slug/staff-login', params: { slug } })
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }

@@ -1,18 +1,21 @@
 import {useQuery} from '@tanstack/react-query'
-import {ClipboardList, Eye, Filter, MoreHorizontal, Search} from 'lucide-react'
+import {ClipboardList, Eye, Filter, MoreHorizontal, Plus, Search} from 'lucide-react'
 import {useId, useMemo, useState} from 'react'
 import {Badge} from '#/components/ui/badge'
 import {Button} from '#/components/ui/button'
 import {Card, CardContent, CardHeader} from '#/components/ui/card'
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '#/components/ui/table'
+import {CreateStaffOrderDialog} from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
 import type {OrderStatus} from '#/features/platform/api/platform.types.ts'
 import {orderByIdQueryOptions, ordersQueryOptions} from '#/features/platform/lib/query-options.ts'
 import {
-  useProcessCashPaymentMutation,
-  useProcessPosPaymentMutation,
-  useUpdateOrderStatusMutation,
+    useProcessCashPaymentMutation,
+    useProcessPosPaymentMutation,
+    useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import {cn} from '#/lib/utils'
+import {StaffPermission} from '#/shared/lib/permissions/index.ts'
+import {usePermissions} from '#/shared/lib/permissions/use-permissions.ts'
 import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
 import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
 import {formatPrice} from '#/shared/libs/utils/price.utils'
@@ -63,6 +66,7 @@ function OrderDetailModal({
 }>) {
   const tipId = useId()
   const [tipAmount, setTipAmount] = useState('')
+  const { isOwner, hasPermission } = usePermissions()
 
   const { data: order, isPending, isError } = useQuery(orderByIdQueryOptions(orderId))
 
@@ -72,8 +76,11 @@ function OrderDetailModal({
 
   const isBusy = cashMutation.isPending || posMutation.isPending || cancelMutation.isPending
 
-  const CANCELLABLE: OrderStatus[] = ['CREATED', 'CONFIRMED', 'IN_KITCHEN']
-  const canCancel = order ? CANCELLABLE.includes(order.status) : false
+  const canTakePayment = isOwner() || hasPermission(StaffPermission.PAYMENT_TAKE)
+  const canCancel =
+    (isOwner() || hasPermission(StaffPermission.ORDER_CANCEL)) &&
+    order != null &&
+    (['CREATED', 'CONFIRMED', 'IN_KITCHEN'] as OrderStatus[]).includes(order.status)
 
   const parsedTip = Number(tipAmount) || 0
 
@@ -98,6 +105,7 @@ function OrderDetailModal({
   }
 
   const canPay =
+    canTakePayment &&
     order?.paymentStatus === 'UNPAID' &&
     (order.status === 'DELIVERED' || order.status === 'READY' || order.status === 'CLOSED')
 
@@ -280,7 +288,10 @@ export function AdminOrdersContent() {
   const [activeFilter, setActiveFilter] = useState<OrderStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
+  const [addOrderOpen, setAddOrderOpen] = useState(false)
   const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const { isOwner, hasPermission } = usePermissions()
+  const canAddOrder = isOwner() || hasPermission(StaffPermission.ORDER_CREATE)
 
   const { data: orders = [], isPending, isError, error, refetch } = useQuery(ordersQueryOptions())
 
@@ -335,6 +346,17 @@ export function AdminOrdersContent() {
           <Button disabled={!orders.length} size='sm' className='rounded-full' type='button'>
             Export CSV
           </Button>
+
+          {canAddOrder && (
+            <Button
+              size='sm'
+              className='rounded-full'
+              type='button'
+              onClick={() => setAddOrderOpen(true)}
+            >
+              <Plus className='mr-2 h-4 w-4' /> Add Order
+            </Button>
+          )}
         </div>
       </div>
 
@@ -494,6 +516,8 @@ export function AdminOrdersContent() {
           currency={currency}
         />
       )}
+
+      <CreateStaffOrderDialog open={addOrderOpen} onClose={() => setAddOrderOpen(false)} />
     </div>
   )
 }

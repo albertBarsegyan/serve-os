@@ -21,13 +21,10 @@ export const createCategoryServerFn = createServerFn({
     }: {
       data: { businessId: string; payload: CreateCategoryRequest }
     }): Promise<CategoryResponse> => {
-      const request = await serverApiInstance<CategoryResponse>(
-        `menu/categories`,
-        {
-          method: 'POST',
-          json: data.payload,
-        },
-      )
+      const request = await serverApiInstance<CategoryResponse>(`menu/categories`, {
+        method: 'POST',
+        json: data.payload,
+      })
 
       forwardCookies(request)
 
@@ -47,13 +44,10 @@ export const getCategoriesServerFn = createServerFn({
   method: 'GET',
 })
   .inputValidator((data: { businessId: string }) => data)
-  .handler(async ({ data }): Promise<CategoryResponse[]> => {
-    const request = await serverApiInstance<CategoryResponse[]>(
-      `menu/categories`,
-      {
-        method: 'GET',
-      },
-    )
+  .handler(async (): Promise<CategoryResponse[]> => {
+    const request = await serverApiInstance<CategoryResponse[]>(`menu/categories`, {
+      method: 'GET',
+    })
 
     forwardCookies(request)
 
@@ -130,12 +124,9 @@ export const deleteCategoryServerFn = createServerFn({
 })
   .inputValidator((data: { businessId: string; categoryId: string }) => data)
   .handler(async ({ data }): Promise<void> => {
-    const request = await serverApiInstance(
-      `menu/categories/${data.categoryId}`,
-      {
-        method: 'DELETE',
-      },
-    )
+    const request = await serverApiInstance(`menu/categories/${data.categoryId}`, {
+      method: 'DELETE',
+    })
 
     forwardCookies(request)
 

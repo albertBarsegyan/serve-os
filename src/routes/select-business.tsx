@@ -68,7 +68,9 @@ function SelectBusinessRoute() {
                   <Button
                     className='ml-auto'
                     disabled={isSwitching}
-                    onClick={() => switchBusiness({ id: b.id, name: b.name, currency: b.currency })}
+                    onClick={() =>
+                      switchBusiness({ id: b.id, name: b.name, currency: b.currency, slug: b.slug })
+                    }
                   >
                     Select
                   </Button>

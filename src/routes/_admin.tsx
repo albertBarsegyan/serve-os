@@ -1,13 +1,16 @@
+import {useQueryClient} from '@tanstack/react-query'
 import {
   createFileRoute,
   Link,
   Outlet,
   redirect,
   useLocation,
+  useNavigate,
   useRouteContext,
 } from '@tanstack/react-router'
-import type { LucideIcon } from 'lucide-react'
 import {
+  ArrowLeft,
+  ArrowRight,
   Building2,
   Check,
   ChefHat,
@@ -15,9 +18,9 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  type LucideIcon,
   Menu,
   Puzzle,
-  Search,
   Settings,
   ShoppingBag,
   Table as TableIcon,
@@ -27,25 +30,28 @@ import {
   Wallet,
   Warehouse,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { ThemeSwitcher } from '#/components/theme-switcher.tsx'
-import { Button } from '#/components/ui/button'
-import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
-import { useLogoutMutation } from '#/features/auth/model/auth-hooks.ts'
+import {useEffect, useMemo, useRef, useState} from 'react'
+import {ThemeSwitcher} from '#/components/theme-switcher.tsx'
+import {Button} from '#/components/ui/button'
+import {authUiMessage} from '#/features/auth/lib/constants/ui-messages.ts'
+import {useLogoutMutation} from '#/features/auth/model/auth-hooks.ts'
 import {
   useBusinessesQuery,
   useBusinessSwitcher,
+  useStaffActiveBusiness,
 } from '#/features/business/model/business-hooks.ts'
-import { cn } from '#/lib/utils.ts'
-import { BusinessFeature, StaffPermission } from '#/shared/lib/permissions/index.ts'
-import { usePermissions } from '#/shared/lib/permissions/use-permissions.ts'
-import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import {useLogoutStaffMutation} from '#/features/platform/model/platform-hooks.ts'
+import {cn} from '#/lib/utils.ts'
+import {BusinessFeature, StaffPermission} from '#/shared/lib/permissions/index.ts'
+import {usePermissions} from '#/shared/lib/permissions/use-permissions.ts'
+import {adminRoutePathname} from '#/shared/libs/constants/route-pathname/admin.ts'
+import {useBodyScrollLock} from '#/shared/libs/hooks/scroll-lock.ts'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
-import { ErrorBoundary } from '#/shared/ui/error-boundary.tsx'
-import { Logo } from '#/shared/ui/logo.tsx'
-import { Modal } from '#/shared/ui/modal'
+import {ErrorBoundary} from '#/shared/ui/error-boundary.tsx'
+import {Logo} from '#/shared/ui/logo.tsx'
+import {Modal} from '#/shared/ui/modal'
 
 function AdminErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
@@ -106,7 +112,7 @@ function SidebarNavLink({
       <item.icon
         className={cn('h-5 w-5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')}
       />
-      {!isCollapsed && <span>{item.label}</span>}
+      {!isCollapsed && <span className='whitespace-nowrap'>{item.label}</span>}
     </Link>
   )
 }
@@ -139,7 +145,7 @@ function BusinessSwitcher() {
         className='cursor-pointer flex items-center gap-2 h-12 px-3 rounded-xl border border-input bg-background text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50'
       >
         <Building2 className='h-4 w-4 shrink-0 text-muted-foreground' />
-        <span className='hidden sm:block max-w-[140px] truncate text-foreground'>
+        <span className='hidden sm:block max-w-35 truncate text-foreground'>
           {isLoading ? 'Loading…' : (selectedBusiness?.name ?? 'Select business')}
         </span>
         <ChevronDown
@@ -169,6 +175,7 @@ function BusinessSwitcher() {
                       id: business.id,
                       name: business.name,
                       currency: business.currency,
+                      slug: business.slug,
                     })
                     setIsOpen(false)
                   }}
@@ -195,13 +202,18 @@ function BusinessSwitcher() {
 }
 
 function AdminLayout() {
-  const isCollapsed = false
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const location = useLocation()
+  const navigation = useNavigate()
 
+  const queryClient = useQueryClient()
   const { authUser } = useRouteContext({ from: '/_admin' })
   const { isOwner, canSee, hasPermission } = usePermissions()
+  const { setActive, active } = useActiveBusinessStore()
+
+  useStaffActiveBusiness(authUser)
 
   const displayName = (() => {
     if (!authUser) return ''
@@ -211,23 +223,31 @@ function AdminLayout() {
     return authUser.displayName || authUser.email || ''
   })()
 
-  const menuItems: NavItem[] = [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-    { label: 'Orders', icon: ShoppingBag, href: '/orders' },
-    ...(canSee(BusinessFeature.TABLES) && (isOwner() || hasPermission(StaffPermission.TABLE_VIEW))
-      ? [{ label: 'Tables', icon: TableIcon, href: '/tables' }]
-      : []),
-    ...(isOwner() || hasPermission(StaffPermission.MENU_VIEW)
-      ? [{ label: 'Menu', icon: UtensilsCrossed, href: '/menu' }]
-      : []),
-    ...(isOwner() || hasPermission(StaffPermission.MENU_EDIT)
-      ? [{ label: 'Modifiers', icon: Puzzle, href: '/modifiers' }]
-      : []),
-    ...(canSee(BusinessFeature.KDS) && (isOwner() || hasPermission(StaffPermission.KITCHEN_VIEW))
-      ? [{ label: 'Service (KDS)', icon: ChefHat, href: '/kitchen' }]
-      : []),
-    ...(isOwner() ? [{ label: 'Businesses', icon: Warehouse, href: '/businesses' }] : []),
-  ]
+  const menuItems: NavItem[] = useMemo(
+    () => [
+      ...(isOwner() || hasPermission(StaffPermission.ORDER_VIEW)
+        ? [{ label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' }]
+        : []),
+      ...(isOwner() ||
+      (hasPermission(StaffPermission.ORDER_VIEW) && !hasPermission(StaffPermission.KITCHEN_VIEW))
+        ? [{ label: 'Orders', icon: ShoppingBag, href: '/orders' }]
+        : []),
+      ...(canSee(BusinessFeature.TABLES) && (isOwner() || hasPermission(StaffPermission.TABLE_VIEW))
+        ? [{ label: 'Tables', icon: TableIcon, href: '/tables' }]
+        : []),
+      ...(isOwner() || hasPermission(StaffPermission.MENU_VIEW)
+        ? [{ label: 'Menu', icon: UtensilsCrossed, href: '/menu' }]
+        : []),
+      ...(isOwner() || hasPermission(StaffPermission.MENU_EDIT)
+        ? [{ label: 'Modifiers', icon: Puzzle, href: '/modifiers' }]
+        : []),
+      ...(canSee(BusinessFeature.KDS) && (isOwner() || hasPermission(StaffPermission.KITCHEN_VIEW))
+        ? [{ label: 'Service (KDS)', icon: ChefHat, href: '/kitchen' }]
+        : []),
+      ...(isOwner() ? [{ label: 'Businesses', icon: Warehouse, href: '/businesses' }] : []),
+    ],
+    [canSee, hasPermission, isOwner],
+  )
 
   const otherItems: NavItem[] = [
     ...(isOwner() || hasPermission(StaffPermission.STAFF_MANAGE)
@@ -246,41 +266,67 @@ function AdminLayout() {
   ]
 
   const logoutMutation = useLogoutMutation()
+  const logoutStaffMutation = useLogoutStaffMutation()
 
   const handleLogout = async () => {
     try {
-      await logoutMutation.mutateAsync()
-      showSuccess(authUiMessage.SUCCESS_LOGOUT)
+      if (authUser?.type === 'staff') {
+        const businessId = authUser.businessId
+        await logoutStaffMutation.mutateAsync(businessId)
+        await queryClient.cancelQueries()
+        queryClient.clear()
+        setActive(null)
+        showSuccess(authUiMessage.SUCCESS_LOGOUT)
+        await navigation({ to: `/b/${active?.slug}/staff-login` })
+      } else {
+        await logoutMutation.mutateAsync()
+        showSuccess(authUiMessage.SUCCESS_LOGOUT)
+        await navigation({ to: '/auth/sign-in' })
+      }
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
   }
 
+  useBodyScrollLock(isMobileOpen)
+
   return (
     <div className='flex min-h-screen bg-background text-foreground'>
-      {/* Mobile Backdrop */}
       {isMobileOpen && (
         <Button
-          className='fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden'
+          role='button'
+          className='fixed inset-0 z-40 bg-black/50 lg:hidden'
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-card transition-all duration-300 lg:static',
-          isCollapsed ? 'w-20' : 'w-72',
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          isMobileOpen ? 'translate-x-0 w-full' : '-translate-x-full w-full',
+          isCollapsed ? 'lg:translate-x-0 lg:w-20' : 'lg:translate-x-0 lg:w-72',
         )}
       >
-        <div className='flex h-20 items-center px-8'>
+        <div
+          className={cn('flex h-20 items-center justify-between pr-4', {
+            'pl-4': isCollapsed,
+            'pl-8': !isCollapsed,
+          })}
+        >
           <Link
             to='/'
             className='flex items-center gap-3 font-semibold tracking-tight text-foreground'
           >
-            <Logo size='md' showText />
+            <Logo size='md' showText={!isCollapsed} />
           </Link>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='lg:hidden'
+            onClick={() => setIsMobileOpen(false)}
+          >
+            <ArrowLeft className='h-5 w-5' />
+          </Button>
         </div>
 
         <div className='flex-1 space-y-8 overflow-y-auto px-4 py-6'>
@@ -334,6 +380,14 @@ function AdminLayout() {
             </nav>
           </div>
         </div>
+
+        <Button
+          variant='outline'
+          className='hidden lg:flex absolute top-1/2 right-0 translate-x-4 px-1 py-1 rounded-sm bg-card shadow-lg'
+          onClick={() => setIsCollapsed((prev) => !prev)}
+        >
+          {isCollapsed ? <ArrowRight className='h-5 w-5' /> : <ArrowLeft className='h-5 w-5' />}
+        </Button>
       </aside>
 
       {/* Main Content */}
@@ -349,14 +403,6 @@ function AdminLayout() {
             >
               <Menu className='h-5 w-5' />
             </Button>
-            <div className='relative w-full max-w-xl'>
-              <Search className='absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-              <input
-                type='text'
-                placeholder='Search'
-                className='h-12 w-full rounded-xl border border-input bg-background pl-12 pr-4 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-              />
-            </div>
           </div>
 
           <div className='flex items-center gap-3'>

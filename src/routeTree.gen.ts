@@ -9,18 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as StaffLoginRouteImport } from './routes/staff-login'
 import { Route as StaffChangePasswordRouteImport } from './routes/staff-change-password'
 import { Route as StaffAcceptInviteRouteImport } from './routes/staff-accept-invite'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SelectBusinessRouteImport } from './routes/select-business'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AboutRouteImport } from './routes/about'
+import { Route as SiteRouteImport } from './routes/_site'
 import { Route as AdminRouteImport } from './routes/_admin'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as CustomerMenuRouteImport } from './routes/customer/menu'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
+import { Route as SiteAboutRouteImport } from './routes/_site/about'
 import { Route as AdminUserSettingsRouteImport } from './routes/_admin/user-settings'
 import { Route as AdminTablesRouteImport } from './routes/_admin/tables'
 import { Route as AdminStaffRouteImport } from './routes/_admin/staff'
@@ -34,13 +34,9 @@ import { Route as AdminKitchenRouteImport } from './routes/_admin/kitchen'
 import { Route as AdminDashboardRouteImport } from './routes/_admin/dashboard'
 import { Route as AdminBusinessesRouteImport } from './routes/_admin/businesses'
 import { Route as AdminStaffIndexRouteImport } from './routes/_admin/staff/index'
+import { Route as BSlugStaffLoginRouteImport } from './routes/b/$slug/staff-login'
 import { Route as AdminStaffKitchenRouteImport } from './routes/_admin/staff/kitchen'
 
-const StaffLoginRoute = StaffLoginRouteImport.update({
-  id: '/staff-login',
-  path: '/staff-login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StaffChangePasswordRoute = StaffChangePasswordRouteImport.update({
   id: '/staff-change-password',
   path: '/staff-change-password',
@@ -66,19 +62,18 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const SiteRoute = SiteRouteImport.update({
+  id: '/_site',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const SiteIndexRoute = SiteIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => SiteRoute,
 } as any)
 const CustomerMenuRoute = CustomerMenuRouteImport.update({
   id: '/customer/menu',
@@ -94,6 +89,11 @@ const AuthSignInRoute = AuthSignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
   getParentRoute: () => AuthRoute,
+} as any)
+const SiteAboutRoute = SiteAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => SiteRoute,
 } as any)
 const AdminUserSettingsRoute = AdminUserSettingsRouteImport.update({
   id: '/user-settings',
@@ -160,6 +160,11 @@ const AdminStaffIndexRoute = AdminStaffIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminStaffRoute,
 } as any)
+const BSlugStaffLoginRoute = BSlugStaffLoginRouteImport.update({
+  id: '/b/$slug/staff-login',
+  path: '/b/$slug/staff-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminStaffKitchenRoute = AdminStaffKitchenRouteImport.update({
   id: '/kitchen',
   path: '/kitchen',
@@ -167,14 +172,12 @@ const AdminStaffKitchenRoute = AdminStaffKitchenRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof SiteIndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/select-business': typeof SelectBusinessRoute
   '/setup': typeof SetupRoute
   '/staff-accept-invite': typeof StaffAcceptInviteRoute
   '/staff-change-password': typeof StaffChangePasswordRoute
-  '/staff-login': typeof StaffLoginRoute
   '/businesses': typeof AdminBusinessesRoute
   '/dashboard': typeof AdminDashboardRoute
   '/kitchen': typeof AdminKitchenRoute
@@ -187,21 +190,21 @@ export interface FileRoutesByFullPath {
   '/staff': typeof AdminStaffRouteWithChildren
   '/tables': typeof AdminTablesRoute
   '/user-settings': typeof AdminUserSettingsRoute
+  '/about': typeof SiteAboutRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
   '/staff/kitchen': typeof AdminStaffKitchenRoute
+  '/b/$slug/staff-login': typeof BSlugStaffLoginRoute
   '/staff/': typeof AdminStaffIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof SiteIndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/select-business': typeof SelectBusinessRoute
   '/setup': typeof SetupRoute
   '/staff-accept-invite': typeof StaffAcceptInviteRoute
   '/staff-change-password': typeof StaffChangePasswordRoute
-  '/staff-login': typeof StaffLoginRoute
   '/businesses': typeof AdminBusinessesRoute
   '/dashboard': typeof AdminDashboardRoute
   '/kitchen': typeof AdminKitchenRoute
@@ -213,23 +216,23 @@ export interface FileRoutesByTo {
   '/settings': typeof AdminSettingsRoute
   '/tables': typeof AdminTablesRoute
   '/user-settings': typeof AdminUserSettingsRoute
+  '/about': typeof SiteAboutRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
   '/staff/kitchen': typeof AdminStaffKitchenRoute
+  '/b/$slug/staff-login': typeof BSlugStaffLoginRoute
   '/staff': typeof AdminStaffIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_admin': typeof AdminRouteWithChildren
-  '/about': typeof AboutRoute
+  '/_site': typeof SiteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/select-business': typeof SelectBusinessRoute
   '/setup': typeof SetupRoute
   '/staff-accept-invite': typeof StaffAcceptInviteRoute
   '/staff-change-password': typeof StaffChangePasswordRoute
-  '/staff-login': typeof StaffLoginRoute
   '/_admin/businesses': typeof AdminBusinessesRoute
   '/_admin/dashboard': typeof AdminDashboardRoute
   '/_admin/kitchen': typeof AdminKitchenRoute
@@ -242,23 +245,24 @@ export interface FileRoutesById {
   '/_admin/staff': typeof AdminStaffRouteWithChildren
   '/_admin/tables': typeof AdminTablesRoute
   '/_admin/user-settings': typeof AdminUserSettingsRoute
+  '/_site/about': typeof SiteAboutRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
+  '/_site/': typeof SiteIndexRoute
   '/_admin/staff/kitchen': typeof AdminStaffKitchenRoute
+  '/b/$slug/staff-login': typeof BSlugStaffLoginRoute
   '/_admin/staff/': typeof AdminStaffIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
     | '/auth'
     | '/select-business'
     | '/setup'
     | '/staff-accept-invite'
     | '/staff-change-password'
-    | '/staff-login'
     | '/businesses'
     | '/dashboard'
     | '/kitchen'
@@ -271,21 +275,21 @@ export interface FileRouteTypes {
     | '/staff'
     | '/tables'
     | '/user-settings'
+    | '/about'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
     | '/staff/kitchen'
+    | '/b/$slug/staff-login'
     | '/staff/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/about'
     | '/auth'
     | '/select-business'
     | '/setup'
     | '/staff-accept-invite'
     | '/staff-change-password'
-    | '/staff-login'
     | '/businesses'
     | '/dashboard'
     | '/kitchen'
@@ -297,22 +301,22 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tables'
     | '/user-settings'
+    | '/about'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
     | '/staff/kitchen'
+    | '/b/$slug/staff-login'
     | '/staff'
   id:
     | '__root__'
-    | '/'
     | '/_admin'
-    | '/about'
+    | '/_site'
     | '/auth'
     | '/select-business'
     | '/setup'
     | '/staff-accept-invite'
     | '/staff-change-password'
-    | '/staff-login'
     | '/_admin/businesses'
     | '/_admin/dashboard'
     | '/_admin/kitchen'
@@ -325,35 +329,30 @@ export interface FileRouteTypes {
     | '/_admin/staff'
     | '/_admin/tables'
     | '/_admin/user-settings'
+    | '/_site/about'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
+    | '/_site/'
     | '/_admin/staff/kitchen'
+    | '/b/$slug/staff-login'
     | '/_admin/staff/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  AboutRoute: typeof AboutRoute
+  SiteRoute: typeof SiteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   SelectBusinessRoute: typeof SelectBusinessRoute
   SetupRoute: typeof SetupRoute
   StaffAcceptInviteRoute: typeof StaffAcceptInviteRoute
   StaffChangePasswordRoute: typeof StaffChangePasswordRoute
-  StaffLoginRoute: typeof StaffLoginRoute
   CustomerMenuRoute: typeof CustomerMenuRoute
+  BSlugStaffLoginRoute: typeof BSlugStaffLoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/staff-login': {
-      id: '/staff-login'
-      path: '/staff-login'
-      fullPath: '/staff-login'
-      preLoaderRoute: typeof StaffLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/staff-change-password': {
       id: '/staff-change-password'
       path: '/staff-change-password'
@@ -389,11 +388,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/_site': {
+      id: '/_site'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof SiteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin': {
@@ -403,12 +402,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_site/': {
+      id: '/_site/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof SiteIndexRouteImport
+      parentRoute: typeof SiteRoute
     }
     '/customer/menu': {
       id: '/customer/menu'
@@ -430,6 +429,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/sign-in'
       preLoaderRoute: typeof AuthSignInRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/_site/about': {
+      id: '/_site/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof SiteAboutRouteImport
+      parentRoute: typeof SiteRoute
     }
     '/_admin/user-settings': {
       id: '/_admin/user-settings'
@@ -522,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminStaffIndexRouteImport
       parentRoute: typeof AdminStaffRoute
     }
+    '/b/$slug/staff-login': {
+      id: '/b/$slug/staff-login'
+      path: '/b/$slug/staff-login'
+      fullPath: '/b/$slug/staff-login'
+      preLoaderRoute: typeof BSlugStaffLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_admin/staff/kitchen': {
       id: '/_admin/staff/kitchen'
       path: '/kitchen'
@@ -578,6 +591,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface SiteRouteChildren {
+  SiteAboutRoute: typeof SiteAboutRoute
+  SiteIndexRoute: typeof SiteIndexRoute
+}
+
+const SiteRouteChildren: SiteRouteChildren = {
+  SiteAboutRoute: SiteAboutRoute,
+  SiteIndexRoute: SiteIndexRoute,
+}
+
+const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
+
 interface AuthRouteChildren {
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
@@ -591,16 +616,15 @@ const AuthRouteChildren: AuthRouteChildren = {
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  AboutRoute: AboutRoute,
+  SiteRoute: SiteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   SelectBusinessRoute: SelectBusinessRoute,
   SetupRoute: SetupRoute,
   StaffAcceptInviteRoute: StaffAcceptInviteRoute,
   StaffChangePasswordRoute: StaffChangePasswordRoute,
-  StaffLoginRoute: StaffLoginRoute,
   CustomerMenuRoute: CustomerMenuRoute,
+  BSlugStaffLoginRoute: BSlugStaffLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

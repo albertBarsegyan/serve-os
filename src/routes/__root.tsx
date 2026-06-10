@@ -1,13 +1,13 @@
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import type { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { Toaster } from 'sonner'
-import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
-import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
-import { getLocale } from '#/paraglide/runtime'
-import { ErrorBoundary } from '#/shared/ui/error-boundary'
-import { NotFoundContent } from '#/shared/ui/not-found-content'
+import {TanStackDevtools} from '@tanstack/react-devtools'
+import type {QueryClient} from '@tanstack/react-query'
+import {createRootRouteWithContext, HeadContent, Scripts} from '@tanstack/react-router'
+import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
+import {Toaster} from 'sonner'
+import type {AuthenticatedUser} from '#/features/auth/api/auth.types.ts'
+import {authUserQueryOptions} from '#/features/auth/lib/query-options.ts'
+import {getLocale} from '#/paraglide/runtime'
+import {ErrorBoundary} from '#/shared/ui/error-boundary'
+import {NotFoundContent} from '#/shared/ui/not-found-content'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import TanStackQueryProvider from '../integrations/tanstack-query/root-provider'
 import appCss from '../styles.css?url'
@@ -76,10 +76,6 @@ function RootErrorComponent({ error }: Readonly<{ error: Error }>) {
 }
 
 function RootDocument({ children }: Readonly<{ children: React.ReactNode }>) {
-  // useEffect(() => {
-  //   document.body.classList.add('page-loaded')
-  // }, [])
-
   return (
     <html lang={getLocale()} suppressHydrationWarning>
       <head>

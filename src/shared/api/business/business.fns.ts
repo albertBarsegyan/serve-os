@@ -126,8 +126,9 @@ export const selectBusinessServerFn = createServerFn({
 /**
  * Clear active business
  */
+
 export const clearBusinessServerFn = createServerFn({
-  method: 'DELETE',
+  method: 'POST',
 }).handler(async (): Promise<void> => {
   const response = await serverApiInstance('auth/business', {
     method: 'DELETE',

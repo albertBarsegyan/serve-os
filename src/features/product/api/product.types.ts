@@ -28,6 +28,7 @@ export interface CreateProductRequest {
   prepTimeMinutes?: number
   availablePeriod?: ServicePeriod
   sortOrder?: number
+  isAvailable?: boolean
   isFeatured?: boolean
   dietaryFlags?: DietaryFlag[]
   allergens?: Allergen[]
@@ -35,8 +36,6 @@ export interface CreateProductRequest {
   variants?: CreateProductVariantDto[]
 }
 
-// Note: backend UpdateProductDto = Partial<CreateProductDto> which does NOT include isAvailable.
-// isAvailable updates are not supported by the current backend PATCH endpoint.
 export type UpdateProductRequest = Partial<CreateProductRequest>
 
 export interface ProductVariantResponse {
@@ -56,6 +55,7 @@ export interface ProductModifierOption {
   groupId: string
   name: string
   priceAdjustment: number
+  priceType: 'adjustment' | 'fixed'
   position: number
   isActive: boolean
 }

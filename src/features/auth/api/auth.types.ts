@@ -1,5 +1,4 @@
-import type { BusinessFeature } from '#/shared/lib/permissions/index.ts'
-import type { StaffPermission, StaffRole } from '#/shared/lib/permissions/index.ts'
+import type { BusinessFeature, StaffPermission, StaffRole } from '#/shared/lib/permissions/index.ts'
 
 export interface SignUpRequest {
   email: string

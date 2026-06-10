@@ -27,7 +27,12 @@ export function Logo({ size = 'md', showText = false, className }: Readonly<Logo
     <span className={cn('inline-flex items-center gap-4', className)}>
       <LazyImage src={logoSrc} alt='ServeOS' width={px} height={px} imgClassName='object-contain' />
       {showText && (
-        <span className={cn('font-semibold tracking-tight text-primary', textSizeMap[size])}>
+        <span
+          className={cn(
+            'font-semibold tracking-tight text-primary whitespace-nowrap',
+            textSizeMap[size],
+          )}
+        >
           serve-os
         </span>
       )}

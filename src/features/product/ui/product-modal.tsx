@@ -20,10 +20,17 @@ interface ProductModalProps {
   onClose: () => void
   mode: 'create' | 'edit'
   productId?: string
+  defaultCategoryId?: string
   initialData?: ProductResponse
 }
 
-export function ProductModal({ isOpen, onClose, mode, productId }: Readonly<ProductModalProps>) {
+export function ProductModal({
+  isOpen,
+  onClose,
+  mode,
+  productId,
+  defaultCategoryId,
+}: Readonly<ProductModalProps>) {
   const { active } = useActiveBusinessStore()
   const activeBusinessId = active?.id ?? ''
   const { data: categories = [] } = useGetCategories(activeBusinessId)
@@ -35,7 +42,7 @@ export function ProductModal({ isOpen, onClose, mode, productId }: Readonly<Prod
     activeBusinessId,
     productId ?? '',
   )
-
+  console.log('fetchedProduct', fetchedProduct)
   const isLoadingEditData = mode === 'edit' && !!productId && isProductPending && !fetchedProduct
 
   const handleSubmit = async (
@@ -100,6 +107,7 @@ export function ProductModal({ isOpen, onClose, mode, productId }: Readonly<Prod
           onSubmit={handleSubmit}
           isLoading={isLoading}
           initialData={mode === 'edit' ? fetchedProduct : undefined}
+          defaultCategoryId={mode === 'create' ? defaultCategoryId : undefined}
           mode={mode}
         />
       )}

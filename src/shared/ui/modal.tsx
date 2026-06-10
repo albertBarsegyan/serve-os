@@ -1,7 +1,7 @@
 import { X } from 'lucide-react'
-import { useEffect } from 'react'
 import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils.ts'
+import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
 
 interface ModalProps {
   isOpen: boolean
@@ -20,16 +20,7 @@ export function Modal({
   footer,
   className,
 }: Readonly<ModalProps>) {
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'auto'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
+  useBodyScrollLock(isOpen)
 
   if (!isOpen) return null
 

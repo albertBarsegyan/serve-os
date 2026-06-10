@@ -10,7 +10,7 @@ import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { SearchSelect } from '#/shared/ui/search-select'
 import { Textarea } from '#/components/ui/textarea'
-import type { ModifierGroup } from '#/features/platform/api/platform.types'
+import type { ModifierGroup, ModifierPriceType } from '#/features/platform/api/platform.types'
 import { modifierGroupsQueryOptions } from '#/features/platform/lib/query-options'
 import {
   useAddModifierToGroupMutation,
@@ -32,6 +32,7 @@ import { createProductFormSchema } from '#/features/product/lib/schemas/create-p
 interface NewGroupItem {
   id: string
   name: string
+  priceType: ModifierPriceType
   priceAdjustment: string
 }
 
@@ -51,6 +52,7 @@ interface ProductFormProps {
   ) => Promise<void>
   isLoading?: boolean
   initialData?: ProductResponse
+  defaultCategoryId?: string
   mode: 'create' | 'edit'
 }
 
@@ -60,6 +62,7 @@ export function ProductForm({
   onSubmit,
   isLoading = false,
   initialData,
+  defaultCategoryId,
   mode,
 }: Readonly<ProductFormProps>) {
   const [imageRowIds, setImageRowIds] = useState(
@@ -110,13 +113,14 @@ export function ProductForm({
           prepTimeMinutes: initialData.prepTimeMinutes,
           availablePeriod: initialData.availablePeriod,
           sortOrder: initialData.sortOrder,
+          isAvailable: initialData.isAvailable,
           isFeatured: initialData.isFeatured,
           dietaryFlags: (initialData.dietaryFlags as DietaryFlag[]) || [],
           allergens: (initialData.allergens as Allergen[]) || [],
           imageUrls: initialData.imageUrls || [],
         }
       : {
-          categoryId: '',
+          categoryId: defaultCategoryId ?? '',
           name: '',
           description: null,
           basePrice: 0.01,
@@ -126,6 +130,7 @@ export function ProductForm({
           prepTimeMinutes: undefined,
           availablePeriod: 'all_day',
           sortOrder: 0,
+          isAvailable: true,
           isFeatured: false,
           dietaryFlags: [],
           allergens: [],
@@ -190,7 +195,12 @@ export function ProductForm({
       ...prev,
       items: [
         ...prev.items,
-        { id: Math.random().toString(36).slice(2, 10), name: '', priceAdjustment: '0' },
+        {
+            id: Math.random().toString(36).slice(2, 10),
+            name: '',
+            priceType: 'adjustment',
+            priceAdjustment: '0',
+          },
       ],
     }))
   }, [])
@@ -200,7 +210,7 @@ export function ProductForm({
   }, [])
 
   const handleNewGroupItemChange = useCallback(
-    (itemId: string, field: 'name' | 'priceAdjustment', value: string) => {
+    (itemId: string, field: 'name' | 'priceType' | 'priceAdjustment', value: string) => {
       setNewGroup((prev) => ({
         ...prev,
         items: prev.items.map((i) => (i.id === itemId ? { ...i, [field]: value } : i)),
@@ -237,6 +247,7 @@ export function ProductForm({
               data: {
                 name: item.name.trim(),
                 priceAdjustment: parseFloat(item.priceAdjustment) || 0,
+                priceType: item.priceType,
               },
             }),
           ),
@@ -266,6 +277,7 @@ export function ProductForm({
             groupId: m.groupId,
             name: m.name,
             priceAdjustment: m.priceAdjustment,
+            priceType: m.priceType,
             position: m.position,
             isActive: m.isActive,
           })),
@@ -483,8 +495,24 @@ export function ProductForm({
         </div>
       </div>
 
-      {/* Featured Toggle */}
-      <div>
+      {/* Availability & Featured Toggles */}
+      <div className='space-y-3'>
+        <Controller
+          name='isAvailable'
+          control={control}
+          render={({ field }) => (
+            <div className='flex items-center space-x-2'>
+              <Checkbox
+                id='isAvailable'
+                checked={field.value ?? true}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+              <Label htmlFor='isAvailable' className='cursor-pointer'>
+                Available
+              </Label>
+            </div>
+          )}
+        />
         <Controller
           name='isFeatured'
           control={control}
@@ -760,17 +788,26 @@ export function ProductForm({
               )}
 
               {newGroup.items.map((item) => (
-                <div key={item.id} className='flex gap-2 mt-1'>
+                <div key={item.id} className='flex gap-2 mt-1 items-center'>
                   <Input
                     placeholder='Option name'
                     value={item.name}
                     onChange={(e) => handleNewGroupItemChange(item.id, 'name', e.target.value)}
                   />
+                  <SearchSelect
+                    value={item.priceType}
+                    onChange={(v) => handleNewGroupItemChange(item.id, 'priceType', v)}
+                    options={[
+                      { value: 'adjustment', label: '+Price' },
+                      { value: 'fixed', label: 'Fixed' },
+                    ]}
+                    className='w-28 shrink-0'
+                  />
                   <Input
                     type='number'
                     step='0.01'
                     min='0'
-                    placeholder='+0.00'
+                    placeholder={item.priceType === 'fixed' ? '0.00' : '+0.00'}
                     className='w-24 shrink-0'
                     value={item.priceAdjustment}
                     onChange={(e) =>

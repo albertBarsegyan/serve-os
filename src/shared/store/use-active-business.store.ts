@@ -5,6 +5,7 @@ export interface ActiveBusiness {
   id: string
   name: string
   currency: string
+  slug: string
 }
 
 export interface ActiveBusinessState {
@@ -35,4 +36,3 @@ const useActiveBusinessStore = create<ActiveBusinessState>()(
 )
 
 export default useActiveBusinessStore
-

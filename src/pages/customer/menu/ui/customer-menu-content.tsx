@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  type CartModifier,
   cartItemTotal,
   cartItemUnitPrice,
+  type CartModifier,
   useCartStore,
 } from '#/features/cart/model/cart.store'
 import {
@@ -150,31 +150,27 @@ function ModifierGroupRow({
   )
 }
 
-// ─── Product Sheet ────────────────────────────────────────────────────────────
-
 interface ProductSheetProps {
   product: CustomerProduct | null
   onClose: () => void
   onAdd: (modifiers: CartModifier[], notes: string, qty: number) => void
 }
 
-function ProductSheet({ product, onClose, onAdd }: ProductSheetProps) {
+function ProductSheet({ product, onClose, onAdd }: Readonly<ProductSheetProps>) {
   const [groupSelections, setGroupSelections] = useState<Record<string, string[]>>({})
   const [notes, setNotes] = useState('')
   const [qty, setQty] = useState(1)
 
   const open = product !== null
 
-  // Reset state whenever a different product is opened
-  const productId = product?.id
   useEffect(() => {
     setGroupSelections({})
     setNotes('')
     setQty(1)
-  }, [productId])
+  }, [])
 
-  const activeGroups = (product?.modifierGroups ?? []).filter(
-    (g) => g.modifiers.filter((m) => m.isActive).length > 0,
+  const activeGroups = (product?.modifierGroups ?? []).filter((g) =>
+    g.modifiers.some((m) => m.isActive),
   )
 
   const isValid = useMemo(() => {
@@ -190,13 +186,17 @@ function ProductSheet({ product, onClose, onAdd }: ProductSheetProps) {
       const sel = groupSelections[g.id] ?? []
       return (
         total +
-        g.modifiers.filter((m) => sel.includes(m.id)).reduce((s, m) => s + m.priceAdjustment, 0)
+        g.modifiers
+          .filter((m) => sel.includes(m.id))
+          .reduce((s, m) => {
+            return s + Number(m.priceAdjustment)
+          }, 0)
       )
     }, 0)
   }, [activeGroups, groupSelections])
 
-  const unitPrice = (product?.price ?? 0) + modifierPrice
-  const totalPrice = unitPrice * qty
+  const unitPrice = Number(product?.price ?? 0) + Number(modifierPrice)
+  const totalPrice = Number(unitPrice * qty)
 
   function handleAdd() {
     if (!(product && isValid)) return
@@ -320,8 +320,6 @@ function ProductSheet({ product, onClose, onAdd }: ProductSheetProps) {
   )
 }
 
-// ─── Cart Sheet ───────────────────────────────────────────────────────────────
-
 interface CartSheetProps {
   open: boolean
   onClose: () => void
@@ -329,7 +327,7 @@ interface CartSheetProps {
   onSuccess: (orderId: string) => void
 }
 
-function CartSheet({ open, onClose, sessionToken, onSuccess }: CartSheetProps) {
+function CartSheet({ open, onClose, sessionToken, onSuccess }: Readonly<CartSheetProps>) {
   const { items, updateQuantity, removeItem, clearCart } = useCartStore()
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH')
 
@@ -346,7 +344,7 @@ function CartSheet({ open, onClose, sessionToken, onSuccess }: CartSheetProps) {
           selectedModifiers: item.selectedModifiers.map((m) => ({
             modifierId: m.modifierId,
             name: m.name,
-            priceAdjustment: m.priceAdjustment,
+            priceAdjustment: Number(m.priceAdjustment),
           })),
         })),
       )
@@ -659,8 +657,7 @@ export function CustomerMenuContent({
             <button
               type='button'
               onClick={() => setCartOpen(true)}
-              className='flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-white'
-              style={{ background: 'var(--lagoon-deep)' }}
+              className='flex text-primary items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold border'
             >
               <span>🛒</span>
               <span>{cartCount}</span>

@@ -68,7 +68,8 @@ export const updateModifierGroupSchema = modifierGroupBaseSchema.partial()
 
 export const addModifierSchema = z.object({
   name: z.string().trim().min(1, 'Modifier name is required'),
-  priceAdjustment: z.number().nonnegative('Price adjustment must be 0 or more'),
+  priceType: z.enum(['adjustment', 'fixed']).optional(),
+  priceAdjustment: z.number().nonnegative('Price must be 0 or more'),
   position: z.number().int().nonnegative().optional(),
   isActive: z.boolean().optional(),
 })
