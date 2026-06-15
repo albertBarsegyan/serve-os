@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AdminStaffPage } from '#/pages/admin/staff/ui/admin-staff-page'
-import { StaffPermission } from '#/shared/lib/permissions/index.ts'
+import { StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/_admin/staff')({

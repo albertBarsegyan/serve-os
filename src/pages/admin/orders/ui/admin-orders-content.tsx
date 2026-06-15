@@ -9,14 +9,14 @@ import {CreateStaffOrderDialog} from '#/features/order/create-staff-order/ui/Cre
 import type {OrderStatus} from '#/features/platform/api/platform.types.ts'
 import {orderByIdQueryOptions, ordersQueryOptions} from '#/features/platform/lib/query-options.ts'
 import {
-    useProcessCashPaymentMutation,
-    useProcessPosPaymentMutation,
-    useUpdateOrderStatusMutation,
+  useProcessCashPaymentMutation,
+  useProcessPosPaymentMutation,
+  useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import {cn} from '#/lib/utils'
-import {StaffPermission} from '#/shared/lib/permissions/index.ts'
-import {usePermissions} from '#/shared/lib/permissions/use-permissions.ts'
 import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {StaffPermission} from '#/shared/libs/permissions/index.ts'
+import {usePermissions} from '#/shared/libs/permissions/use-permissions.ts'
 import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
 import {formatPrice} from '#/shared/libs/utils/price.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'

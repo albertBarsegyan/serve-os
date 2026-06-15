@@ -1,13 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { Building2, MapPin } from 'lucide-react'
-import { useEffect, useId, useMemo } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { FeatureSelector } from '#/components/feature-selector'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
-import { SearchSelect } from '#/shared/ui/search-select'
 import type {
   CreateBusinessRequest,
   UpdateBusinessRequest,
@@ -28,9 +27,13 @@ import {
   useCreateBusinessMutation,
   useUpdateBusinessMutation,
 } from '#/features/business/model/business-hooks'
+import { selectBusinessServerFn } from '#/shared/api/business/business.fns'
+import { ImageEntityType, uploadImage } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
+import { LogoUploadField } from '#/shared/ui/logo-upload-field'
 import { Modal } from '#/shared/ui/modal'
+import { SearchSelect } from '#/shared/ui/search-select'
 
 interface BusinessFormProps {
   mode: 'add' | 'edit'
@@ -57,6 +60,9 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
     return null
   }, [mode, businessId, businessesQuery.data])
 
+  const pendingLogoFileRef = useRef<File | null>(null)
+  const [shouldClearLogo, setShouldClearLogo] = useState(false)
+
   const {
     register,
     handleSubmit,
@@ -82,9 +88,9 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
   const selectedFeatures = watch('features')
 
   const countryOptions = useMemo(() => getCountryOptions(), [])
-  const cityOptions = useMemo(() => getCityOptions(selectedCountry), [selectedCountry])
+  const cityOptions = getCityOptions(selectedCountry)
   const currencyOptions = useMemo(() => getCurrencyOptions(), [])
-
+  console.log('cityOptions', cityOptions)
   useEffect(() => {
     if (mode === 'edit' && currentBusiness?.location) {
       const [city, country] = currentBusiness.location.split(', ').map((s) => s.trim())
@@ -101,17 +107,15 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
     }
   }, [mode, currentBusiness, countryOptions, setValue])
 
+  const handleLogoFileChange = (file: File | null) => {
+    pendingLogoFileRef.current = file
+    setShouldClearLogo(file === null)
+  }
+
   const onSubmit = async (values: UpdateBusinessFormValues) => {
     try {
       const countryLabel = getCountryNameByCode(values.locationCountry) ?? values.locationCountry
-
-      const payload: UpdateBusinessRequest = {
-        name: values.name?.trim(),
-        type: values.type,
-        location: `${values.locationCity.trim()}, ${countryLabel.trim()}`,
-        currency: values.currency?.toUpperCase(),
-        ...(values.features.length ? { features: values.features } : {}),
-      }
+      const pendingFile = pendingLogoFileRef.current
 
       if (mode === 'add') {
         const createPayload: CreateBusinessRequest = {
@@ -121,11 +125,42 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
           currency: values.currency.toUpperCase(),
           ...(values.features.length ? { features: values.features } : {}),
         }
-        await createMutation.mutateAsync({ data: createPayload })
-        await queryClient.invalidateQueries({ queryKey: ['businesses'] })
+        const newBusiness = await createMutation.mutateAsync({ data: createPayload })
 
+        if (pendingFile) {
+          await selectBusinessServerFn({ data: newBusiness.id })
+          const uploaded = await uploadImage(pendingFile, {
+            entityType: ImageEntityType.BUSINESS_LOGO,
+          })
+          await updateMutation.mutateAsync({
+            id: newBusiness.id,
+            payload: { type: newBusiness.type, logoUrl: uploaded.url },
+          })
+        }
+
+        await queryClient.invalidateQueries({ queryKey: ['businesses'] })
         showSuccess('Business created successfully')
       } else if (mode === 'edit' && businessId) {
+        let logoUrl: string | null | undefined
+
+        if (pendingFile) {
+          const uploaded = await uploadImage(pendingFile, {
+            entityType: ImageEntityType.BUSINESS_LOGO,
+          })
+          logoUrl = uploaded.url
+        } else if (shouldClearLogo) {
+          logoUrl = null
+        }
+
+        const payload: UpdateBusinessRequest = {
+          name: values.name?.trim(),
+          type: values.type,
+          location: `${values.locationCity.trim()}, ${countryLabel.trim()}`,
+          currency: values.currency?.toUpperCase(),
+          ...(values.features.length ? { features: values.features } : {}),
+          ...(logoUrl === undefined ? {} : { logoUrl }),
+        }
+
         await updateMutation.mutateAsync({ id: businessId, payload })
         showSuccess('Business updated successfully')
       }
@@ -156,6 +191,13 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className='space-y-4 px-4'>
+        <LogoUploadField
+          label='Business Logo'
+          currentUrl={currentBusiness?.logoUrl}
+          onFileChange={handleLogoFileChange}
+          shape='square'
+        />
+
         <div className='space-y-2'>
           <Label htmlFor={nameId} className='text-sm font-medium'>
             Business Name
@@ -184,7 +226,10 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
                 id={typeId}
                 value={field.value}
                 onChange={field.onChange}
-                options={Object.entries(businessTypeLabels).map(([value, label]) => ({ value, label }))}
+                options={Object.entries(businessTypeLabels).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
                 placeholder='Select type'
               />
             )}

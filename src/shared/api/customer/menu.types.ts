@@ -34,6 +34,7 @@ export interface CustomerProduct {
 export interface CustomerCategory {
   id: string
   name: string
+  imageUrl?: string | null
   sortOrder: number
   products: CustomerProduct[]
 }

@@ -1,45 +1,47 @@
-import type {ResponsePromise} from 'ky'
-import type {StaffAuthUser} from '#/features/auth/api/auth.types.ts'
+import type { ResponsePromise } from 'ky'
+import type { StaffAuthUser } from '#/features/auth/api/auth.types.ts'
 import type {
-    AcceptInviteRequest,
-    AddModifierRequest,
-    ChangePasswordRequest,
-    ConfirmPaymentRequest,
-    CreateMenuCategoryRequest,
-    CreateModifierGroupRequest,
-    CreateOrderRequest,
-    CreatePaymentRequest,
-    CreateProductRequest,
-    CreateStaffOrderRequest,
-    CreateStaffWithInviteRequest,
-    CreateStaffWithPasswordRequest,
-    CreateStaffWithPinRequest,
-    CreateTableRequest,
-    MenuCategory,
-    Modifier,
-    ModifierGroup,
-    Order,
-    OrderStatus,
-    Payment,
-    ProcessPaymentRequest,
-    Product,
-    ScanSessionRequest,
-    ScanSessionResponse,
-    SessionBill,
-    StaffLoginWithPasswordRequest,
-    StaffLoginWithPinRequest,
-    StaffMember,
-    TableEntity,
-    UpdateMenuCategoryRequest,
-    UpdateModifierGroupRequest,
-    UpdateModifierRequest,
-    UpdateOrderStatusRequest,
-    UpdateProductRequest,
-    UpdateStaffRequest,
-    UpdateStaffRoleRequest,
-    UpdateTableRequest,
+  AcceptInviteRequest,
+  AddModifierRequest,
+  ChangePasswordRequest,
+  ConfirmPaymentRequest,
+  CreateMenuCategoryRequest,
+  CreateModifierGroupRequest,
+  CreateOrderRequest,
+  CreatePaymentRequest,
+  CreateProductRequest,
+  CreateStaffOrderRequest,
+  CreateStaffWithInviteRequest,
+  CreateStaffWithPasswordRequest,
+  CreateStaffWithPinRequest,
+  CreateTableRequest,
+  MenuCategory,
+  Modifier,
+  ModifierGroup,
+  Order,
+  OrderStatus,
+  Payment,
+  ProcessPaymentRequest,
+  Product,
+  ScanSessionRequest,
+  ScanSessionResponse,
+  SessionBill,
+  SetTableReservationRequest,
+  StaffLoginWithPasswordRequest,
+  StaffLoginWithPinRequest,
+  StaffMember,
+  TableEntity,
+  ToggleTableStatusRequest,
+  UpdateMenuCategoryRequest,
+  UpdateModifierGroupRequest,
+  UpdateModifierRequest,
+  UpdateOrderStatusRequest,
+  UpdateProductRequest,
+  UpdateStaffRequest,
+  UpdateStaffRoleRequest,
+  UpdateTableRequest,
 } from '#/features/platform/api/platform.types.ts'
-import {clientApiInstance} from '#/shared/api/client-instance.ts'
+import { clientApiInstance } from '#/shared/api/client-instance.ts'
 
 type ListResponse<T> = T[] | { data?: T[] }
 
@@ -66,8 +68,28 @@ export function updateTable(tableId: string, data: UpdateTableRequest): Promise<
   return clientApiInstance.patch(`tables/${tableId}`, { json: data }).json<TableEntity>()
 }
 
-export function deleteTable(tableId: string): Promise<{ message: string }> {
-  return clientApiInstance.delete(`tables/${tableId}`).json<{ message: string }>()
+export function deleteTable(tableId: string): Promise<unknown> {
+  return clientApiInstance.delete(`tables/${tableId}`)
+}
+
+export function toggleTableStatus(
+  tableId: string,
+  data: ToggleTableStatusRequest,
+): Promise<TableEntity> {
+  return clientApiInstance.patch(`tables/${tableId}/status`, { json: data }).json<TableEntity>()
+}
+
+export function setTableReservation(
+  tableId: string,
+  data: SetTableReservationRequest,
+): Promise<TableEntity> {
+  return clientApiInstance.patch(`tables/${tableId}/reserve`, { json: data }).json<TableEntity>()
+}
+
+export function uploadTableImage(tableId: string, file: File): Promise<TableEntity> {
+  const formData = new FormData()
+  formData.append('image', file)
+  return clientApiInstance.post(`tables/${tableId}/image`, { body: formData }).json<TableEntity>()
 }
 
 // --- Table Sessions ---
@@ -393,6 +415,12 @@ export function removeStaff(businessId: string, staffId: string): Promise<{ mess
   return clientApiInstance
     .delete(`businesses/${businessId}/staff/${staffId}`)
     .json<{ message: string }>()
+}
+
+export function unlockStaff(businessId: string, staffId: string): Promise<StaffMember> {
+  return clientApiInstance
+    .post(`businesses/${businessId}/staff/${staffId}/unlock`)
+    .json<StaffMember>()
 }
 
 // --- Kitchen (active orders only — /kitchen/active-orders) ---

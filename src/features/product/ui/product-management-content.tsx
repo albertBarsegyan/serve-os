@@ -21,6 +21,7 @@ import {
 import { cn } from '#/lib/utils'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
 import { ProductModal } from './product-modal'
 
 export function ProductManagementContent() {
@@ -31,6 +32,7 @@ export function ProductManagementContent() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [productModalMode, setProductModalMode] = useState<'create' | 'edit'>('create')
+  const [deletingProduct, setDeletingProduct] = useState<{ id: string; name: string } | null>(null)
 
   const { data: products = [], isPending: productsLoading } = useGetProducts(activeBusinessId || '')
   const { data: categories = [] } = useGetCategories(activeBusinessId || '')
@@ -97,13 +99,15 @@ export function ProductManagementContent() {
     }
   }
 
-  const handleDeleteProduct = async (productId: string) => {
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return
     try {
       await deleteMutation.mutateAsync({
         businessId: activeBusinessId || '',
-        productId,
+        productId: deletingProduct.id,
       })
       toast.success('Product deleted')
+      setDeletingProduct(null)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to delete product')
     }
@@ -237,8 +241,9 @@ export function ProductManagementContent() {
                             variant='ghost'
                             size='icon'
                             className='rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive'
-                            onClick={() => handleDeleteProduct(product.id)}
-                            disabled={deleteMutation.isPending}
+                            onClick={() =>
+                              setDeletingProduct({ id: product.id, name: product.name })
+                            }
                           >
                             <Trash2 className='h-4 w-4' />
                           </Button>
@@ -257,6 +262,15 @@ export function ProductManagementContent() {
         isOpen={isProductModalOpen}
         onClose={() => setIsProductModalOpen(false)}
         mode={productModalMode}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingProduct)}
+        onClose={() => setDeletingProduct(null)}
+        onConfirm={() => void handleDeleteProduct()}
+        name={deletingProduct?.name ?? ''}
+        entityLabel='product'
+        isPending={deleteMutation.isPending}
       />
     </div>
   )

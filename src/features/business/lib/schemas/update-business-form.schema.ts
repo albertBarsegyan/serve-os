@@ -6,6 +6,8 @@ export const updateBusinessRequestSchema = z.object({
   id: z.string(),
 
   payload: z.object({
+    logoUrl: z.string().nullable().optional(),
+
     name: z.string().min(1).optional(),
 
     type: z.enum(businessTypes),

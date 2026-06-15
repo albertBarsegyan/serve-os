@@ -9,7 +9,7 @@ export interface RosterStaffMember {
 }
 
 export interface StaffRosterResponse {
-  business: { name: string; slug: string }
+  business: { id: string; name: string; slug: string }
   staff: RosterStaffMember[]
 }
 
@@ -23,4 +23,27 @@ export interface StaffLoginResponse {
   tokens: { accessToken: string }
   user: StaffAuthUser
   requiresPasswordChange?: boolean
+}
+
+export interface StaffLookupRequest {
+  employeeId: string
+  businessId: string
+}
+
+export interface StaffLookupResult {
+  id: string
+  displayName: string
+  role: StaffRole
+  avatarUrl: string | null
+}
+
+export interface StaffPinLoginRequest {
+  staffId: string
+  pin: string
+  businessId: string
+}
+
+export interface StaffPinLoginResponse {
+  tokens: { accessToken: string }
+  user: StaffAuthUser
 }

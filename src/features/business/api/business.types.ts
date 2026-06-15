@@ -22,6 +22,7 @@ export interface CreateBusinessRequest {
 }
 
 export interface UpdateBusinessRequest {
+  logoUrl?: string | null
   name?: string
   type: keyof typeof BusinessType
   location?: string
@@ -34,6 +35,7 @@ export interface UpdateBusinessRequest {
 export interface BusinessResponse {
   id: string
   name: string
+  logoUrl?: string | null
   type: keyof typeof BusinessType
   features: BusinessFeature[]
   location: string

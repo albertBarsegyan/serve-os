@@ -51,11 +51,19 @@ export const getCountryOptions = (): LocationOption[] => getCountryOpts()
 
 export const getCityOptions = (countryCode?: string): LocationOption[] => {
   if (!countryCode) return []
-  const cached = cityCache.get(countryCode)
-  if (cached) return cached
+  if (cityCache.has(countryCode)) return cityCache.get(countryCode)!
+
+  const seen = new Set<string>()
   const cities = (City.getCitiesOfCountry(countryCode) ?? [])
-    .map(({ name }) => ({ value: name, label: name }))
+    .reduce<LocationOption[]>((acc, { name }) => {
+      if (!seen.has(name)) {
+        seen.add(name)
+        acc.push({ value: name, label: name })
+      }
+      return acc
+    }, [])
     .sort((a, b) => a.label.localeCompare(b.label))
+
   cityCache.set(countryCode, cities)
   return cities
 }

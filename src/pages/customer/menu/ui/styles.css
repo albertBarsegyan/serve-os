@@ -1,0 +1,143 @@
+/* ── Theme variables ── */
+
+/* Dark theme (default) */
+.c-app {
+  --c-bg: #0d0d0d;
+  --c-card: #1a1a1a;
+  --c-card2: #242424;
+  --c-card3: #2e2e2e;
+  --c-text: #ffffff;
+  --c-w80: rgba(255, 255, 255, 0.8);
+  --c-w60: rgba(255, 255, 255, 0.6);
+  --c-w40: rgba(255, 255, 255, 0.4);
+  --c-w30: rgba(255, 255, 255, 0.3);
+  --c-w20: rgba(255, 255, 255, 0.2);
+  --c-w10: rgba(255, 255, 255, 0.1);
+  --c-w06: rgba(255, 255, 255, 0.06);
+  --c-border: rgba(255, 255, 255, 0.09);
+  --c-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Auto light mode from OS */
+@media (prefers-color-scheme: light) {
+  .c-app:not([data-theme='dark']) {
+    --c-bg: #f8f5f1;
+    --c-card: #ffffff;
+    --c-card2: #f2ede7;
+    --c-card3: #e8e1d9;
+    --c-text: #1a1a1a;
+    --c-w80: rgba(0, 0, 0, 0.8);
+    --c-w60: rgba(0, 0, 0, 0.6);
+    --c-w40: rgba(0, 0, 0, 0.4);
+    --c-w30: rgba(0, 0, 0, 0.3);
+    --c-w20: rgba(0, 0, 0, 0.2);
+    --c-w10: rgba(0, 0, 0, 0.1);
+    --c-w06: rgba(0, 0, 0, 0.06);
+    --c-border: rgba(0, 0, 0, 0.08);
+    --c-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* Manual dark override */
+.c-app[data-theme='dark'] {
+  --c-bg: #0d0d0d;
+  --c-card: #1a1a1a;
+  --c-card2: #242424;
+  --c-card3: #2e2e2e;
+  --c-text: #ffffff;
+  --c-w80: rgba(255, 255, 255, 0.8);
+  --c-w60: rgba(255, 255, 255, 0.6);
+  --c-w40: rgba(255, 255, 255, 0.4);
+  --c-w30: rgba(255, 255, 255, 0.3);
+  --c-w20: rgba(255, 255, 255, 0.2);
+  --c-w10: rgba(255, 255, 255, 0.1);
+  --c-w06: rgba(255, 255, 255, 0.06);
+  --c-border: rgba(255, 255, 255, 0.09);
+  --c-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Manual light override */
+.c-app[data-theme='light'] {
+  --c-bg: #f8f5f1;
+  --c-card: #ffffff;
+  --c-card2: #f2ede7;
+  --c-card3: #e8e1d9;
+  --c-text: #1a1a1a;
+  --c-w80: rgba(0, 0, 0, 0.8);
+  --c-w60: rgba(0, 0, 0, 0.6);
+  --c-w40: rgba(0, 0, 0, 0.4);
+  --c-w30: rgba(0, 0, 0, 0.3);
+  --c-w20: rgba(0, 0, 0, 0.2);
+  --c-w10: rgba(0, 0, 0, 0.1);
+  --c-w06: rgba(0, 0, 0, 0.06);
+  --c-border: rgba(0, 0, 0, 0.08);
+  --c-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Base ── */
+.c-app {
+  font-family: inherit;
+}
+
+.c-app textarea::placeholder {
+  color: var(--c-w40);
+}
+
+/* ── Animations ── */
+.c-page {
+  animation: c-slide-in 290ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes c-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.c-pulse {
+  animation: c-pulse 1.4s ease-in-out infinite;
+}
+@keyframes c-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(249, 115, 22, 0);
+  }
+}
+
+.c-step-pop {
+  animation: c-step-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes c-step-pop {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.c-scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.c-scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

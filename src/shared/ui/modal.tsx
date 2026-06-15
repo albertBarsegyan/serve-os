@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils.ts'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
@@ -22,11 +23,11 @@ export function Modal({
 }: Readonly<ModalProps>) {
   useBodyScrollLock(isOpen)
 
-  if (!isOpen) return null
+  if (!isOpen || typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div
-      className={cn('fixed inset-0 z-100 flex items-center justify-center p-2 sm:p-4', className)}
+      className={cn('fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4', className)}
     >
       <button
         type='button'
@@ -35,7 +36,7 @@ export function Modal({
         onClick={onClose}
       />
 
-      <div className='relative w-full max-w-4xl animate-in fade-in zoom-in duration-200 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg sm:p-8'>
+      <div className='relative w-full max-w-2xl animate-in fade-in zoom-in duration-200 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg sm:p-8'>
         <div className='mb-6 flex items-center justify-between'>
           <h2 className='text-xl font-bold'>{title}</h2>
           <Button variant='ghost' size='icon' onClick={onClose} className='rounded-full'>
@@ -46,6 +47,7 @@ export function Modal({
         <div className='mb-8 p-2 max-h-140 overflow-y-auto'>{children}</div>
         {footer && <div className='flex justify-end gap-3'>{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

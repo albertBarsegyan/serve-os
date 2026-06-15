@@ -33,12 +33,15 @@ import {
 } from '#/features/platform/model/platform-hooks.ts'
 import { ProductModal } from '#/features/product/ui/product-modal.tsx'
 import { cn } from '#/lib/utils'
-import { StaffPermission } from '#/shared/lib/permissions/index.ts'
-import { usePermissions } from '#/shared/lib/permissions/use-permissions.ts'
+import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { StaffPermission } from '#/shared/libs/permissions/index.ts'
+import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
+import { ImageUpload } from '#/shared/ui/image-upload'
 import { Modal } from '#/shared/ui/modal'
 
 type CreateCategoryFormValues = z.infer<typeof createMenuCategorySchema>
@@ -49,6 +52,10 @@ export function AdminMenuContent() {
   const [search, setSearch] = useState('')
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null)
+  const [deletingCategory, setDeletingCategory] = useState<MenuCategory | null>(null)
+  const [deletingProduct, setDeletingProduct] = useState<{ id: string; name: string } | null>(null)
+  const [createImageUrl, setCreateImageUrl] = useState<string | null>(null)
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [productModalMode, setProductModalMode] = useState<'create' | 'edit'>('create')
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
@@ -129,9 +136,11 @@ export function AdminMenuContent() {
       await createCategoryMutation.mutateAsync({
         ...values,
         description: values.description || null,
+        imageUrl: createImageUrl,
       })
       showSuccess('Category created')
       resetCreateForm({ name: '', description: '', sortOrder: 0 })
+      setCreateImageUrl(null)
       setIsCategoryModalOpen(false)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -140,6 +149,7 @@ export function AdminMenuContent() {
 
   const openEditCategory = (category: MenuCategory) => {
     setEditingCategory(category)
+    setEditImageUrl(category.imageUrl ?? null)
     resetEditForm({
       name: category.name,
       description: category.description ?? '',
@@ -152,7 +162,7 @@ export function AdminMenuContent() {
     try {
       await updateCategoryMutation.mutateAsync({
         categoryId: editingCategory.id,
-        data: { ...values, description: values.description || null },
+        data: { ...values, description: values.description || null, imageUrl: editImageUrl },
       })
       showSuccess('Category updated')
       setEditingCategory(null)
@@ -164,20 +174,24 @@ export function AdminMenuContent() {
     }
   }
 
-  const handleDeleteCategory = async (category: MenuCategory) => {
+  const handleDeleteCategory = async () => {
+    if (!deletingCategory) return
     try {
-      await deleteCategoryMutation.mutateAsync(category.id)
+      await deleteCategoryMutation.mutateAsync(deletingCategory.id)
       showSuccess('Category deleted')
-      if (activeCategory === category.name) setActiveCategory('All')
+      if (activeCategory === deletingCategory.name) setActiveCategory('All')
+      setDeletingCategory(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
   }
 
-  const removeProduct = async (productId: string) => {
+  const removeProduct = async () => {
+    if (!deletingProduct) return
     try {
-      await deleteProductMutation.mutateAsync(productId)
+      await deleteProductMutation.mutateAsync(deletingProduct.id)
       showSuccess('Product removed')
+      setDeletingProduct(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
@@ -261,12 +275,19 @@ export function AdminMenuContent() {
                   type='button'
                   onClick={() => setActiveCategory(category.name)}
                   className={cn(
-                    'flex-1 rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-all',
+                    'flex flex-1 items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all',
                     activeCategory === category.name
                       ? 'bg-accent text-accent-foreground'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
+                  {category.imageUrl && (
+                    <img
+                      src={category.imageUrl}
+                      alt={category.name}
+                      className='h-6 w-6 shrink-0 rounded-md object-cover'
+                    />
+                  )}
                   {category.name}
                 </button>
                 {canEditMenu && (
@@ -283,8 +304,7 @@ export function AdminMenuContent() {
                       type='button'
                       className='rounded-lg p-1 text-destructive hover:bg-destructive/10'
                       title='Delete category'
-                      onClick={() => void handleDeleteCategory(category)}
-                      disabled={deleteCategoryMutation.isPending}
+                      onClick={() => setDeletingCategory(category)}
                     >
                       <Trash2 className='h-3.5 w-3.5' />
                     </button>
@@ -423,9 +443,7 @@ export function AdminMenuContent() {
                                 variant='ghost'
                                 size='icon'
                                 className='rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive'
-                                onClick={() => {
-                                  void removeProduct(item.id)
-                                }}
+                                onClick={() => setDeletingProduct({ id: item.id, name: item.name })}
                               >
                                 <Trash2 className='h-4 w-4' />
                               </Button>
@@ -441,6 +459,26 @@ export function AdminMenuContent() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete category confirmation modal */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingCategory)}
+        onClose={() => setDeletingCategory(null)}
+        onConfirm={() => void handleDeleteCategory()}
+        name={deletingCategory?.name ?? ''}
+        entityLabel='category'
+        isPending={deleteCategoryMutation.isPending}
+      />
+
+      {/* Delete product confirmation modal */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingProduct)}
+        onClose={() => setDeletingProduct(null)}
+        onConfirm={() => void removeProduct()}
+        name={deletingProduct?.name ?? ''}
+        entityLabel='product'
+        isPending={deleteProductMutation.isPending}
+      />
 
       {/* Create category modal */}
       <Modal
@@ -464,6 +502,13 @@ export function AdminMenuContent() {
         }
       >
         <form className='space-y-4'>
+          <ImageUpload
+            value={createImageUrl}
+            onChange={setCreateImageUrl}
+            entityType={ImageEntityType.BUSINESS_CATEGORY}
+            label='Category image'
+            previewShape='square'
+          />
           <div className='space-y-1'>
             <label
               htmlFor={categoryNameId}
@@ -538,6 +583,13 @@ export function AdminMenuContent() {
         }
       >
         <form className='space-y-4'>
+          <ImageUpload
+            value={editImageUrl}
+            onChange={setEditImageUrl}
+            entityType={ImageEntityType.BUSINESS_CATEGORY}
+            label='Category image'
+            previewShape='square'
+          />
           <div className='space-y-1'>
             <label
               htmlFor={editNameId}

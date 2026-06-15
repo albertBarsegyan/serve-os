@@ -42,7 +42,6 @@ export function ProductModal({
     activeBusinessId,
     productId ?? '',
   )
-  console.log('fetchedProduct', fetchedProduct)
   const isLoadingEditData = mode === 'edit' && !!productId && isProductPending && !fetchedProduct
 
   const handleSubmit = async (

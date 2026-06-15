@@ -24,7 +24,7 @@ function applyTheme(theme: Theme, animate = false) {
 const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: 'light',
+      theme: 'dark',
 
       setTheme: (theme) => {
         applyTheme(theme)

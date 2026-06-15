@@ -1,6 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, ArrowRight, CheckCircle2, ChefHat, Clock, Wifi, WifiOff } from 'lucide-react'
-import { useState } from 'react'
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  ChefHat,
+  Clock,
+  Maximize2,
+  Minimize2,
+  Wifi,
+  WifiOff,
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
@@ -39,6 +49,22 @@ const columns: { title: string; key: Column; icon: typeof AlertCircle; color: st
 export function AdminKitchenContent() {
   const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
   const [isConnected, setIsConnected] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
+  }, [])
+
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      containerRef.current?.requestFullscreen()
+    } else {
+      document.exitFullscreen()
+    }
+  }
 
   useKitchenSocket(businessId, setIsConnected)
 
@@ -65,7 +91,13 @@ export function AdminKitchenContent() {
   }
 
   return (
-    <div className='flex h-[calc(100vh-10rem)] flex-col space-y-8'>
+    <div
+      ref={containerRef}
+      className={cn(
+        'flex flex-col space-y-8',
+        isFullscreen ? 'h-screen bg-background p-8' : 'h-[calc(100vh-10rem)]',
+      )}
+    >
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
           <h1 className='text-3xl font-semibold tracking-tight'>Kitchen Display (KDS)</h1>
@@ -108,6 +140,15 @@ export function AdminKitchenContent() {
             onClick={() => void refetch()}
           >
             Refresh
+          </Button>
+          <Button
+            size='sm'
+            variant='outline'
+            type='button'
+            className='rounded-full'
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? <Minimize2 className='h-4 w-4' /> : <Maximize2 className='h-4 w-4' />}
           </Button>
         </div>
       </div>

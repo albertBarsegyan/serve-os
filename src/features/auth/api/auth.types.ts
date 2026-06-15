@@ -1,4 +1,8 @@
-import type { BusinessFeature, StaffPermission, StaffRole } from '#/shared/lib/permissions/index.ts'
+import type {
+  BusinessFeature,
+  StaffPermission,
+  StaffRole,
+} from '#/shared/libs/permissions/index.ts'
 
 export interface SignUpRequest {
   email: string
@@ -13,6 +17,7 @@ export interface OwnerAuthUser {
   email: string
   firstName: string
   lastName: string
+  avatarUrl?: string | null
   hasBusiness: boolean
   role: string
 }
@@ -21,6 +26,7 @@ export interface StaffAuthUser {
   type: 'staff'
   staffId: string
   displayName: string
+  avatarUrl?: string | null
   email?: string | null
   businessId: string
   role: StaffRole

@@ -1,6 +1,6 @@
-import {useMutation, useQueryClient} from '@tanstack/react-query'
-import {CATEGORIES_QUERY_KEY} from '#/entities/product/api/category-hooks.ts'
-import {authUserQueryOptions} from '#/features/auth/lib/query-options.ts'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { CATEGORIES_QUERY_KEY } from '#/entities/product/api/category-hooks.ts'
+import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import type {
   AcceptInviteRequest,
   AddModifierRequest,
@@ -18,8 +18,10 @@ import type {
   CreateTableRequest,
   ProcessPaymentRequest,
   ScanSessionRequest,
+  SetTableReservationRequest,
   StaffLoginWithPasswordRequest,
   StaffLoginWithPinRequest,
+  ToggleTableStatusRequest,
   UpdateMenuCategoryRequest,
   UpdateModifierGroupRequest,
   UpdateModifierRequest,
@@ -29,7 +31,7 @@ import type {
   UpdateStaffRoleRequest,
   UpdateTableRequest,
 } from '#/features/platform/api/platform.types.ts'
-import {platformQueryKeys} from '#/features/platform/lib/constants/platform-query-keys.ts'
+import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys.ts'
 import {
   acceptStaffInvite,
   addModifierToGroup,
@@ -59,7 +61,10 @@ import {
   removeStaff,
   scanSession,
   setProductAvailability,
+  setTableReservation,
   syncProductModifierGroups,
+  toggleTableStatus,
+  unlockStaff,
   updateMenuCategory,
   updateModifier,
   updateModifierGroup,
@@ -68,6 +73,7 @@ import {
   updateStaff,
   updateStaffRole,
   updateTable,
+  uploadTableImage,
 } from '#/shared/api/platform/platform-api.ts'
 
 export function useCreateTableMutation() {
@@ -101,6 +107,42 @@ export function useDeleteTableMutation() {
 
   return useMutation({
     mutationFn: (tableId: string) => deleteTable(tableId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+    },
+  })
+}
+
+export function useToggleTableStatusMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ tableId, data }: { tableId: string; data: ToggleTableStatusRequest }) =>
+      toggleTableStatus(tableId, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+    },
+  })
+}
+
+export function useSetTableReservationMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ tableId, data }: { tableId: string; data: SetTableReservationRequest }) =>
+      setTableReservation(tableId, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+    },
+  })
+}
+
+export function useUploadTableImageMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ tableId, file }: { tableId: string; file: File }) =>
+      uploadTableImage(tableId, file),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
     },
@@ -599,6 +641,20 @@ export function useRemoveStaffMutation() {
   return useMutation({
     mutationFn: ({ businessId, staffId }: { businessId: string; staffId: string }) =>
       removeStaff(businessId, staffId),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.staff(variables.businessId),
+      })
+    },
+  })
+}
+
+export function useUnlockStaffMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ businessId, staffId }: { businessId: string; staffId: string }) =>
+      unlockStaff(businessId, staffId),
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.staff(variables.businessId),

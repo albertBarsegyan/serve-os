@@ -73,6 +73,11 @@ export interface ScanSessionRequest {
   qrCode: string
 }
 
+export interface CustomerPaymentMethod {
+  method: 'CASH' | 'POS' | 'ONLINE'
+  isActive: boolean
+}
+
 export interface ScanSessionResponse {
   sessionToken: string
   tableSessionId: string
@@ -80,6 +85,8 @@ export interface ScanSessionResponse {
   tableId: string
   tableName: string
   businessName: string
+  businessLogoUrl: string | null
+  paymentMethods: CustomerPaymentMethod[]
 }
 
 export interface SessionBillItem {
@@ -106,6 +113,9 @@ export interface TableEntity {
   qrCode: string
   capacity: number
   isActive: boolean
+  isReserved: boolean
+  imageUrl: string | null
+  currentSessionId: string | null
   createdAt: string
   updatedAt: string
 }
@@ -114,13 +124,22 @@ export interface CreateTableRequest {
   number: number
   capacity: number
   isActive?: boolean
+  imageUrl?: string | null
 }
 
 export interface UpdateTableRequest {
   number?: number
   capacity?: number
-  qrCode?: string
   isActive?: boolean
+  imageUrl?: string | null
+}
+
+export interface ToggleTableStatusRequest {
+  isActive: boolean
+}
+
+export interface SetTableReservationRequest {
+  isReserved: boolean
 }
 
 // ── Menu categories ───────────────────────────────────────────────────────────
@@ -129,6 +148,7 @@ export interface MenuCategory {
   businessId: string
   name: string
   description?: string | null
+  imageUrl?: string | null
   sortOrder: number
   createdAt: string
   updatedAt: string
@@ -138,6 +158,7 @@ export interface MenuCategory {
 export interface CreateMenuCategoryRequest {
   name: string
   description?: string | null
+  imageUrl?: string | null
   sortOrder?: number
 }
 
@@ -334,12 +355,23 @@ export interface ChangePasswordRequest {
 export interface StaffMember {
   id: string
   businessId: string
+  createdByOwnerId: string
   displayName: string
-  role: StaffRole
-  authType: StaffAuthType
-  email?: string | null
-  isActive: boolean
+  role: (typeof staffRoles)[number]
+  authType: string
+  email: string | null
+  inviteExpiresAt: string | null
   mustChangePassword: boolean
+  avatarUrl: string | null
+  isActive: boolean
+  featureOverrides: Record<string, unknown> | null
+  employeeId: string
+  pinFailedAttempts: number
+  pinLockedUntil: string | null
+  lastLoginAt: string | null
+  lastLoginIp: string | null
+  lastLoginTerminal: string | null
+  deletedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -349,6 +381,7 @@ export interface UpdateStaffRoleRequest {
 }
 
 export interface UpdateStaffRequest {
+  avatarUrl?: string | null
   displayName?: string
   role?: StaffRole
   isActive?: boolean

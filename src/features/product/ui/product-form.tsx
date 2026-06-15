@@ -1,14 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Trash2, X } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { ImageIcon, Loader2, Plus, Trash2, X } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
-import { SearchSelect } from '#/shared/ui/search-select'
 import { Textarea } from '#/components/ui/textarea'
 import type { ModifierGroup, ModifierPriceType } from '#/features/platform/api/platform.types'
 import { modifierGroupsQueryOptions } from '#/features/platform/lib/query-options'
@@ -28,6 +27,11 @@ import type {
   UpdateProductFormData,
 } from '#/features/product/lib/schemas/create-product-form.schema'
 import { createProductFormSchema } from '#/features/product/lib/schemas/create-product-form.schema'
+import { ImageEntityType, uploadImage } from '#/shared/api/images/images.api'
+import { SearchSelect } from '#/shared/ui/search-select'
+
+const ALLOWED_IMAGE_TYPES = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp']
+const MAX_IMAGE_SIZE = 3 * 1024 * 1024 // 3 MB
 
 interface NewGroupItem {
   id: string
@@ -65,12 +69,8 @@ export function ProductForm({
   defaultCategoryId,
   mode,
 }: Readonly<ProductFormProps>) {
-  const [imageRowIds, setImageRowIds] = useState(
-    () =>
-      initialData?.imageUrls?.map(
-        (_, index) => `image-row-${index}-${Math.random().toString(36).slice(2, 8)}`,
-      ) ?? [],
-  )
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   // Modifier groups local state
   const [attachedGroups, setAttachedGroups] = useState<ProductModifierGroup[]>(
@@ -142,18 +142,56 @@ export function ProductForm({
   const selectedDietaryFlags = (watch('dietaryFlags') ?? []) as DietaryFlag[]
   const selectedAllergens = (watch('allergens') ?? []) as Allergen[]
 
-  const handleAddImage = useCallback(() => {
-    const nextId = `image-row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    setImageRowIds((current) => [...current, nextId])
-    setValue('imageUrls', [...imageUrls, ''], { shouldDirty: true, shouldValidate: true })
-  }, [imageUrls, setValue])
+  const MAX_IMAGES = 4
+
+  const handleImageFilesSelected = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return
+      const remaining = MAX_IMAGES - imageUrls.length
+      if (remaining <= 0) return
+
+      const validFiles: File[] = []
+      for (const file of Array.from(files).slice(0, remaining)) {
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          toast.error('Only SVG, PNG, JPG, JPEG, and WebP files are allowed')
+          continue
+        }
+        if (file.size > MAX_IMAGE_SIZE) {
+          toast.error('File size must be under 3 MB')
+          continue
+        }
+        validFiles.push(file)
+      }
+
+      if (validFiles.length === 0) {
+        if (imageInputRef.current) imageInputRef.current.value = ''
+        return
+      }
+
+      setIsUploadingImage(true)
+      try {
+        const uploaded = await Promise.all(
+          validFiles.map((f) => uploadImage(f, { entityType: ImageEntityType.BUSINESS_PRODUCT })),
+        )
+        setValue('imageUrls', [...imageUrls, ...uploaded.map((u) => u.url)], {
+          shouldDirty: true,
+          shouldValidate: true,
+        })
+      } catch {
+        toast.error('Image upload failed')
+      } finally {
+        setIsUploadingImage(false)
+        if (imageInputRef.current) imageInputRef.current.value = ''
+      }
+    },
+    [imageUrls, setValue],
+  )
 
   const handleRemoveImage = useCallback(
     (index: number) => {
-      setImageRowIds((current) => current.filter((_, currentIndex) => currentIndex !== index))
       setValue(
         'imageUrls',
-        imageUrls.filter((_, currentIndex) => currentIndex !== index),
+        imageUrls.filter((_, i) => i !== index),
         { shouldDirty: true, shouldValidate: true },
       )
     },
@@ -196,11 +234,11 @@ export function ProductForm({
       items: [
         ...prev.items,
         {
-            id: Math.random().toString(36).slice(2, 10),
-            name: '',
-            priceType: 'adjustment',
-            priceAdjustment: '0',
-          },
+          id: Math.random().toString(36).slice(2, 10),
+          name: '',
+          priceType: 'adjustment',
+          priceAdjustment: '0',
+        },
       ],
     }))
   }, [])
@@ -488,7 +526,10 @@ export function ProductForm({
                 id='availablePeriod'
                 value={field.value || 'all_day'}
                 onChange={field.onChange}
-                options={servicePeriods.map((p) => ({ value: p, label: p.replace('_', ' ').toUpperCase() }))}
+                options={servicePeriods.map((p) => ({
+                  value: p,
+                  label: p.replace('_', ' ').toUpperCase(),
+                }))}
               />
             )}
           />
@@ -595,47 +636,66 @@ export function ProductForm({
         </div>
       </div>
 
-      {/* Image URLs */}
+      {/* Images */}
       <div>
-        <div className='flex items-center justify-between mb-2'>
-          <div className='text-sm font-medium'>Images</div>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={handleAddImage}
-            className='gap-1'
-          >
-            <Plus className='w-4 h-4' />
-            Add Image
-          </Button>
+        <div className='flex items-center justify-between mb-3'>
+          <div className='text-sm font-medium'>
+            Images
+            <span className='ml-1.5 text-xs font-normal text-muted-foreground'>
+              ({imageUrls.length}/{MAX_IMAGES})
+            </span>
+          </div>
         </div>
-        <div className='space-y-2'>
-          {imageRowIds.map((id, index) => (
-            <div key={id} className='flex gap-2'>
-              <Controller
-                name={`imageUrls.${index}`}
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    placeholder='https://example.com/image.jpg'
-                    {...field}
-                    value={field.value || ''}
-                  />
-                )}
+
+        <div className='grid grid-cols-4 gap-2'>
+          {imageUrls.map((url, index) => (
+            <div
+              key={url + String(index)}
+              className='relative aspect-square overflow-hidden rounded-xl border border-input bg-muted'
+            >
+              <img
+                src={url}
+                alt={`Product view ${index + 1}`}
+                className='h-full w-full object-cover'
               />
-              <Button
+              <button
                 type='button'
-                variant='ghost'
-                size='sm'
                 onClick={() => handleRemoveImage(index)}
-                className='text-red-500'
+                className='absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors'
+                aria-label='Remove image'
               >
-                <Trash2 className='w-4 h-4' />
-              </Button>
+                <X className='h-3 w-3' />
+              </button>
             </div>
           ))}
+
+          {imageUrls.length < MAX_IMAGES && (
+            <button
+              type='button'
+              disabled={isUploadingImage}
+              onClick={() => imageInputRef.current?.click()}
+              className='flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-input bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 cursor-pointer'
+            >
+              {isUploadingImage ? (
+                <Loader2 className='h-5 w-5 animate-spin' />
+              ) : (
+                <>
+                  <ImageIcon className='h-5 w-5' />
+                  <span className='text-[10px] font-medium'>Add photo</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
+
+        <input
+          ref={imageInputRef}
+          type='file'
+          accept='.svg,.png,.jpg,.jpeg,.webp'
+          multiple
+          className='hidden'
+          onChange={(e) => void handleImageFilesSelected(e.target.files)}
+        />
       </div>
 
       {/* Modifier Groups */}
@@ -749,7 +809,9 @@ export function ProductForm({
               <SearchSelect
                 id='newGroupSelectionType'
                 value={newGroup.selectionType}
-                onChange={(v) => setNewGroup((prev) => ({ ...prev, selectionType: v as 'SINGLE' | 'MULTIPLE' }))}
+                onChange={(v) =>
+                  setNewGroup((prev) => ({ ...prev, selectionType: v as 'SINGLE' | 'MULTIPLE' }))
+                }
                 options={[
                   { value: 'SINGLE', label: 'Single choice' },
                   { value: 'MULTIPLE', label: 'Multiple choice' },

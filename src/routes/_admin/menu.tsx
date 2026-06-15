@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AdminMenuPage } from '#/pages/admin/menu/ui/admin-menu-page'
+import { StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
-import { StaffPermission } from '#/shared/lib/permissions/index.ts'
 
 export const Route = createFileRoute('/_admin/menu')({
   component: AdminMenuPage,

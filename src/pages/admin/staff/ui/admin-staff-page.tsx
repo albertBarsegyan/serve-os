@@ -1,22 +1,16 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQuery } from '@tanstack/react-query'
-import { Copy, Edit2, Search, Trash2, UserPlus } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import type { z } from 'zod'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/components/ui/table'
-import type { StaffMember, StaffRole } from '#/features/platform/api/platform.types.ts'
-import { staffQueryOptions } from '#/features/platform/lib/query-options.ts'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {useQuery} from '@tanstack/react-query'
+import {useRouteContext} from '@tanstack/react-router'
+import {Copy, Edit2, LockOpen, Search, Trash2, UserPlus} from 'lucide-react'
+import {useId, useMemo, useState} from 'react'
+import {Controller, useForm} from 'react-hook-form'
+import type {z} from 'zod'
+import {Badge} from '#/components/ui/badge'
+import {Button} from '#/components/ui/button'
+import {Card, CardContent, CardHeader, CardTitle} from '#/components/ui/card'
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '#/components/ui/table'
+import type {StaffMember, StaffRole} from '#/features/platform/api/platform.types.ts'
+import {staffQueryOptions} from '#/features/platform/lib/query-options.ts'
 import {
   createStaffWithInviteSchema,
   createStaffWithPasswordSchema,
@@ -28,13 +22,18 @@ import {
   useCreateStaffWithPasswordMutation,
   useCreateStaffWithPinMutation,
   useRemoveStaffMutation,
+  useUnlockStaffMutation,
   useUpdateStaffMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import {ImageEntityType} from '#/shared/api/images/images.api'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import {StaffRole as StaffRoleEnum} from '#/shared/libs/permissions/index.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
-import { Modal } from '#/shared/ui/modal'
-import { SearchSelect } from '#/shared/ui/search-select'
+import {ConfirmDeleteModal} from '#/shared/ui/confirm-delete-modal'
+import {ImageUpload} from '#/shared/ui/image-upload'
+import {Modal} from '#/shared/ui/modal'
+import {SearchSelect} from '#/shared/ui/search-select'
 
 type InviteFormValues = z.infer<typeof createStaffWithInviteSchema>
 type PasswordFormValues = z.infer<typeof createStaffWithPasswordSchema>
@@ -47,10 +46,22 @@ const roleOptions: StaffRole[] = ['MANAGER', 'WAITER', 'CASHIER', 'KITCHEN']
 
 const roleSelectOptions = roleOptions.map((r) => ({ value: r, label: r }))
 
+function isStaffLocked(member: StaffMember): boolean {
+  if (!member.pinLockedUntil) return false
+  return new Date(member.pinLockedUntil) > new Date()
+}
+
 export function AdminStaffPage() {
+  const { authUser } = useRouteContext({ from: '/_admin' })
+  const canUnlock =
+    authUser?.type === 'owner' ||
+    (authUser?.type === 'staff' && authUser.role === StaffRoleEnum.MANAGER)
+
   const [search, setSearch] = useState('')
   const [createMode, setCreateMode] = useState<CreateMode | null>(null)
   const [editingMember, setEditingMember] = useState<StaffMember | null>(null)
+  const [editingAvatarUrl, setEditingAvatarUrl] = useState<string | null>(null)
+  const [deletingMember, setDeletingMember] = useState<StaffMember | null>(null)
 
   const emailId = useId()
   const roleId = useId()
@@ -67,7 +78,6 @@ export function AdminStaffPage() {
   const roleId3 = useId()
 
   const activeBusiness = useActiveBusinessStore((s) => s.active)
-  console.log('activeBusiness', activeBusiness)
   const activeBusinessId = activeBusiness?.id ?? ''
 
   const { data: staffMembers = [], isPending } = useQuery(staffQueryOptions(activeBusinessId))
@@ -78,6 +88,7 @@ export function AdminStaffPage() {
 
   const updateStaffMutation = useUpdateStaffMutation()
   const removeStaffMutation = useRemoveStaffMutation()
+  const unlockStaffMutation = useUnlockStaffMutation()
 
   const staffSignInLink = `${globalThis.location.origin}/b/${activeBusiness?.slug}/staff-login`
 
@@ -128,6 +139,7 @@ export function AdminStaffPage() {
 
   const openEditMember = (member: StaffMember) => {
     setEditingMember(member)
+    setEditingAvatarUrl(member.avatarUrl ?? null)
     editForm.reset({
       displayName: member.displayName,
       role: member.role,
@@ -172,7 +184,7 @@ export function AdminStaffPage() {
       await updateStaffMutation.mutateAsync({
         businessId: activeBusinessId,
         staffId: editingMember.id,
-        data: values,
+        data: { ...values, avatarUrl: editingAvatarUrl },
       })
       showSuccess('Staff member updated')
       setEditingMember(null)
@@ -181,10 +193,27 @@ export function AdminStaffPage() {
     }
   }
 
-  const handleRemoveStaff = async (staffId: string) => {
+  const handleRemoveStaff = async () => {
+    if (!deletingMember) return
     try {
-      await removeStaffMutation.mutateAsync({ businessId: activeBusinessId, staffId })
+      await removeStaffMutation.mutateAsync({
+        businessId: activeBusinessId,
+        staffId: deletingMember.id,
+      })
       showSuccess('Staff member removed')
+      setDeletingMember(null)
+    } catch (error) {
+      showError(getResponseErrorMessage(error))
+    }
+  }
+
+  const handleUnlockStaff = async (member: StaffMember) => {
+    try {
+      await unlockStaffMutation.mutateAsync({
+        businessId: activeBusinessId,
+        staffId: member.id,
+      })
+      showSuccess(`${member.displayName} unlocked`)
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
@@ -253,7 +282,7 @@ export function AdminStaffPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className='pl-8'>Name</TableHead>
-                <TableHead>Staff ID</TableHead>
+                <TableHead>Employee ID</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
@@ -279,20 +308,35 @@ export function AdminStaffPage() {
 
               {filteredStaff.map((member) => (
                 <TableRow key={member.id}>
-                  <TableCell className='pl-8 font-bold'>
-                    {member.displayName || member.id.slice(0, 8)}
+                  <TableCell className='pl-8'>
+                    <div className='flex items-center gap-3'>
+                      <div className='flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-xs font-bold uppercase'>
+                        {member.avatarUrl ? (
+                          <img
+                            src={member.avatarUrl}
+                            alt={member.displayName}
+                            className='h-full w-full object-cover'
+                          />
+                        ) : (
+                          (member.displayName[0] ?? '?')
+                        )}
+                      </div>
+                      <span className='font-bold'>
+                        {member.displayName || member.id.slice(0, 8)}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <button
                       type='button'
                       title='Copy full Staff ID'
                       onClick={() => {
-                        navigator.clipboard.writeText(member.id)
+                        navigator.clipboard.writeText(member.employeeId)
                         showSuccess('Staff ID copied')
                       }}
                       className='flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
                     >
-                      {member.id.slice(0, 8)}
+                      {member.employeeId}
                       <Copy className='h-3 w-3 shrink-0' />
                     </button>
                   </TableCell>
@@ -300,12 +344,31 @@ export function AdminStaffPage() {
                   <TableCell>{member.role}</TableCell>
 
                   <TableCell>
-                    <Badge variant={member.isActive ? 'success' : 'outline'} className='capitalize'>
-                      {member.isActive ? 'active' : 'inactive'}
-                    </Badge>
+                    <div className='flex flex-wrap items-center gap-1.5'>
+                      <Badge variant={member.isActive ? 'success' : 'outline'} className='capitalize'>
+                        {member.isActive ? 'active' : 'inactive'}
+                      </Badge>
+                      {isStaffLocked(member) && (
+                        <Badge variant='destructive' className='capitalize'>
+                          PIN locked
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className='pr-8 text-right'>
                     <div className='flex justify-end gap-1'>
+                      {canUnlock && isStaffLocked(member) && (
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          className='rounded-full text-amber-500 hover:bg-amber-500/10 hover:text-amber-600'
+                          title='Unlock PIN'
+                          disabled={unlockStaffMutation.isPending}
+                          onClick={() => void handleUnlockStaff(member)}
+                        >
+                          <LockOpen className='h-4 w-4' />
+                        </Button>
+                      )}
                       <Button
                         variant='ghost'
                         size='icon'
@@ -320,7 +383,7 @@ export function AdminStaffPage() {
                         size='icon'
                         className='rounded-full text-red-500 hover:bg-red-500/10 hover:text-red-600'
                         title='Remove'
-                        onClick={() => void handleRemoveStaff(member.id)}
+                        onClick={() => setDeletingMember(member)}
                       >
                         <Trash2 className='h-4 w-4' />
                       </Button>
@@ -353,6 +416,14 @@ export function AdminStaffPage() {
         }
       >
         <form className='space-y-4'>
+          <ImageUpload
+            value={editingAvatarUrl}
+            onChange={setEditingAvatarUrl}
+            entityType={ImageEntityType.STAFF_AVATAR}
+            entityId={editingMember?.id}
+            label='Profile photo'
+            previewShape='circle'
+          />
           <div className='space-y-1'>
             <label
               htmlFor={editNameId}
@@ -507,7 +578,7 @@ export function AdminStaffPage() {
           </>
         }
       >
-        <form className='space-y-4'>
+        <form className='space-y-4 mb-24'>
           <div className='space-y-1'>
             <label
               htmlFor={displayNameId2}
@@ -584,6 +655,16 @@ export function AdminStaffPage() {
         </form>
       </Modal>
 
+      {/* Delete confirmation modal */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingMember)}
+        onClose={() => setDeletingMember(null)}
+        onConfirm={() => void handleRemoveStaff()}
+        name={deletingMember?.displayName ?? ''}
+        entityLabel='staff member'
+        isPending={removeStaffMutation.isPending}
+      />
+
       {/* Create with PIN modal */}
       <Modal
         isOpen={createMode === 'pin'}
@@ -603,7 +684,7 @@ export function AdminStaffPage() {
           </>
         }
       >
-        <form className='space-y-4'>
+        <form className='space-y-4 h-full mb-24'>
           <div className='space-y-1'>
             <label
               htmlFor={displayNameId3}

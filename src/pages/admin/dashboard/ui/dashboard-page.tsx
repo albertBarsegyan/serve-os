@@ -8,8 +8,8 @@ import {
   paymentsQueryOptions,
   staffQueryOptions,
 } from '#/features/platform/lib/query-options.ts'
-import { StaffPermission } from '#/shared/lib/permissions/index.ts'
-import { usePermissions } from '#/shared/lib/permissions/use-permissions.ts'
+import { StaffPermission } from '#/shared/libs/permissions/index.ts'
+import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 

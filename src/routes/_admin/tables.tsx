@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AdminTablesPage } from '#/pages/admin/tables/ui/admin-tables-page'
-import { BusinessFeature, StaffPermission } from '#/shared/lib/permissions/index.ts'
+import { BusinessFeature, StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/_admin/tables')({

@@ -18,9 +18,11 @@ import {
   getCurrencyOptions,
 } from '#/features/business/lib/utils/location-options'
 import {useBusinessesQuery, useUpdateBusinessMutation,} from '#/features/business/model/business-hooks'
+import {ImageEntityType} from '#/shared/api/images/images.api'
 import {showError, showSuccess} from '#/shared/libs/hooks/toast'
 import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import {ImageUpload} from '#/shared/ui/image-upload'
 import {SearchSelect} from '#/shared/ui/search-select'
 import {WorkingHoursPicker} from '#/widgets/shared/working-hours-picker.tsx'
 
@@ -30,6 +32,7 @@ export function AdminSettingsContent() {
     enabled: true,
   })
   const updateMutation = useUpdateBusinessMutation()
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   const currentBusiness = useMemo(
     () => businesses.find((b) => b.id === activeBusiness?.id) ?? null,
@@ -96,6 +99,7 @@ export function AdminSettingsContent() {
             ? JSON.stringify(currentBusiness.workingHours, null, 2)
             : '',
     })
+    setLogoUrl(currentBusiness.logoUrl ?? null)
     setHasUnsaved(false)
   }, [currentBusiness, countryOptions, reset])
 
@@ -105,6 +109,7 @@ export function AdminSettingsContent() {
     try {
       const countryLabel = getCountryNameByCode(values.locationCountry) ?? values.locationCountry
       const payload: UpdateBusinessRequest = {
+        logoUrl,
         name: values.name.trim(),
         type: values.type as BusinessType,
         location: `${values.locationCity.trim()}, ${countryLabel.trim()}`,
@@ -164,7 +169,7 @@ export function AdminSettingsContent() {
         <div className='flex flex-col gap-4 space-y-6 lg:flex-row md:space-y-0'>
           {/* Business info */}
 
-          <Card>
+          <Card className='shrink-0'>
             <CardHeader>
               <div className='flex items-center gap-3'>
                 <div className='rounded-xl bg-accent p-2 text-accent-foreground'>
@@ -179,6 +184,14 @@ export function AdminSettingsContent() {
               </div>
             </CardHeader>
             <CardContent className='space-y-4'>
+              <ImageUpload
+                value={logoUrl}
+                onChange={setLogoUrl}
+                entityType={ImageEntityType.BUSINESS_LOGO}
+                label='Business logo'
+                previewShape='square'
+                enableEditor
+              />
               {/* Name */}
               <div className='space-y-2'>
                 <label htmlFor={nameId} className='text-sm font-medium text-muted-foreground'>

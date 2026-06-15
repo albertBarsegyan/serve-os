@@ -20,6 +20,7 @@ export function useUpdateProfileMutation() {
               firstName: updated.firstName,
               lastName: updated.lastName,
               email: updated.email,
+              avatarUrl: updated.avatarUrl ?? null,
             },
           }
         },

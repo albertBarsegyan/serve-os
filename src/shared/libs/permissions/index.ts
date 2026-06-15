@@ -15,6 +15,11 @@ export const StaffPermission = {
   ORDER_CANCEL: 'order_cancel',
   TABLE_VIEW: 'table_view',
   TABLE_ASSIGN: 'table_assign',
+  TABLE_CREATE: 'table_create',
+  TABLE_UPDATE: 'table_update',
+  TABLE_DELETE: 'table_delete',
+  TABLE_TOGGLE_STATUS: 'table_toggle_status',
+  TABLE_MANAGE_RESERVATION: 'table_manage_reservation',
   KITCHEN_VIEW: 'kitchen_view',
   KITCHEN_UPDATE: 'kitchen_update',
   PAYMENT_TAKE: 'payment_take',
@@ -44,6 +49,7 @@ export const ROLE_PERMISSION_MAP: Record<StaffRole, StaffPermission[]> = {
     StaffPermission.ORDER_EDIT,
     StaffPermission.TABLE_VIEW,
     StaffPermission.TABLE_ASSIGN,
+    StaffPermission.TABLE_MANAGE_RESERVATION,
     StaffPermission.PAYMENT_TAKE,
     StaffPermission.TIPS_MANAGE,
     StaffPermission.SPLIT_BILL,
@@ -55,6 +61,7 @@ export const ROLE_PERMISSION_MAP: Record<StaffRole, StaffPermission[]> = {
     StaffPermission.KITCHEN_UPDATE,
     StaffPermission.MENU_VIEW,
     StaffPermission.MENU_AVAILABILITY,
+    StaffPermission.TABLE_VIEW,
   ],
 
   [StaffRole.CASHIER]: [

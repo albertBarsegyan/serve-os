@@ -1,11 +1,13 @@
-import type { CSSProperties, ElementType, ReactNode } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import type {CSSProperties, ElementType, ReactNode} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
 import './serve-os.css'
-import { cn } from '#/lib/utils.ts'
+import {useNavigate} from '@tanstack/react-router'
+import {PaletteSwitcher} from '#/features/palette/ui/PaletteSwitcher.tsx'
+import {cn} from '#/lib/utils.ts'
 import logo from '#/shared/assets/logo.png'
-import { Icons } from './icons'
-import { DashboardMock, FloatBadge, PhoneMock, QrCode } from './mockups'
+import {Icons} from './icons'
+import {DashboardMock, FloatBadge, PhoneMock, QrCode} from './mockups'
 
 interface RevealProps {
   as?: ElementType
@@ -15,7 +17,12 @@ interface RevealProps {
   id?: string
 }
 
-export function Reveal({ as: Tag = 'div', className = '', children, ...rest }: Readonly<RevealProps>) {
+export function Reveal({
+  as: Tag = 'div',
+  className = '',
+  children,
+  ...rest
+}: Readonly<RevealProps>) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = ref.current
@@ -122,6 +129,7 @@ export function Nav() {
   const toggle = useThemeStore((s) => s.toggle)
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -133,7 +141,9 @@ export function Nav() {
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [menuOpen])
 
   const close = () => setMenuOpen(false)
@@ -153,6 +163,7 @@ export function Nav() {
             <a href='/#pricing'>Pricing</a>
           </nav>
           <div className='nav-right'>
+            <PaletteSwitcher triggerClassName='palette-toggle h-[40px] w-[40px] rounded-[11px]' />
             <button
               type='button'
               className='theme-toggle'
@@ -181,14 +192,63 @@ export function Nav() {
       </header>
 
       <div className={`mobile-menu${menuOpen ? ' open' : ''}`} aria-hidden={!menuOpen}>
-        <a className='mob-link' href='/#features' onClick={close}>Features</a>
-        <a className='mob-link' href='/#ordering' onClick={close}>Ordering</a>
-        <a className='mob-link' href='/#how' onClick={close}>How it works</a>
-        <a className='mob-link' href='/#pricing' onClick={close}>Pricing</a>
-        <a className='mob-link' href='/about' onClick={close}>About</a>
+        <button
+          type='button'
+          className='mob-link'
+          onClick={async () => {
+            await navigate({ to: '/', hash: 'features' })
+            close()
+          }}
+        >
+          Features
+        </button>
+        <button
+          type='button'
+          className='mob-link'
+          onClick={async () => {
+            await navigate({ to: '/', hash: 'ordering' })
+            close()
+          }}
+        >
+          Ordering
+        </button>
+        <button
+          type='button'
+          className='mob-link'
+          onClick={async () => {
+            await navigate({ to: '/', hash: 'how' })
+            close()
+          }}
+        >
+          How it works
+        </button>
+        <button
+          type='button'
+          className='mob-link'
+          onClick={async () => {
+            await navigate({ to: '/', hash: 'pricing' })
+            close()
+          }}
+        >
+          Pricing
+        </button>
+        <button
+          type='button'
+          className='mob-link'
+          onClick={async () => {
+            await navigate({ to: '/about' })
+            close()
+          }}
+        >
+          About
+        </button>
         <div className='mob-ctas'>
-          <a className='btn ghost' href='/auth/sign-in' onClick={close}>Log in</a>
-          <a className='btn primary' href='/auth/sign-up' onClick={close}>Start free trial</a>
+          <a className='btn ghost' href='/auth/sign-in' onClick={close}>
+            Log in
+          </a>
+          <a className='btn primary' href='/auth/sign-up' onClick={close}>
+            Start free trial
+          </a>
         </div>
       </div>
     </>

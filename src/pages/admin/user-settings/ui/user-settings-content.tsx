@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouteContext } from '@tanstack/react-router'
 import { KeyRound, Save, User } from 'lucide-react'
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
@@ -17,11 +17,15 @@ import {
   useChangePasswordMutation,
   useUpdateProfileMutation,
 } from '#/features/users/model/users-hooks'
+import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
+import { ImageUpload } from '#/shared/ui/image-upload'
 
 export function UserSettingsContent() {
   const { authUser } = useRouteContext({ from: '/_admin' })
+
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   const firstNameId = useId()
   const lastNameId = useId()
@@ -60,11 +64,12 @@ export function UserSettingsContent() {
       lastName: authUser.lastName ?? '',
       email: authUser.email ?? '',
     })
+    setAvatarUrl(authUser.avatarUrl ?? null)
   }, [authUser, resetProfile])
 
   const onProfileSubmit = async (values: UpdateProfileFormValues) => {
     try {
-      await updateProfileMutation.mutateAsync(values)
+      await updateProfileMutation.mutateAsync({ ...values, avatarUrl })
       showSuccess('Profile updated')
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -122,6 +127,13 @@ export function UserSettingsContent() {
                 void handleProfileSubmit(onProfileSubmit)()
               }}
             >
+              <ImageUpload
+                value={avatarUrl}
+                onChange={setAvatarUrl}
+                entityType={ImageEntityType.USER_AVATAR}
+                label='Profile photo'
+                previewShape='circle'
+              />
               <div className='grid grid-cols-2 gap-4'>
                 <div className='space-y-2'>
                   <label

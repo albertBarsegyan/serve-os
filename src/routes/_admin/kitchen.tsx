@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AdminKitchenPage } from '#/pages/admin/kitchen/ui/admin-kitchen-page'
+import { BusinessFeature, StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
-import { BusinessFeature, StaffPermission } from '#/shared/lib/permissions/index.ts'
 
 export const Route = createFileRoute('/_admin/kitchen')({
   component: AdminKitchenPage,

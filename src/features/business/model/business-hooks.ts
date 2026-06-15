@@ -60,7 +60,6 @@ export function useSelectBusinessMutation({ navigate }: { navigate: NavigateFn }
   return useMutation({
     mutationFn: (business: ActiveBusiness) => selectBusinessServerFn({ data: business.id }),
     onSuccess: async (_, business) => {
-      console.log('business', business)
       setActive(business)
       await queryClient.invalidateQueries()
       await navigate()
