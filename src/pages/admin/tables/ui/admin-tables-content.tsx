@@ -382,7 +382,6 @@ export function AdminTablesContent() {
                     <TableImagePlaceholder number={table.number} />
                   )}
 
-                  {/* Status badges overlay */}
                   <div className='absolute left-2 top-2 flex flex-col gap-1'>
                     <Badge
                       variant={table.isActive ? 'success' : 'outline'}

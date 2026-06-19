@@ -1,7 +1,11 @@
-import {createFileRoute, redirect} from '@tanstack/react-router'
-import {CustomerMenuPage} from '#/pages/customer/menu/ui/customer-menu-page'
-import {scanSessionServerFn} from '#/shared/api/customer/session.fns.ts'
-import {ErrorBoundary} from '#/shared/ui/error-boundary.tsx'
+import { useQuery } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
+import type { ScanSessionResponse } from '#/features/platform/api/platform.types.ts'
+import { CustomerMenuPage } from '#/pages/customer/menu/ui/customer-menu-page'
+import { clientApiInstance } from '#/shared/api/client-instance.ts'
+import { resumeSessionServerFn, scanSessionServerFn } from '#/shared/api/customer/session.fns.ts'
+import { ErrorBoundary } from '#/shared/ui/error-boundary.tsx'
 import '#/pages/customer/menu/ui/styles.css'
 
 type CustomerMenuSearch = {
@@ -13,21 +17,59 @@ export const Route = createFileRoute('/customer/menu')({
     id: typeof raw.id === 'string' ? raw.id : '',
   }),
 
-  beforeLoad: ({search}) => {
-    if (!search.id) throw redirect({to: '/'})
-  },
+  loaderDeps: ({ search }) => ({ qrCode: search.id }),
 
-  loaderDeps: ({search}) => ({qrCode: search.id}),
-  loader: ({deps}) => scanSessionServerFn({data: {qrCode: deps.qrCode}}),
+  loader: async ({ deps }): Promise<ScanSessionResponse | null> => {
+    if (deps.qrCode) {
+      return scanSessionServerFn({ data: { qrCode: deps.qrCode } })
+    }
+    // No QR code — try to resume via the HttpOnly cookie forwarded from the browser
+    try {
+      return await resumeSessionServerFn()
+    } catch {
+      return null
+    }
+  },
 
   pendingComponent: CustomerMenuPending,
 
   component: CustomerMenuRoute,
-  errorComponent: ({error}) => <ErrorBoundary error={error} />,
+  errorComponent: ({ error }) => <ErrorBoundary error={error} />,
 })
 
 function CustomerMenuRoute() {
-  const session = Route.useLoaderData()
+  const loaderSession = Route.useLoaderData()
+  const navigate = useNavigate()
+
+  // When the loader returned null (no cookie, or expired cookie), try localStorage
+  const resumeQuery = useQuery({
+    queryKey: ['customer-session'],
+    queryFn: async (): Promise<ScanSessionResponse | null> => {
+      const token = localStorage.getItem('customer_session_token')
+      if (!token) return null
+      return await clientApiInstance
+        .get('sessions/resume', { headers: { 'x-session-token': token } })
+        .json<ScanSessionResponse>()
+    },
+    staleTime: 60_000,
+    enabled: loaderSession === null,
+    retry: false,
+  })
+
+  const session: ScanSessionResponse | null = loaderSession ?? resumeQuery.data ?? null
+
+  useEffect(() => {
+    if (loaderSession !== null) return
+    if (resumeQuery.isPending) return
+    if (!session) {
+      localStorage.removeItem('customer_session_token')
+      void navigate({ to: '/' })
+    }
+  }, [loaderSession, resumeQuery.isPending, session, navigate])
+
+  if (!session) {
+    return <CustomerMenuPending />
+  }
 
   return (
     <CustomerMenuPage
@@ -75,9 +117,9 @@ function CustomerMenuPending() {
       }}
     >
       {/* Top bar skeleton */}
-      <div style={{display: 'flex', alignItems: 'center', gap: 12, padding: '16px 16px 12px'}}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 16px 12px' }}>
         <PendingSkeleton w={42} h={42} r='50%' card={card} card2={card2} />
-        <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: 6}}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <PendingSkeleton w='38%' h={9} r={6} card={card} card2={card2} />
           <PendingSkeleton w='65%' h={13} r={6} card={card} card2={card2} />
         </div>
@@ -86,12 +128,12 @@ function CustomerMenuPending() {
       </div>
 
       {/* Search bar skeleton */}
-      <div style={{padding: '0 16px 16px'}}>
+      <div style={{ padding: '0 16px 16px' }}>
         <PendingSkeleton w='100%' h={44} r={12} card={card} card2={card2} />
       </div>
 
       {/* Hero card with centered loading message */}
-      <div style={{margin: '0 16px 20px', position: 'relative'}}>
+      <div style={{ margin: '0 16px 20px', position: 'relative' }}>
         <div
           style={{
             width: '100%',
@@ -122,19 +164,17 @@ function CustomerMenuPending() {
           >
             🍽️
           </div>
-          <div style={{textAlign: 'center'}}>
-            <p style={{color: textPrimary, fontSize: 14, fontWeight: 700, margin: '0 0 3px'}}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: textPrimary, fontSize: 14, fontWeight: 700, margin: '0 0 3px' }}>
               Setting up your table
             </p>
-            <p style={{color: textMuted, fontSize: 12, margin: 0}}>
-              Starting your session…
-            </p>
+            <p style={{ color: textMuted, fontSize: 12, margin: 0 }}>Starting your session…</p>
           </div>
         </div>
       </div>
 
       {/* Categories heading skeleton */}
-      <div style={{padding: '0 16px 10px'}}>
+      <div style={{ padding: '0 16px 10px' }}>
         <PendingSkeleton w='28%' h={13} r={6} card={card} card2={card2} />
       </div>
 
@@ -149,7 +189,16 @@ function CustomerMenuPending() {
       >
         {[56, 48, 64, 52].map((w, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
-          <div key={i} style={{flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8}}>
+          <div
+            key={i}
+            style={{
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
             <PendingSkeleton w={60} h={60} r='50%' card={card} card2={card2} />
             <PendingSkeleton w={w} h={9} r={5} card={card} card2={card2} />
           </div>
@@ -170,7 +219,7 @@ function CustomerMenuPending() {
       </div>
 
       {/* Product card skeletons */}
-      <div style={{padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 12}}>
+      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {[1, 2, 3].map((k) => (
           <div
             key={k}
@@ -184,12 +233,20 @@ function CustomerMenuPending() {
             }}
           >
             <PendingSkeleton w={82} h={82} r={12} card={card} card2={card2} />
-            <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8}}>
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
               <PendingSkeleton w='70%' h={13} r={6} card={card} card2={card2} />
               <PendingSkeleton w='90%' h={10} r={5} card={card} card2={card2} />
               <PendingSkeleton w='40%' h={10} r={5} card={card} card2={card2} />
             </div>
-            <div style={{display: 'flex', alignItems: 'flex-end', flexShrink: 0}}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', flexShrink: 0 }}>
               <PendingSkeleton w={36} h={36} r={12} card={card} card2={card2} />
             </div>
           </div>
@@ -221,7 +278,7 @@ function CustomerMenuPending() {
               gap: 4,
             }}
           >
-            <span style={{fontSize: 22, opacity: 0.35}}>{icon}</span>
+            <span style={{ fontSize: 22, opacity: 0.35 }}>{icon}</span>
             <PendingSkeleton w={28} h={8} r={4} card={card} card2={card2} />
           </div>
         ))}

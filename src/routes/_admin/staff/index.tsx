@@ -18,6 +18,10 @@ import { ordersQueryOptions } from '#/features/platform/lib/query-options.ts'
 import { useUpdateOrderStatusMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import {
+  type OrderStatusChangedPayload,
+  useKitchenSocket,
+} from '#/shared/libs/hooks/use-kitchen-socket.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
@@ -58,6 +62,14 @@ function WaiterWorkspace() {
   const [activeFilter, setActiveFilter] = useState<OrderStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
+
+  useKitchenSocket(businessId, undefined, (payload: OrderStatusChangedPayload) => {
+    if (payload.status === 'READY') {
+      const label = payload.tableName ? `Table ${payload.tableName}` : 'An order'
+      showSuccess(`${label} is ready to serve!`)
+    }
+  })
 
   const {
     data: orders = [],

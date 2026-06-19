@@ -31,27 +31,19 @@ export function useOrderStatusSocket(sessionToken: string, orderId: string): Cus
     socketRef.current = socket
 
     socket.on('connect', () => {
-      socket.emit('join-session', sessionToken)
+      // Use prop first; fall back to localStorage so the room is re-joined after
+      // a network drop or tab restore even if React state was not yet restored.
+      const effectiveToken = sessionToken || localStorage.getItem('customer_session_token') || ''
+      if (effectiveToken) {
+        socket.emit('join-session', effectiveToken)
+      }
     })
 
-    // Initial status sync emitted by backend on join
-    socket.on('order.status', (payload: { orderId: string; status: string }) => {
+    socket.on('order:status-changed', (payload: { orderId: string; status: string }) => {
       if (payload.orderId !== orderId) return
       const mapped = BACKEND_STATUS_MAP[payload.status]
       if (mapped) setStatus(mapped)
     })
-
-    const advance = (next: CustomerOrderStatus) => (payload: { orderId: string }) => {
-      if (payload.orderId !== orderId) return
-      setStatus(next)
-    }
-
-    socket.on('order.confirmed', advance('confirmed'))
-    socket.on('order.in_kitchen', advance('preparing'))
-    socket.on('order.ready', advance('ready'))
-    socket.on('order.delivered', advance('served'))
-    socket.on('order.closed', advance('served'))
-    socket.on('order.cancelled', advance('cancelled'))
 
     return () => {
       socket.disconnect()

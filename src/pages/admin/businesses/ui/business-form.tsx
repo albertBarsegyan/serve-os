@@ -90,7 +90,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
   const countryOptions = useMemo(() => getCountryOptions(), [])
   const cityOptions = getCityOptions(selectedCountry)
   const currencyOptions = useMemo(() => getCurrencyOptions(), [])
-  console.log('cityOptions', cityOptions)
+
   useEffect(() => {
     if (mode === 'edit' && currentBusiness?.location) {
       const [city, country] = currentBusiness.location.split(', ').map((s) => s.trim())

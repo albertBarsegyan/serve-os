@@ -103,8 +103,6 @@ export function SearchSelect({
     close()
   }
 
-  console.log('filtered', filtered)
-
   return (
     <div className='relative'>
       <button

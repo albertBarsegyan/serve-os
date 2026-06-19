@@ -1,17 +1,17 @@
-import {useQuery} from '@tanstack/react-query'
-import {useEffect, useState} from 'react'
-import type {CartModifier} from '#/features/cart/model/cart.store'
-import {cartItemTotal, useCartStore} from '#/features/cart/model/cart.store'
-import type {CustomerPaymentMethod} from '#/features/platform/api/platform.types'
-import {fetchCustomerMenu} from '#/shared/api/customer/customer-api'
-import type {CustomerProduct} from '#/shared/api/customer/menu.types'
-import {C} from './customer-theme'
-import {CartView} from './views/cart-view'
-import {BottomNav, MenuView} from './views/menu-view'
-import type {OrderRecord} from './views/order-view'
-import {OrderView} from './views/order-view'
-import {PaymentView} from './views/payment-view'
-import {ProductView} from './views/product-view'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import type { CartModifier } from '#/features/cart/model/cart.store'
+import { cartItemTotal, useCartStore } from '#/features/cart/model/cart.store'
+import type { CustomerPaymentMethod } from '#/features/platform/api/platform.types'
+import { fetchCustomerMenu } from '#/shared/api/customer/customer-api'
+import type { CustomerProduct } from '#/shared/api/customer/menu.types'
+import { C } from './customer-theme'
+import { CartView } from './views/cart-view'
+import { BottomNav, MenuView } from './views/menu-view'
+import type { OrderRecord } from './views/order-view'
+import { OrderView } from './views/order-view'
+import { PaymentView } from './views/payment-view'
+import { ProductView } from './views/product-view'
 import './styles.css'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -37,16 +37,24 @@ export function CustomerMenuContent({
   businessLogoUrl,
   paymentMethods,
 }: Readonly<CustomerMenuContentProps>) {
+  // Persist sessionToken client-side so the WebSocket hook and session-resume
+  // flow can access it even when the HttpOnly cookie has been cleared.
+  useEffect(() => {
+    if (sessionToken) {
+      localStorage.setItem('customer_session_token', sessionToken)
+    }
+  }, [sessionToken])
+
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('c-theme')
     if (saved) return saved === 'dark'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
+    return globalThis.matchMedia('(prefers-color-scheme: dark)').matches
   })
 
   function toggleTheme() {
     setIsDark((prev) => {
       const next = !prev
-      localStorage.setItem('c-theme', next ? 'dark' : 'light')
+      globalThis.localStorage.setItem('c-theme', next ? 'dark' : 'light')
       return next
     })
   }
@@ -55,7 +63,7 @@ export function CustomerMenuContent({
   const [selectedProduct, setSelectedProduct] = useState<CustomerProduct | null>(null)
   const [orderRecord, setOrderRecord] = useState<OrderRecord | null>(null)
 
-  const {items, addItem, updateQuantity, removeItem, clearCart} = useCartStore()
+  const { items, addItem, updateQuantity, removeItem, clearCart } = useCartStore()
 
   const menuQuery = useQuery({
     queryKey: ['customer-menu', businessId],
@@ -146,7 +154,12 @@ export function CustomerMenuContent({
       <div
         className='c-app'
         data-theme={theme}
-        style={{background: C.bg, minHeight: '100dvh', display: 'flex', flexDirection: 'column'}}
+        style={{
+          background: C.bg,
+          minHeight: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <div
           style={{
@@ -155,12 +168,15 @@ export function CustomerMenuContent({
             flexDirection: 'column',
             gap: 16,
             padding: '24px 16px',
+            maxWidth: 600,
+            width: '100%',
+            margin: '0 auto',
           }}
         >
           {/* Header skeleton */}
-          <div style={{display: 'flex', gap: 12, alignItems: 'center'}}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <Skeleton w={42} h={42} r='50%' />
-            <div style={{flex: 1}}>
+            <div style={{ flex: 1 }}>
               <Skeleton w='40%' h={10} r={6} mb={6} />
               <Skeleton w='70%' h={14} r={6} />
             </div>
@@ -168,9 +184,9 @@ export function CustomerMenuContent({
           </div>
           <Skeleton w='100%' h={44} r={12} />
           <Skeleton w='100%' h={118} r={20} />
-          <div style={{display: 'flex', gap: 14, overflow: 'hidden'}}>
+          <div style={{ display: 'flex', gap: 14, overflow: 'hidden' }}>
             {[1, 2, 3, 4].map((k) => (
-              <div key={k} style={{flexShrink: 0, textAlign: 'center'}}>
+              <div key={k} style={{ flexShrink: 0, textAlign: 'center' }}>
                 <Skeleton w={60} h={60} r='50%' mb={8} />
                 <Skeleton w={50} h={10} r={5} />
               </div>
@@ -180,7 +196,9 @@ export function CustomerMenuContent({
             <Skeleton key={k} w='100%' h={96} r={16} />
           ))}
         </div>
-        <BottomNav active='home' onCart={() => {}} cartCount={0} />
+        <div className='c-mobile-only'>
+          <BottomNav active='home' onCart={() => {}} cartCount={0} />
+        </div>
       </div>
     )
   }
@@ -202,11 +220,11 @@ export function CustomerMenuContent({
           gap: 12,
         }}
       >
-        <span style={{fontSize: 48}}>😕</span>
-        <p style={{color: C.white, fontSize: 16, fontWeight: 700, margin: 0}}>
+        <span style={{ fontSize: 48 }}>😕</span>
+        <p style={{ color: C.white, fontSize: 16, fontWeight: 700, margin: 0 }}>
           Could not load menu
         </p>
-        <p style={{color: C.w40, fontSize: 13, margin: 0}}>Please check your connection</p>
+        <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>Please check your connection</p>
         <button
           type='button'
           onClick={() => void menuQuery.refetch()}
@@ -230,7 +248,7 @@ export function CustomerMenuContent({
 
   // ── App shell ───────────────────────────────────────────────────────────────
   return (
-    <div className='c-app' data-theme={theme} style={{background: C.bg}}>
+    <div className='c-app' data-theme={theme} style={{ background: C.bg }}>
       {view === 'menu' && (
         <MenuView
           businessName={businessName}
@@ -249,46 +267,50 @@ export function CustomerMenuContent({
         />
       )}
 
-      {view === 'product' && selectedProduct && (
-        <ProductView
-          product={selectedProduct}
-          cartCount={cartCount}
-          onBack={() => setView('menu')}
-          onGoToCart={() => setView('cart')}
-          onAdd={handleProductAdd}
-          onAddAndNext={handleProductAddAndNext}
-        />
-      )}
+      {view !== 'menu' && (
+        <div className='c-view-wrapper'>
+          {view === 'product' && selectedProduct && (
+            <ProductView
+              product={selectedProduct}
+              cartCount={cartCount}
+              onBack={() => setView('menu')}
+              onGoToCart={() => setView('cart')}
+              onAdd={handleProductAdd}
+              onAddAndNext={handleProductAddAndNext}
+            />
+          )}
 
-      {view === 'cart' && (
-        <CartView
-          items={items}
-          products={allProducts}
-          tableName={tableName}
-          onBack={() => setView('menu')}
-          onOrderNow={() => setView('payment')}
-          onUpdateQty={updateQuantity}
-          onRemove={removeItem}
-        />
-      )}
+          {view === 'cart' && (
+            <CartView
+              items={items}
+              products={allProducts}
+              tableName={tableName}
+              onBack={() => setView('menu')}
+              onOrderNow={() => setView('payment')}
+              onUpdateQty={updateQuantity}
+              onRemove={removeItem}
+            />
+          )}
 
-      {view === 'payment' && (
-        <PaymentView
-          items={items}
-          tableName={tableName}
-          sessionToken={sessionToken}
-          paymentMethods={paymentMethods}
-          onBack={() => setView('cart')}
-          onSuccess={handleOrderSuccess}
-        />
-      )}
+          {view === 'payment' && (
+            <PaymentView
+              items={items}
+              tableName={tableName}
+              sessionToken={sessionToken}
+              paymentMethods={paymentMethods}
+              onBack={() => setView('cart')}
+              onSuccess={handleOrderSuccess}
+            />
+          )}
 
-      {view === 'order' && orderRecord && (
-        <OrderView
-          order={orderRecord}
-          sessionToken={sessionToken}
-          onBackToMenu={handleBackToMenu}
-        />
+          {view === 'order' && orderRecord && (
+            <OrderView
+              order={orderRecord}
+              sessionToken={sessionToken}
+              onBackToMenu={handleBackToMenu}
+            />
+          )}
+        </div>
       )}
     </div>
   )

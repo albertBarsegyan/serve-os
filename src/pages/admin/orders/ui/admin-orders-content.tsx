@@ -15,6 +15,10 @@ import {
 } from '#/features/platform/model/platform-hooks.ts'
 import {cn} from '#/lib/utils'
 import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {
+  type OrderStatusChangedPayload,
+  useKitchenSocket,
+} from '#/shared/libs/hooks/use-kitchen-socket.ts'
 import {StaffPermission} from '#/shared/libs/permissions/index.ts'
 import {usePermissions} from '#/shared/libs/permissions/use-permissions.ts'
 import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
@@ -290,8 +294,16 @@ export function AdminOrdersContent() {
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
   const [addOrderOpen, setAddOrderOpen] = useState(false)
   const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
   const { isOwner, hasPermission } = usePermissions()
   const canAddOrder = isOwner() || hasPermission(StaffPermission.ORDER_CREATE)
+
+  useKitchenSocket(businessId, undefined, (payload: OrderStatusChangedPayload) => {
+    if (payload.status === 'READY') {
+      const label = payload.tableName ? `Table ${payload.tableName}` : 'An order'
+      showSuccess(`${label} is ready to serve!`)
+    }
+  })
 
   const { data: orders = [], isPending, isError, error, refetch } = useQuery(ordersQueryOptions())
 

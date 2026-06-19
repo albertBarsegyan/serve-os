@@ -1,9 +1,9 @@
-import { Moon, Plus, Search, ShoppingBag, Sun, UtensilsCrossed } from 'lucide-react'
-import { useState } from 'react'
-import { LazyImage } from '#/shared/ui/lazy-image'
-import type { CustomerCategory, CustomerProduct } from '#/shared/api/customer/menu.types'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
-import { C } from '../customer-theme'
+import {Moon, Plus, Search, ShoppingBag, Sun, UtensilsCrossed} from 'lucide-react'
+import {useState} from 'react'
+import type {CustomerCategory, CustomerProduct} from '#/shared/api/customer/menu.types'
+import {formatPrice} from '#/shared/libs/utils/price.utils'
+import {LazyImage} from '#/shared/ui/lazy-image'
+import {C} from '../customer-theme'
 
 interface MenuViewProps {
   businessName: string
@@ -567,15 +567,14 @@ export function BottomNav({
   active,
   onCart,
   cartCount,
-}: {
+}: Readonly<{
   active: 'home' | 'cart' | 'profile'
   onCart: () => void
   cartCount: number
-}) {
+}>) {
   const tabs = [
     { key: 'home' as const, label: 'Home', icon: '🏠', action: undefined },
     { key: 'cart' as const, label: 'Cart', icon: '🛒', action: onCart, badge: cartCount },
-    { key: 'profile' as const, label: 'Profile', icon: '👤', action: undefined },
   ]
   return (
     <nav

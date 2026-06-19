@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Building2, MapPin } from 'lucide-react'
-import { useEffect, useId, useMemo } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { FeatureSelector } from '#/components/feature-selector'
 import { Button } from '#/components/ui/button'
@@ -16,8 +16,8 @@ import {
   FEATURE_PRESETS,
 } from '#/features/business/api/business-domain.ts'
 import {
-  createBusinessFormSchema,
   type CreateBusinessFormValues,
+  createBusinessFormSchema,
 } from '#/features/business/lib/schemas/create-business-form.schema.ts'
 import { businessFormAdapter } from '#/features/business/lib/utils/business-form-adapter.ts'
 import {
@@ -25,13 +25,18 @@ import {
   getCountryOptions,
   getCurrencyOptions,
 } from '#/features/business/lib/utils/location-options.ts'
-import { useCreateBusinessMutation } from '#/features/business/model/business-hooks.ts'
+import {
+  useCreateBusinessMutation,
+  useUpdateBusinessMutation,
+} from '#/features/business/model/business-hooks.ts'
+import { ImageEntityType } from '#/shared/api/images/images.api.ts'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { stringToCommaSeparated } from '#/shared/libs/utils/naming.utils.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
+import { ImageUpload } from '#/shared/ui/image-upload'
 import { SearchSelect } from '#/shared/ui/search-select'
 import { WorkingHoursPicker } from '#/widgets/shared/working-hours-picker'
 
@@ -53,7 +58,9 @@ function AdminSetupRoute() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const createBusinessMutation = useCreateBusinessMutation()
+  const updateBusinessMutation = useUpdateBusinessMutation()
   const setActive = useActiveBusinessStore((s) => s.setActive)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   const nameId = useId()
   const typeId = useId()
@@ -105,6 +112,13 @@ function AdminSetupRoute() {
       const createdBusiness = await createBusinessMutation.mutateAsync({
         data: businessFormAdapter.toApi(values),
       })
+
+      if (logoUrl) {
+        await updateBusinessMutation.mutateAsync({
+          id: createdBusiness.id,
+          payload: { type: createdBusiness.type, logoUrl },
+        })
+      }
 
       setActive(createdBusiness)
 
@@ -169,6 +183,24 @@ function AdminSetupRoute() {
 
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
             <div className='grid gap-5 sm:grid-cols-2'>
+              <div className='sm:col-span-2'>
+                <Label className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+                  Business logo
+                </Label>
+                <div className='mt-2'>
+                  <ImageUpload
+                    value={logoUrl}
+                    onChange={setLogoUrl}
+                    entityType={ImageEntityType.BUSINESS_LOGO}
+                    previewShape='square'
+                    enableEditor
+                  />
+                </div>
+                <p className='mt-1 text-xs text-muted-foreground'>
+                  Optional. PNG, JPG, WebP or SVG — max 3 MB.
+                </p>
+              </div>
+
               <div className='space-y-2 sm:col-span-2'>
                 <div className='space-y-2'>
                   <Label
@@ -356,10 +388,12 @@ function AdminSetupRoute() {
 
             <Button
               type='submit'
-              disabled={createBusinessMutation.isPending}
+              disabled={createBusinessMutation.isPending || updateBusinessMutation.isPending}
               className='h-14 w-full rounded-xl'
             >
-              {createBusinessMutation.isPending ? 'Creating business…' : 'Create business'}
+              {createBusinessMutation.isPending || updateBusinessMutation.isPending
+                ? 'Creating business…'
+                : 'Create business'}
             </Button>
           </form>
         </div>

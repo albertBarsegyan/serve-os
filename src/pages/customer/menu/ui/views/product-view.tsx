@@ -1,9 +1,9 @@
-import { Check, ChevronDown, ChevronLeft, ChevronUp, Clock, ShoppingBag } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import type { CartModifier } from '#/features/cart/model/cart.store'
-import type { CustomerModifierGroup, CustomerProduct } from '#/shared/api/customer/menu.types'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
-import { C } from '../customer-theme'
+import {Check, ChevronDown, ChevronLeft, ChevronUp, Clock, ShoppingBag} from 'lucide-react'
+import {useMemo, useState} from 'react'
+import type {CartModifier} from '#/features/cart/model/cart.store'
+import type {CustomerModifierGroup, CustomerProduct} from '#/shared/api/customer/menu.types'
+import {formatPrice} from '#/shared/libs/utils/price.utils'
+import {C} from '../customer-theme'
 
 const DIETARY_LABELS: Record<string, string> = {
   vegan: 'Vegan 🌱',
@@ -387,6 +387,8 @@ export function ProductView({
           padding: '12px 16px 28px',
           display: 'flex',
           alignItems: 'center',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
           gap: 12,
           zIndex: 50,
         }}
@@ -396,17 +398,21 @@ export function ProductView({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 2,
+            gap: 8,
             background: C.card2,
             borderRadius: C.r12,
             padding: '4px',
             border: `1px solid ${C.border}`,
+            justifyContent: 'center',
           }}
         >
           <QtyBtn onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1}>
             −
           </QtyBtn>
-          <span
+          <input
+            className='focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            onChange={(e) => setQty(Number(e.target.value || 0))}
+            value={qty}
             style={{
               width: 32,
               textAlign: 'center',
@@ -414,52 +420,52 @@ export function ProductView({
               fontSize: 15,
               fontWeight: 700,
             }}
-          >
-            {qty}
-          </span>
+          />
+
           <QtyBtn onClick={() => setQty((q) => q + 1)}>+</QtyBtn>
         </div>
 
-        {/* ADD TO CART */}
-        <button
-          type='button'
-          disabled={!(isValid && product.isAvailable)}
-          onClick={() => onAdd(qty, buildModifiers(), notes)}
-          style={{
-            flex: 1,
-            padding: '13px 8px',
-            borderRadius: C.r12,
-            border: `1px solid ${C.border}`,
-            background: !(isValid && product.isAvailable) ? C.card3 : C.card2,
-            color: !(isValid && product.isAvailable) ? C.w40 : C.amber,
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: !(isValid && product.isAvailable) ? 'not-allowed' : 'pointer',
-          }}
-        >
-          ADD TO CART
-        </button>
+        <div className='flex justify-between w-full flex-1 gap-2'>
+          <button
+            type='button'
+            disabled={!(isValid && product.isAvailable)}
+            onClick={() => onAdd(qty, buildModifiers(), notes)}
+            style={{
+              flex: 1,
+              padding: '13px 8px',
+              borderRadius: C.r12,
+              border: `1px solid ${C.border}`,
+              background: !(isValid && product.isAvailable) ? C.card3 : C.card2,
+              color: !(isValid && product.isAvailable) ? C.w40 : C.amber,
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: !(isValid && product.isAvailable) ? 'not-allowed' : 'pointer',
+            }}
+          >
+            ADD TO CART
+          </button>
 
-        {/* NEXT */}
-        <button
-          type='button'
-          disabled={!(isValid && product.isAvailable)}
-          onClick={() => onAddAndNext(qty, buildModifiers(), notes)}
-          style={{
-            flex: 1.4,
-            padding: '13px 8px',
-            borderRadius: C.r12,
-            border: 'none',
-            background: !(isValid && product.isAvailable) ? C.card3 : C.amberGrad,
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: !(isValid && product.isAvailable) ? 'not-allowed' : 'pointer',
-            opacity: !(isValid && product.isAvailable) ? 0.5 : 1,
-          }}
-        >
-          {formatPrice(totalPrice)} · NEXT →
-        </button>
+          {/* NEXT */}
+          <button
+            type='button'
+            disabled={!(isValid && product.isAvailable)}
+            onClick={() => onAddAndNext(qty, buildModifiers(), notes)}
+            style={{
+              flex: 1.4,
+              padding: '13px 8px',
+              borderRadius: C.r12,
+              border: 'none',
+              background: !(isValid && product.isAvailable) ? C.card3 : C.amberGrad,
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: !(isValid && product.isAvailable) ? 'not-allowed' : 'pointer',
+              opacity: !(isValid && product.isAvailable) ? 0.5 : 1,
+            }}
+          >
+            {formatPrice(totalPrice)} · NEXT →
+          </button>
+        </div>
       </div>
     </div>
   )
