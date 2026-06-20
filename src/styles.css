@@ -248,7 +248,9 @@ html.theme-transition *::after {
     background-color 250ms ease,
     border-color 250ms ease,
     fill 250ms ease,
+    /* biome-ignore lint/complexity/noImportantStyles: required to override element-level transitions during theme switch */
     stroke 250ms ease !important;
+  /* biome-ignore lint/complexity/noImportantStyles: required to override element-level transitions during theme switch */
   transition-delay: 0ms !important;
 }
 
@@ -364,6 +366,7 @@ a {
 }
 
 @layer base {
+  /* biome-ignore lint/style/noDescendingSpecificity: intentional base reset after theme-transition rules */
   * {
     @apply border-border outline-ring/50;
   }

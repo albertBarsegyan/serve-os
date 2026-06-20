@@ -64,6 +64,7 @@ function RootErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
     <html lang={getLocale()} suppressHydrationWarning>
       <head>
+        {/** biome-ignore lint/security/noDangerouslySetInnerHtml: hardcoded theme init script, not user input */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>

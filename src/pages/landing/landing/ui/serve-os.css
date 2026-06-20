@@ -1752,6 +1752,7 @@ footer.site {
     display: flex;
   }
   .hide-mobile {
+    /* biome-ignore lint/complexity/noImportantStyles: utility visibility class needs !important to override inline styles */
     display: none !important;
   }
   .hero h1 {
@@ -1779,6 +1780,7 @@ footer.site {
     padding: 0 0 0 4px;
   }
   .tl-step::after {
+    /* biome-ignore lint/complexity/noImportantStyles: utility visibility class needs !important to override inline styles */
     display: none !important;
   }
   .price-grid {
