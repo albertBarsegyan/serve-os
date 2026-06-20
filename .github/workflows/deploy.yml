@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  IMAGE: ghcr.io/albertbarsegyan/serve-os
+  IMAGE: ghcr.io/albertBarsegyan/serve-os
 
 jobs:
   # ──────────────────────────────────────────────
