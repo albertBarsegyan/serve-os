@@ -3,7 +3,7 @@ services:
     networks:
       - serve_os_shared
 
-    image: ghcr.io/albertbarsegyan/serve-os:latest
+    image: ghcr.io/albertBarsegyan/serve-os:latest
 
     environment:
       NODE_ENV: production
