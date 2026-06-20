@@ -94,7 +94,7 @@ jobs:
           envs: GHCR_TOKEN
           script: |
             set -e
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u albertBarsegyan --password-stdin
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u albertbarsegyan --password-stdin
             cd /opt/serve-os
             docker compose -f docker-compose.prod.yml --env-file .env.production pull
             docker compose -f docker-compose.prod.yml --env-file .env.production up -d
