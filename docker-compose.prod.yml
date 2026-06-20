@@ -3,13 +3,7 @@ services:
     networks:
       - serve_os_shared
 
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runner
-      args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
-        API_BASE_URL: ${API_BASE_URL}
+    image: ghcr.io/albertbarsegyan/serve-os:latest
 
     environment:
       NODE_ENV: production

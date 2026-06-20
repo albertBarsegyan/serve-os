@@ -18,7 +18,8 @@
       "!**/.env",
       "!**/.env.*",
       "!src/routeTree.gen.ts",
-      "!src/paraglide"
+      "!src/paraglide",
+      "!src/shared/api/generated"
     ]
   },
   "formatter": {
