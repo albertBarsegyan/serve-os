@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import type { ScanSessionResponse } from '#/features/platform/api/platform.types.ts'
+import { menuQueryOptions } from '#/entities/menu/lib/menu-query-options'
+import { createSessionServerFn } from '#/features/guest-session/api/create-session.fns'
+import type { ScanSessionResponse } from '#/features/platform/api/platform.types'
 import { CustomerMenuPage } from '#/pages/customer/menu/ui/customer-menu-page'
-import { clientApiInstance } from '#/shared/api/client-instance.ts'
-import { resumeSessionServerFn, scanSessionServerFn } from '#/shared/api/customer/session.fns.ts'
-import { ErrorBoundary } from '#/shared/ui/error-boundary.tsx'
+import { clientApiInstance } from '#/shared/api/client-instance'
+import { resumeSessionServerFn } from '#/shared/api/customer/session.fns'
+import { useSessionRealtime } from '#/shared/realtime/use-session-realtime'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import '#/pages/customer/menu/ui/styles.css'
 
 type CustomerMenuSearch = {
@@ -19,20 +22,33 @@ export const Route = createFileRoute('/customer/menu')({
 
   loaderDeps: ({ search }) => ({ qrCode: search.id }),
 
-  loader: async ({ deps }): Promise<ScanSessionResponse | null> => {
+  loader: async ({ deps, context }): Promise<ScanSessionResponse | null> => {
+    let session: ScanSessionResponse | null = null
+
     if (deps.qrCode) {
-      return scanSessionServerFn({ data: { qrCode: deps.qrCode } })
+      try {
+        session = await createSessionServerFn({ data: { qrCode: deps.qrCode } })
+      } catch {
+        session = null
+      }
+    } else {
+      // No QR — resume from the HttpOnly cookie forwarded by the browser
+      try {
+        session = await resumeSessionServerFn()
+      } catch {
+        session = null
+      }
     }
-    // No QR code — try to resume via the HttpOnly cookie forwarded from the browser
-    try {
-      return await resumeSessionServerFn()
-    } catch {
-      return null
+
+    // SSR the menu so the component gets it from cache without a second fetch
+    if (session?.businessId) {
+      await context.queryClient.ensureQueryData(menuQueryOptions(session.businessId))
     }
+
+    return session
   },
 
   pendingComponent: CustomerMenuPending,
-
   component: CustomerMenuRoute,
   errorComponent: ({ error }) => <ErrorBoundary error={error} />,
 })
@@ -57,6 +73,9 @@ function CustomerMenuRoute() {
   })
 
   const session: ScanSessionResponse | null = loaderSession ?? resumeQuery.data ?? null
+
+  // Connect realtime for this session — joins session:<token> room and patches cache
+  useSessionRealtime(session?.sessionToken ?? '')
 
   useEffect(() => {
     if (loaderSession !== null) return
@@ -132,7 +151,7 @@ function CustomerMenuPending() {
         <PendingSkeleton w='100%' h={44} r={12} card={card} card2={card2} />
       </div>
 
-      {/* Hero card with centered loading message */}
+      {/* Hero card */}
       <div style={{ margin: '0 16px 20px', position: 'relative' }}>
         <div
           style={{
@@ -179,18 +198,10 @@ function CustomerMenuPending() {
       </div>
 
       {/* Category pills */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 14,
-          padding: '4px 16px 20px',
-          overflow: 'hidden',
-        }}
-      >
-        {[56, 48, 64, 52].map((w, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
+      <div style={{ display: 'flex', gap: 14, padding: '4px 16px 20px', overflow: 'hidden' }}>
+        {[56, 48, 64, 52].map((w) => (
           <div
-            key={i}
+            key={w}
             style={{
               flexShrink: 0,
               display: 'flex',

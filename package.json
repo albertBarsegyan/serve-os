@@ -21,7 +21,8 @@
     "format": "biome format",
     "add:component": "npx shadcn@latest add",
     "lint": "biome lint",
-    "check": "biome check"
+    "check": "biome check",
+    "gen:api": "openapi-typescript http://localhost:4000/api/docs-json -o src/shared/api/generated/schema.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -75,6 +76,7 @@
     "typescript": "^5.7.2",
     "vite": "^7.3.3",
     "vite-tsconfig-paths": "^5.1.4",
+    "openapi-typescript": "^7.8.0",
     "vitest": "^3.0.5"
   }
 }
