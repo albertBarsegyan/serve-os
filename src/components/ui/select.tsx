@@ -17,4 +17,3 @@ const Select = React.forwardRef<HTMLSelectElement, React.ComponentProps<'select'
 Select.displayName = 'Select'
 
 export { Select }
-

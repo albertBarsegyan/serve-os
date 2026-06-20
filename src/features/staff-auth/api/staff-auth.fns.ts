@@ -53,7 +53,12 @@ export const loginStaffBySlugFn = createServerFn({ method: 'POST' })
       let message = 'Authentication failed'
       try {
         const body: unknown = await response.json()
-        if (typeof body === 'object' && body !== null && 'message' in body && typeof (body as { message: unknown }).message === 'string') {
+        if (
+          typeof body === 'object' &&
+          body !== null &&
+          'message' in body &&
+          typeof (body as { message: unknown }).message === 'string'
+        ) {
           message = (body as { message: string }).message
         }
       } catch {}
@@ -90,7 +95,12 @@ export const pinLoginStaffFn = createServerFn({ method: 'POST' })
       let message = 'Authentication failed'
       try {
         const body: unknown = await response.json()
-        if (typeof body === 'object' && body !== null && 'message' in body && typeof (body as { message: unknown }).message === 'string') {
+        if (
+          typeof body === 'object' &&
+          body !== null &&
+          'message' in body &&
+          typeof (body as { message: unknown }).message === 'string'
+        ) {
           message = (body as { message: string }).message
         }
       } catch {}

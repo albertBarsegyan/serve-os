@@ -2,8 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { Edit2, Plus, Trash2 } from 'lucide-react'
 import { useId, useState } from 'react'
-import { Controller, useForm, type UseFormReturn } from 'react-hook-form'
-import { SearchSelect } from '#/shared/ui/search-select'
+import { Controller, type UseFormReturn, useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -41,10 +40,11 @@ import {
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { Modal } from '#/shared/ui/modal'
+import { SearchSelect } from '#/shared/ui/search-select'
 
 type CreateGroupValues = z.infer<typeof createModifierGroupSchema>
 type UpdateGroupValues = z.infer<typeof updateModifierGroupSchema>

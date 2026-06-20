@@ -99,10 +99,7 @@ export function PaymentView({
   })
 
   return (
-    <div
-      className='c-page'
-      style={{ background: C.bg, minHeight: '100dvh', paddingBottom: 100 }}
-    >
+    <div className='c-page' style={{ background: C.bg, minHeight: '100dvh', paddingBottom: 100 }}>
       {/* Header */}
       <div
         style={{
@@ -347,9 +344,7 @@ function PaymentRow({
         {icon}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: C.white, fontSize: 13, fontWeight: 600, margin: '0 0 1px' }}>
-          {label}
-        </p>
+        <p style={{ color: C.white, fontSize: 13, fontWeight: 600, margin: '0 0 1px' }}>{label}</p>
         <p style={{ color: C.w40, fontSize: 11, margin: 0 }}>{sublabel}</p>
       </div>
       <div

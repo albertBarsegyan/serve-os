@@ -12,8 +12,8 @@ import type {
   StaffRosterResponse,
 } from '#/features/staff-auth/api/staff-auth.types.ts'
 import {
-  emailPasswordSchema,
   type EmailPasswordValues,
+  emailPasswordSchema,
 } from '#/features/staff-auth/lib/schemas/staff-auth.schema.ts'
 import {
   useLoginStaffBySlugMutation,

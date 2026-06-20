@@ -1,9 +1,9 @@
-import {Clock} from 'lucide-react'
-import {useEffect, useId, useState} from 'react'
-import {Button} from '#/components/ui/button'
-import {Checkbox} from '#/components/ui/checkbox'
-import {Input} from '#/components/ui/input'
-import {Label} from '#/components/ui/label'
+import { Clock } from 'lucide-react'
+import { useEffect, useId, useState } from 'react'
+import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
+import { Input } from '#/components/ui/input'
+import { Label } from '#/components/ui/label'
 
 const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 

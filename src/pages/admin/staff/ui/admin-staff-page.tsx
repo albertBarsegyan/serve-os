@@ -1,16 +1,23 @@
-import {zodResolver} from '@hookform/resolvers/zod'
-import {useQuery} from '@tanstack/react-query'
-import {useRouteContext} from '@tanstack/react-router'
-import {Copy, Edit2, LockOpen, Search, Trash2, UserPlus} from 'lucide-react'
-import {useId, useMemo, useState} from 'react'
-import {Controller, useForm} from 'react-hook-form'
-import type {z} from 'zod'
-import {Badge} from '#/components/ui/badge'
-import {Button} from '#/components/ui/button'
-import {Card, CardContent, CardHeader, CardTitle} from '#/components/ui/card'
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '#/components/ui/table'
-import type {StaffMember, StaffRole} from '#/features/platform/api/platform.types.ts'
-import {staffQueryOptions} from '#/features/platform/lib/query-options.ts'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
+import { useRouteContext } from '@tanstack/react-router'
+import { Copy, Edit2, LockOpen, Search, Trash2, UserPlus } from 'lucide-react'
+import { useId, useMemo, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import type { z } from 'zod'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
+import type { StaffMember, StaffRole } from '#/features/platform/api/platform.types.ts'
+import { staffQueryOptions } from '#/features/platform/lib/query-options.ts'
 import {
   createStaffWithInviteSchema,
   createStaffWithPasswordSchema,
@@ -25,15 +32,15 @@ import {
   useUnlockStaffMutation,
   useUpdateStaffMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import {ImageEntityType} from '#/shared/api/images/images.api'
-import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
-import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
-import {StaffRole as StaffRoleEnum} from '#/shared/libs/permissions/index.ts'
+import { ImageEntityType } from '#/shared/api/images/images.api'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { StaffRole as StaffRoleEnum } from '#/shared/libs/permissions/index.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
-import {ConfirmDeleteModal} from '#/shared/ui/confirm-delete-modal'
-import {ImageUpload} from '#/shared/ui/image-upload'
-import {Modal} from '#/shared/ui/modal'
-import {SearchSelect} from '#/shared/ui/search-select'
+import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
+import { ImageUpload } from '#/shared/ui/image-upload'
+import { Modal } from '#/shared/ui/modal'
+import { SearchSelect } from '#/shared/ui/search-select'
 
 type InviteFormValues = z.infer<typeof createStaffWithInviteSchema>
 type PasswordFormValues = z.infer<typeof createStaffWithPasswordSchema>
@@ -345,7 +352,10 @@ export function AdminStaffPage() {
 
                   <TableCell>
                     <div className='flex flex-wrap items-center gap-1.5'>
-                      <Badge variant={member.isActive ? 'success' : 'outline'} className='capitalize'>
+                      <Badge
+                        variant={member.isActive ? 'success' : 'outline'}
+                        className='capitalize'
+                      >
                         {member.isActive ? 'active' : 'inactive'}
                       </Badge>
                       {isStaffLocked(member) && (

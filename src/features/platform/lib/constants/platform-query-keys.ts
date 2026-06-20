@@ -8,7 +8,11 @@ export const platformQueryKeys = {
   sessionBill: (sessionId: string) => [...platformQueryKeys.sessions(), sessionId, 'bill'] as const,
 
   menuCategories: (includeProducts: boolean) =>
-    [...platformQueryKeys.root, 'menu-categories', includeProducts ? 'with-products' : 'flat'] as const,
+    [
+      ...platformQueryKeys.root,
+      'menu-categories',
+      includeProducts ? 'with-products' : 'flat',
+    ] as const,
   products: (filters?: { categoryId?: string; availableOnly?: boolean }) =>
     [
       ...platformQueryKeys.root,

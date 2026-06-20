@@ -1,9 +1,9 @@
-import {Check, ChevronDown, ChevronLeft, ChevronUp, Clock, ShoppingBag} from 'lucide-react'
-import {useMemo, useState} from 'react'
-import type {CartModifier} from '#/features/cart/model/cart.store'
-import type {CustomerModifierGroup, CustomerProduct} from '#/shared/api/customer/menu.types'
-import {formatPrice} from '#/shared/libs/utils/price.utils'
-import {C} from '../customer-theme'
+import { Check, ChevronDown, ChevronLeft, ChevronUp, Clock, ShoppingBag } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import type { CartModifier } from '#/features/cart/model/cart.store'
+import type { CustomerModifierGroup, CustomerProduct } from '#/shared/api/customer/menu.types'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
+import { C } from '../customer-theme'
 
 const DIETARY_LABELS: Record<string, string> = {
   vegan: 'Vegan 🌱',
