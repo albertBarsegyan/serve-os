@@ -160,6 +160,7 @@ function ProductDetailPanel({
   const [notes, setNotes] = useState('')
   const [qty, setQty] = useState(1)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: product.id is a trigger, not used inside effect body
   useEffect(() => {
     setGroupSelections({})
     setNotes('')

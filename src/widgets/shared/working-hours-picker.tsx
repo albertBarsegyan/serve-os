@@ -29,34 +29,9 @@ interface WorkingHoursPickerProps {
   readonly onChange: (value: string) => void
 }
 
-export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps) {
-  const pickerId = useId()
-
-  // Parse existing JSON value or initialize empty state
-  const parseWorkingHours = (): WorkingHoursEntry[] => {
-    try {
-      if (!value.trim()) {
-        return DAYS_OF_WEEK.map((day) => ({
-          day,
-          open: '09:00',
-          close: '22:00',
-          enabled: false,
-        }))
-      }
-
-      const parsed = JSON.parse(value)
-      return DAYS_OF_WEEK.map((day) => {
-        const timeRange = parsed[day]
-        const [open, close] = timeRange ? timeRange.split('-') : ['09:00', '22:00']
-
-        return {
-          day,
-          open: open || '09:00',
-          close: close || '22:00',
-          enabled: Boolean(timeRange),
-        }
-      })
-    } catch {
+function parseWorkingHours(value: string): WorkingHoursEntry[] {
+  try {
+    if (!value.trim()) {
       return DAYS_OF_WEEK.map((day) => ({
         day,
         open: '09:00',
@@ -64,12 +39,36 @@ export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps)
         enabled: false,
       }))
     }
-  }
 
-  const [hours, setHours] = useState<WorkingHoursEntry[]>(parseWorkingHours())
+    const parsed = JSON.parse(value)
+    return DAYS_OF_WEEK.map((day) => {
+      const timeRange = parsed[day]
+      const [open, close] = timeRange ? timeRange.split('-') : ['09:00', '22:00']
+
+      return {
+        day,
+        open: open || '09:00',
+        close: close || '22:00',
+        enabled: Boolean(timeRange),
+      }
+    })
+  } catch {
+    return DAYS_OF_WEEK.map((day) => ({
+      day,
+      open: '09:00',
+      close: '22:00',
+      enabled: false,
+    }))
+  }
+}
+
+export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps) {
+  const pickerId = useId()
+
+  const [hours, setHours] = useState<WorkingHoursEntry[]>(() => parseWorkingHours(value))
 
   useEffect(() => {
-    setHours(parseWorkingHours())
+    setHours(parseWorkingHours(value))
   }, [value])
 
   // Serialize hours to JSON

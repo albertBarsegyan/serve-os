@@ -179,6 +179,7 @@
 @media (min-width: 640px) {
   /* Visibility */
   .c-mobile-only {
+    /* biome-ignore lint/complexity/noImportantStyles: utility visibility class needs !important to override inline styles */
     display: none !important;
   }
   .c-tablet-up {

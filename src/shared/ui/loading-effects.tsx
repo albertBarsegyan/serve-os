@@ -35,6 +35,7 @@ export function LoadingSkeleton({
   return (
     <div className='space-y-4'>
       {Array.from({ length: count }).map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static list, items have no identity
         <div key={i} className={`${height} animate-pulse rounded-lg bg-muted`} />
       ))}
     </div>

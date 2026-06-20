@@ -102,7 +102,7 @@ function OnlineConfigForm({
       merchantId: config?.merchantId ?? '',
       testMode: config?.testMode ?? true,
     })
-  }, [existing?.id, reset])
+  }, [config, reset])
 
   const onSubmit = async (values: OnlineConfigForm) => {
     try {
@@ -132,10 +132,11 @@ function OnlineConfigForm({
 
       <div className='grid gap-4 sm:grid-cols-2'>
         <div className='space-y-1'>
-          <label className='text-sm font-medium'>Client ID</label>
+          <label htmlFor='clientId' className='text-sm font-medium'>Client ID</label>
           <div className='relative'>
             <KeyRound className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
             <input
+              id='clientId'
               type='text'
               placeholder='e.g. 12345678'
               className='h-10 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
@@ -146,10 +147,11 @@ function OnlineConfigForm({
         </div>
 
         <div className='space-y-1'>
-          <label className='text-sm font-medium'>Secret Key</label>
+          <label htmlFor='secretKey' className='text-sm font-medium'>Secret Key</label>
           <div className='relative'>
             <KeyRound className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
             <input
+              id='secretKey'
               type='password'
               placeholder='••••••••••••'
               className='h-10 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
@@ -160,8 +162,9 @@ function OnlineConfigForm({
         </div>
 
         <div className='space-y-1'>
-          <label className='text-sm font-medium'>Merchant ID</label>
+          <label htmlFor='merchantId' className='text-sm font-medium'>Merchant ID</label>
           <input
+            id='merchantId'
             type='text'
             placeholder='e.g. MerchantID'
             className='h-10 w-full rounded-xl border border-input bg-background px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'

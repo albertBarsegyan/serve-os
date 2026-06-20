@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
-import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {useEffect} from 'react'
+import type {AuthenticatedUser} from '#/features/auth/api/auth.types.ts'
 import type {
   BusinessResponse,
   CreateBusinessRequest,
@@ -18,9 +18,7 @@ import {
   updateBusinessServerFn,
   upsertPaymentMethodServerFn,
 } from '#/shared/api/business/business.fns.ts'
-import useActiveBusinessStore, {
-  type ActiveBusiness,
-} from '#/shared/store/use-active-business.store.ts'
+import useActiveBusinessStore, {type ActiveBusiness,} from '#/shared/store/use-active-business.store.ts'
 
 export function useDeleteBusinessMutation() {
   const queryClient = useQueryClient()
@@ -95,8 +93,8 @@ export function usePaymentMethodsQuery({
 }) {
   return useQuery({
     queryKey: ['payment-methods', businessId],
-    queryFn: () => listPaymentMethodsServerFn({ data: { businessId: businessId! } }),
-    enabled: enabled && !!businessId,
+    queryFn: () => listPaymentMethodsServerFn({ data: { businessId: businessId ?? '' } }),
+    enabled: enabled && Boolean(businessId),
   })
 }
 

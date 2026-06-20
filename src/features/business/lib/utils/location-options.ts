@@ -51,7 +51,8 @@ export const getCountryOptions = (): LocationOption[] => getCountryOpts()
 
 export const getCityOptions = (countryCode?: string): LocationOption[] => {
   if (!countryCode) return []
-  if (cityCache.has(countryCode)) return cityCache.get(countryCode)!
+
+  if (cityCache.has(countryCode)) return cityCache.get(countryCode) ?? []
 
   const seen = new Set<string>()
   const cities = (City.getCitiesOfCountry(countryCode) ?? [])
