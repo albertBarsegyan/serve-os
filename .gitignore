@@ -11,9 +11,14 @@ dist-ssr
 .wrangler
 .tanstack
 
-# Environment
+# Environment — ignore all env files...
 .env
+.env.*
 *.local
+
+# ...but allow committing templates (no real secrets in these)
+!.env.example
+!.env.sample
 
 # IDE
 .idea
