@@ -1,9 +1,9 @@
-import {RotateCcw, RotateCw} from 'lucide-react'
-import {useCallback, useState} from 'react'
-import type {Area, Point} from 'react-easy-crop'
+import { RotateCcw, RotateCw } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import type { Area, Point } from 'react-easy-crop'
 import Cropper from 'react-easy-crop'
-import {Button} from '#/components/ui/button'
-import {useBodyScrollLock} from '#/shared/libs/hooks/scroll-lock'
+import { Button } from '#/components/ui/button'
+import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock'
 
 interface ImageEditorDialogProps {
   imageSrc: string

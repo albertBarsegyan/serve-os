@@ -1,9 +1,9 @@
-import {Moon, Plus, Search, ShoppingBag, Sun, UtensilsCrossed} from 'lucide-react'
-import {useState} from 'react'
-import type {CustomerCategory, CustomerProduct} from '#/shared/api/customer/menu.types'
-import {formatPrice} from '#/shared/libs/utils/price.utils'
-import {LazyImage} from '#/shared/ui/lazy-image'
-import {C} from '../customer-theme'
+import { Moon, Plus, Search, ShoppingBag, Sun, UtensilsCrossed } from 'lucide-react'
+import { useState } from 'react'
+import type { CustomerCategory, CustomerProduct } from '#/shared/api/customer/menu.types'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
+import { LazyImage } from '#/shared/ui/lazy-image'
+import { C } from '../customer-theme'
 
 interface MenuViewProps {
   businessName: string

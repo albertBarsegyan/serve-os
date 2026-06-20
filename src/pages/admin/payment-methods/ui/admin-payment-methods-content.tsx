@@ -132,7 +132,9 @@ function OnlineConfigForm({
 
       <div className='grid gap-4 sm:grid-cols-2'>
         <div className='space-y-1'>
-          <label htmlFor='clientId' className='text-sm font-medium'>Client ID</label>
+          <label htmlFor='clientId' className='text-sm font-medium'>
+            Client ID
+          </label>
           <div className='relative'>
             <KeyRound className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
             <input
@@ -147,7 +149,9 @@ function OnlineConfigForm({
         </div>
 
         <div className='space-y-1'>
-          <label htmlFor='secretKey' className='text-sm font-medium'>Secret Key</label>
+          <label htmlFor='secretKey' className='text-sm font-medium'>
+            Secret Key
+          </label>
           <div className='relative'>
             <KeyRound className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
             <input
@@ -162,7 +166,9 @@ function OnlineConfigForm({
         </div>
 
         <div className='space-y-1'>
-          <label htmlFor='merchantId' className='text-sm font-medium'>Merchant ID</label>
+          <label htmlFor='merchantId' className='text-sm font-medium'>
+            Merchant ID
+          </label>
           <input
             id='merchantId'
             type='text'
@@ -170,9 +176,7 @@ function OnlineConfigForm({
             className='h-10 w-full rounded-xl border border-input bg-background px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
             {...register('merchantId')}
           />
-          {errors.merchantId && (
-            <p className='text-xs text-red-600'>{errors.merchantId.message}</p>
-          )}
+          {errors.merchantId && <p className='text-xs text-red-600'>{errors.merchantId.message}</p>}
         </div>
 
         <div className='flex items-center gap-3 pt-5'>

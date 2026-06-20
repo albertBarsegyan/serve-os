@@ -27,7 +27,9 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
           <div className='mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10'>
             <AlertTriangle className='h-8 w-8 text-destructive' />
           </div>
-          <h1 className='mb-2 text-3xl font-semibold tracking-tight text-foreground'>Page Not Found</h1>
+          <h1 className='mb-2 text-3xl font-semibold tracking-tight text-foreground'>
+            Page Not Found
+          </h1>
           <p className='mb-8 text-muted-foreground'>
             The page you're looking for doesn't exist or has been moved.
           </p>
@@ -69,8 +71,12 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
 
           {isDev && (
             <div className='mb-6 rounded-lg border border-destructive/20 bg-destructive/5 p-4'>
-              <p className='mb-2 text-xs font-mono font-semibold text-destructive'>Error Details:</p>
-                  <p className='mb-3 wrap-break-word font-mono text-sm text-destructive'>{errorMessage}</p>
+              <p className='mb-2 text-xs font-mono font-semibold text-destructive'>
+                Error Details:
+              </p>
+              <p className='mb-3 wrap-break-word font-mono text-sm text-destructive'>
+                {errorMessage}
+              </p>
               {errorStack && (
                 <details className='text-xs'>
                   <summary className='mb-2 cursor-pointer font-semibold text-destructive'>

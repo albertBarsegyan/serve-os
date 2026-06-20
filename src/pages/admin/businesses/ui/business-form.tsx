@@ -13,8 +13,8 @@ import type {
 } from '#/features/business/api/business.types'
 import { businessTypeLabels } from '#/features/business/api/business-domain'
 import {
-  updateBusinessFormSchema,
   type UpdateBusinessFormValues,
+  updateBusinessFormSchema,
 } from '#/features/business/lib/schemas/update-business-form.schema'
 import {
   getCityOptions,

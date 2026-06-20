@@ -22,6 +22,7 @@
     "add:component": "npx shadcn@latest add",
     "lint": "biome lint",
     "check": "biome check",
+    "check:fix": "biome check --write",
     "gen:api": "openapi-typescript http://localhost:4000/api/docs-json -o src/shared/api/generated/schema.ts"
   },
   "dependencies": {

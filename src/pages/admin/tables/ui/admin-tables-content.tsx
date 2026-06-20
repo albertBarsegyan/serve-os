@@ -1,16 +1,31 @@
-import {zodResolver} from '@hookform/resolvers/zod'
-import {useQuery} from '@tanstack/react-query'
-import {Check, Copy, Edit2, LayoutGrid, Minus, Plus, QrCode, Trash2, Upload, Users, X,} from 'lucide-react'
-import {QRCodeSVG} from 'qrcode.react'
-import {useId, useMemo, useRef, useState} from 'react'
-import {useForm} from 'react-hook-form'
-import type {z} from 'zod'
-import {Badge} from '#/components/ui/badge'
-import {Button} from '#/components/ui/button'
-import {Card, CardContent, CardHeader, CardTitle} from '#/components/ui/card'
-import type {TableEntity} from '#/features/platform/api/platform.types.ts'
-import {tablesQueryOptions} from '#/features/platform/lib/query-options.ts'
-import {createTableSchema, updateTableSchema,} from '#/features/platform/lib/schemas/platform.schemas.ts'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
+import {
+  Check,
+  Copy,
+  Edit2,
+  LayoutGrid,
+  Minus,
+  Plus,
+  QrCode,
+  Trash2,
+  Upload,
+  Users,
+  X,
+} from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
+import { useId, useMemo, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import type { z } from 'zod'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
+import type { TableEntity } from '#/features/platform/api/platform.types.ts'
+import { tablesQueryOptions } from '#/features/platform/lib/query-options.ts'
+import {
+  createTableSchema,
+  updateTableSchema,
+} from '#/features/platform/lib/schemas/platform.schemas.ts'
 import {
   useCreateTableMutation,
   useDeleteTableMutation,
@@ -19,12 +34,12 @@ import {
   useUpdateTableMutation,
   useUploadTableImageMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
-import {useTablePermissions} from '#/shared/libs/hooks/use-table-permissions.ts'
-import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
-import {ConfirmDeleteModal} from '#/shared/ui/confirm-delete-modal'
-import {LazyImage} from '#/shared/ui/lazy-image.tsx'
-import {Modal} from '#/shared/ui/modal'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useTablePermissions } from '#/shared/libs/hooks/use-table-permissions.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
+import { LazyImage } from '#/shared/ui/lazy-image.tsx'
+import { Modal } from '#/shared/ui/modal'
 
 type CreateTableFormValues = z.infer<typeof createTableSchema>
 type UpdateTableFormValues = z.infer<typeof updateTableSchema>

@@ -22,8 +22,8 @@ import {
   type OrderStatusChangedPayload,
   useKitchenSocket,
 } from '#/shared/libs/hooks/use-kitchen-socket.ts'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
 import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
@@ -55,7 +55,10 @@ const WAITER_NEXT: Partial<Record<OrderStatus, OrderStatus>> = {
 }
 
 function formatStatus(s: string) {
-  return s.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+  return s
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function WaiterWorkspace() {
@@ -71,19 +74,12 @@ function WaiterWorkspace() {
     }
   })
 
-  const {
-    data: orders = [],
-    isPending,
-    isError,
-    error,
-    refetch,
-  } = useQuery(ordersQueryOptions())
+  const { data: orders = [], isPending, isError, error, refetch } = useQuery(ordersQueryOptions())
 
   const updateMutation = useUpdateOrderStatusMutation()
 
   const filteredOrders = useMemo(() => {
-    const active =
-      activeFilter === 'all' ? orders : orders.filter((o) => o.status === activeFilter)
+    const active = activeFilter === 'all' ? orders : orders.filter((o) => o.status === activeFilter)
 
     const needle = search.trim().toLowerCase()
     if (!needle) return active
@@ -116,7 +112,11 @@ function WaiterWorkspace() {
       {isError && (
         <div className='rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive'>
           {getResponseErrorMessage(error)}
-          <button type='button' className='ml-2 font-semibold underline' onClick={() => void refetch()}>
+          <button
+            type='button'
+            className='ml-2 font-semibold underline'
+            onClick={() => void refetch()}
+          >
             Retry
           </button>
         </div>

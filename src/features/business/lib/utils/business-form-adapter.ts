@@ -8,7 +8,9 @@ export const businessFormAdapter = {
       type: formData.type,
       location: formatBackendLocation(formData.locationCity, formData.locationCountry),
       currency: formData.currency.trim().toUpperCase(),
-      ...(formData.workingHoursJson.trim() ? { workingHours: formData.workingHoursJson.trim() } : {}),
+      ...(formData.workingHoursJson.trim()
+        ? { workingHours: formData.workingHoursJson.trim() }
+        : {}),
       ...(formData.features.length ? { features: formData.features } : {}),
     }
   },

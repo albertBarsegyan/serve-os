@@ -1,6 +1,6 @@
-import {Link} from '@tanstack/react-router'
-import {ThemeSwitcher} from '#/components/theme-switcher.tsx'
-import {Logo} from '#/shared/ui/logo.tsx'
+import { Link } from '@tanstack/react-router'
+import { ThemeSwitcher } from '#/components/theme-switcher.tsx'
+import { Logo } from '#/shared/ui/logo.tsx'
 
 export default function Header() {
   return (

@@ -15,4 +15,3 @@ export interface CreateCategoryRequest {
 }
 
 export type UpdateCategoryRequest = Partial<CreateCategoryRequest>
-
