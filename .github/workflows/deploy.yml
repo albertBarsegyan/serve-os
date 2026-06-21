@@ -65,9 +65,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Write .env.production
+      - name: Write .env
         run: |
-          cat > .env.production <<'EOF'
+          cat > .env <<'EOF'
           ${{ secrets.ENV_PRODUCTION }}
           EOF
 
@@ -77,7 +77,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "docker-compose.prod.yml,.env.production"
+          source: "docker-compose.prod.yml,.env"
           target: /opt/serve-os/
 
       - name: Deploy on server
@@ -93,9 +93,9 @@ jobs:
             set -e
             echo "$GHCR_TOKEN" | docker login ghcr.io -u albertbarsegyan --password-stdin
             cd /opt/serve-os
-            chmod 600 .env.production
-            docker compose -f docker-compose.prod.yml --env-file .env.production pull
-            docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+            chmod 600 .env
+            docker compose -f docker-compose.prod.yml --env-file .env pull
+            docker compose -f docker-compose.prod.yml --env-file .env up -d
             docker image prune -f
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
