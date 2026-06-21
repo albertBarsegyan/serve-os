@@ -1,7 +1,13 @@
 services:
   app:
     networks:
-      - serve_os_shared
+      - shared
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
 
     image: ghcr.io/albertbarsegyan/serve-os:latest
 
@@ -17,7 +23,7 @@ services:
       - "3000:3000"
 
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -26,6 +32,6 @@ services:
     restart: unless-stopped
 
 networks:
-  serve_os_shared:
+  shared:
     driver: bridge
-    name: serve_os_shared
+    name: shared
