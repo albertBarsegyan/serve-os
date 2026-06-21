@@ -11,7 +11,9 @@ const AUTH_COOKIES = ['access_token', 'staff_access_token']
 
 function hasAuthCookie(): boolean {
   const cookies = getRequest()?.headers.get('cookie') ?? ''
-  return cookies.split(';').some((c) => AUTH_COOKIES.some((name) => c.trim().startsWith(`${name}=`)))
+  return cookies
+    .split(';')
+    .some((c) => AUTH_COOKIES.some((name) => c.trim().startsWith(`${name}=`)))
 }
 
 export const getAuthUserServerFn = createServerFn({ method: 'GET' }).handler(
