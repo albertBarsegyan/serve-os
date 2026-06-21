@@ -1,4 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
 
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { signInSchema } from '#/features/auth/lib/schemas/sign-in-form.schema.ts'
@@ -6,8 +7,17 @@ import { signUpRequestSchema } from '#/features/auth/lib/schemas/sign-up.schema.
 import { serverApiInstance } from '#/shared/api/server-instance.ts'
 import { forwardCookies } from '#/shared/libs/utils/cookie.utils.ts'
 
+const AUTH_COOKIES = ['access_token', 'staff_access_token']
+
+function hasAuthCookie(): boolean {
+  const cookies = getRequest()?.headers.get('cookie') ?? ''
+  return cookies.split(';').some((c) => AUTH_COOKIES.some((name) => c.trim().startsWith(`${name}=`)))
+}
+
 export const getAuthUserServerFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<{ user: AuthenticatedUser | null }> => {
+    if (!hasAuthCookie()) return { user: null }
+
     try {
       const response = await serverApiInstance<AuthenticatedUser>('auth/me')
 
