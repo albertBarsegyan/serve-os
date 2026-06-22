@@ -1,5 +1,6 @@
 services:
   app:
+    container_name: serve_os_frontend_prod
     networks:
       - shared
 
