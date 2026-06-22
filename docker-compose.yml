@@ -1,5 +1,6 @@
 services:
   app:
+    container_name: serve_os_frontend_dev
     networks:
       - serve_os_shared
 
@@ -7,6 +8,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: deps
+
+    env_file:
+      - .env.local
 
     environment:
       NODE_ENV: development
