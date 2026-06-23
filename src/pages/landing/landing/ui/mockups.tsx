@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import logo from '#/shared/assets/logo.png'
+import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
 import { Icons } from './icons'
 
 interface FloatBadgeProps {
@@ -40,7 +40,7 @@ export function DashboardMock() {
       <div className='dash'>
         <aside className='dash-side'>
           <div className='brandrow'>
-            <img src={logo} alt='' />
+            <LogoSvg aria-hidden='true' />
             serve<span className='g'>-os</span>
           </div>
           {nav.map((n) => (

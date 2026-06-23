@@ -5,10 +5,9 @@ import {
   useBusinessesQuery,
   useBusinessSwitcher,
 } from '#/features/business/model/business-hooks.ts'
-import logoBg from '#/shared/assets/logo.png'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
-import { LazyImage } from '#/shared/ui/lazy-image.tsx'
+import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
 
 export const Route = createFileRoute('/select-business')({
   component: SelectBusinessRoute,
@@ -29,11 +28,9 @@ function SelectBusinessRoute() {
   return (
     <main className='relative min-h-screen page-wrap overflow-hidden px-4 py-10'>
       {/* Background logo watermark */}
-      <LazyImage
-        src={logoBg}
-        alt=''
+      <LogoSvg
         aria-hidden='true'
-        className='pointer-events-none select-none fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-auto w-150 max-w-[80vw] opacity-20 dark:opacity-60 object-contain'
+        className='pointer-events-none select-none fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 max-w-[80vw] opacity-20 dark:opacity-60 text-primary'
       />
 
       <div className='relative z-10 w-full max-w-300'>

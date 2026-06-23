@@ -5,7 +5,7 @@ import './serve-os.css'
 import { useNavigate } from '@tanstack/react-router'
 import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
 import { cn } from '#/lib/utils.ts'
-import logo from '#/shared/assets/logo.png'
+import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
 import { Icons } from './icons'
 import { DashboardMock, FloatBadge, PhoneMock, QrCode } from './mockups'
 
@@ -153,7 +153,7 @@ export function Nav() {
       <header className={`nav${scrolled ? ' scrolled' : ''}`}>
         <div className='wrap nav-inner'>
           <a className='logo' href='/'>
-            <img src={logo} alt='serve-os logo' />
+            <LogoSvg aria-hidden='true' />
             serve<span className='g'>-os</span>
           </a>
           <nav className='nav-links'>
@@ -420,7 +420,7 @@ function Ordering() {
             <div className='qh'>Scan to Order</div>
             <QrCode />
             <div className='qfoot'>
-              <img src={logo} alt='' />
+              <LogoSvg aria-hidden='true' />
               serve<span className='g'>-os</span>
             </div>
           </div>
@@ -583,7 +583,7 @@ export function SiteFooter() {
         <div className='foot-grid'>
           <div>
             <a className='logo' href='/'>
-              <img src={logo} alt='' />
+              <LogoSvg aria-hidden='true' />
               serve<span className='g'>-os</span>
             </a>
             <p className='blurb'>

@@ -9,7 +9,6 @@ export const Route = createFileRoute('/_admin/dashboard')({
   beforeLoad: ({ context }) => {
     const user = context.authUser
 
-    console.log('dashboard', { user })
     if (user?.type === 'staff' && user.role === StaffRole.KITCHEN) {
       throw redirect({ to: '/kitchen' })
     }

@@ -1,6 +1,5 @@
 import { cn } from '#/lib/utils.ts'
-import logoSrc from '#/shared/assets/logo.png'
-import { LazyImage } from './lazy-image.tsx'
+import { LogoSvg } from './logo-svg.tsx'
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg'
@@ -9,9 +8,9 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: 36,
-  md: 48,
-  lg: 56,
+  sm: 'w-9 h-9',
+  md: 'w-12 h-12',
+  lg: 'w-14 h-14',
 }
 
 const textSizeMap = {
@@ -21,18 +20,11 @@ const textSizeMap = {
 }
 
 export function Logo({ size = 'md', showText = false, className }: Readonly<LogoProps>) {
-  const px = sizeMap[size]
-
   return (
-    <span className={cn('inline-flex items-center gap-4', className)}>
-      <LazyImage src={logoSrc} alt='ServeOS' width={px} height={px} imgClassName='object-contain' />
+    <span className={cn('inline-flex items-center gap-4 text-primary', className)}>
+      <LogoSvg className={cn('shrink-0', sizeMap[size])} aria-hidden='true' />
       {showText && (
-        <span
-          className={cn(
-            'font-semibold tracking-tight text-primary whitespace-nowrap',
-            textSizeMap[size],
-          )}
-        >
+        <span className={cn('font-semibold tracking-tight whitespace-nowrap', textSizeMap[size])}>
           serve-os
         </span>
       )}

@@ -8,6 +8,8 @@
 @plugin "@tailwindcss/typography";
 
 :root {
+  --logo-bg: var(--background);
+
   /* Brand palette — three greens sampled from the light logo (lime-green, hue ~133–137) */
   --brand-primary: oklch(0.543 0.152 137); /* #3F8218 — deep logo green (wordmark / primary) */
   --brand-leaf: oklch(0.697 0.194 133); /* #6AB50C — bright leaf green (logo core) */

@@ -11,6 +11,7 @@
 
   /* backgrounds */
   --bg: #15130f;
+  --logo-bg: var(--bg);
   --bg-2: #1d1a14;
   --panel-edge: #0a0908;
 
@@ -422,9 +423,12 @@ a {
   letter-spacing: -0.04em;
   white-space: nowrap;
 }
-.logo img {
+.logo img,
+.logo svg {
   width: 38px;
   height: 38px;
+  color: var(--green);
+  flex-shrink: 0;
 }
 .logo .g {
   color: var(--accent);
@@ -706,9 +710,12 @@ section {
   font-size: 15px;
   margin-bottom: 16px;
 }
-.dash-side .brandrow img {
+.dash-side .brandrow img,
+.dash-side .brandrow svg {
   width: 20px;
   height: 20px;
+  color: var(--green);
+  flex-shrink: 0;
 }
 .dash-side .brandrow .g {
   color: var(--accent);
@@ -1222,9 +1229,12 @@ section {
   font-weight: 800;
   font-size: 13px;
 }
-.qr-tent .qfoot img {
+.qr-tent .qfoot img,
+.qr-tent .qfoot svg {
   width: 16px;
   height: 16px;
+  color: var(--green);
+  flex-shrink: 0;
 }
 .qr-tent .qfoot .g {
   color: var(--accent);
