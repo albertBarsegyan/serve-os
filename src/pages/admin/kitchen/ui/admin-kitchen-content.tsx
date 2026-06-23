@@ -50,10 +50,10 @@ export function AdminKitchenContent() {
   }, [])
 
   const toggleFullscreen = () => {
-    if (!isFullscreen) {
+    if (isFullscreen) {
       containerRef.current?.requestFullscreen()
     } else {
-      document.exitFullscreen()
+      void document.exitFullscreen()
     }
   }
 
@@ -104,7 +104,7 @@ export function AdminKitchenContent() {
               <button
                 type='button'
                 className='ml-2 font-semibold underline'
-                onClick={() => void refetch()}
+                onClick={() => refetch()}
               >
                 Retry
               </button>
@@ -128,7 +128,7 @@ export function AdminKitchenContent() {
             variant='outline'
             type='button'
             className='rounded-full'
-            onClick={() => void refetch()}
+            onClick={() => refetch()}
           >
             Refresh
           </Button>
