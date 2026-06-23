@@ -8,16 +8,13 @@ import {
 import logoBg from '#/shared/assets/logo.png'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
 import { LazyImage } from '#/shared/ui/lazy-image.tsx'
 
 export const Route = createFileRoute('/select-business')({
   component: SelectBusinessRoute,
   beforeLoad: ({ context }) => {
     if (!context.authUser) throw redirect({ to: sharedRoutePathname.SIGN_IN })
-    const businessId = useActiveBusinessStore.getState().active?.id
-
-    if (businessId) throw redirect({ to: adminRoutePathname.DASHBOARD })
+    if (context.selectedBusinessId) throw redirect({ to: adminRoutePathname.DASHBOARD })
   },
 })
 
@@ -68,9 +65,7 @@ function SelectBusinessRoute() {
                   <Button
                     className='ml-auto'
                     disabled={isSwitching}
-                    onClick={() =>
-                      switchBusiness({ id: b.id, name: b.name, currency: b.currency, slug: b.slug })
-                    }
+                    onClick={() => switchBusiness(b.id)}
                   >
                     Select
                   </Button>

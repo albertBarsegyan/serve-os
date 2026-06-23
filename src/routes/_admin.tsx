@@ -38,7 +38,6 @@ import { useLogoutMutation } from '#/features/auth/model/auth-hooks.ts'
 import {
   useBusinessesQuery,
   useBusinessSwitcher,
-  useStaffActiveBusiness,
 } from '#/features/business/model/business-hooks.ts'
 import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
 import { useLogoutStaffMutation } from '#/features/platform/model/platform-hooks.ts'
@@ -46,10 +45,13 @@ import { cn } from '#/lib/utils.ts'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import {
+  useActiveBusiness,
+  useSelectedBusinessId,
+} from '#/shared/libs/hooks/use-active-business.ts'
 import { BusinessFeature, StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { ErrorBoundary } from '#/shared/ui/error-boundary.tsx'
 import { Logo } from '#/shared/ui/logo.tsx'
 import { Modal } from '#/shared/ui/modal'
@@ -151,7 +153,7 @@ function SidebarNavLink({
 }
 
 function BusinessSwitcher() {
-  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const selectedBusinessId = useSelectedBusinessId()
   const { data: businesses = [], isLoading } = useBusinessesQuery({ enabled: true })
   const { switchBusiness, isLoading: isSwitching } = useBusinessSwitcher({
     navigate: async () => undefined,
@@ -167,7 +169,7 @@ function BusinessSwitcher() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const selectedBusiness = businesses.find((b) => b.id === activeBusiness?.id)
+  const selectedBusiness = businesses.find((b) => b.id === selectedBusinessId)
 
   return (
     <div ref={ref} className='relative'>
@@ -206,18 +208,13 @@ function BusinessSwitcher() {
           </div>
           <div className='p-2 space-y-0.5'>
             {businesses.map((business) => {
-              const isActive = business.id === activeBusiness?.id
+              const isActive = business.id === selectedBusinessId
               return (
                 <button
                   key={business.id}
                   type='button'
                   onClick={() => {
-                    switchBusiness({
-                      id: business.id,
-                      name: business.name,
-                      currency: business.currency,
-                      slug: business.slug,
-                    })
+                    switchBusiness(business.id)
                     setIsOpen(false)
                   }}
                   className={cn(
@@ -260,13 +257,11 @@ function AdminLayout() {
   const queryClient = useQueryClient()
   const { authUser } = useRouteContext({ from: '/_admin' })
   const { isOwner, canSee, hasPermission } = usePermissions()
+  const activeBusiness = useActiveBusiness()
   const { isLoading: isBusinessLoading } = useBusinessesQuery({
     enabled: authUser?.type === 'owner',
   })
   const isSidebarLoading = authUser?.type === 'owner' ? isBusinessLoading : false
-  const { setActive, active } = useActiveBusinessStore()
-
-  useStaffActiveBusiness(authUser)
 
   const displayName = (() => {
     if (!authUser) return ''
@@ -325,12 +320,12 @@ function AdminLayout() {
     try {
       if (authUser?.type === 'staff') {
         const businessId = authUser.businessId
+        const slug = activeBusiness?.slug
         await logoutStaffMutation.mutateAsync(businessId)
         await queryClient.cancelQueries()
         queryClient.clear()
-        setActive(null)
         showSuccess(authUiMessage.SUCCESS_LOGOUT)
-        await navigation({ to: `/b/${active?.slug}/staff-login` })
+        await navigation({ to: slug ? `/b/${slug}/staff-login` : '/auth/sign-in' })
       } else {
         await logoutMutation.mutateAsync()
         showSuccess(authUiMessage.SUCCESS_LOGOUT)

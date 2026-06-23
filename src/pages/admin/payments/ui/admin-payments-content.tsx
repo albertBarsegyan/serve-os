@@ -17,9 +17,9 @@ import { paymentsQueryOptions } from '#/features/platform/lib/query-options.ts'
 import { useConfirmPaymentMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 
 function statusBadgeVariant(status: PaymentStatus): 'success' | 'warning' | 'outline' {
   if (status === 'CONFIRMED') return 'success'
@@ -38,7 +38,7 @@ const ALL_STATUSES: (PaymentStatus | 'all')[] = ['all', 'PENDING', 'CONFIRMED', 
 export function AdminPaymentsContent() {
   const [activeFilter, setActiveFilter] = useState<PaymentStatus | 'all'>('all')
   const [search, setSearch] = useState('')
-  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const currency = useActiveBusiness()?.currency ?? 'USD'
 
   const {
     data: payments = [],

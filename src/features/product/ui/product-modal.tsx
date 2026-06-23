@@ -12,7 +12,7 @@ import type {
   UpdateProductFormData,
 } from '#/features/product/lib/schemas/create-product-form.schema'
 import { ProductForm } from '#/features/product/ui/product-form'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
 import { Modal } from '#/shared/ui/modal'
 
 interface ProductModalProps {
@@ -31,8 +31,7 @@ export function ProductModal({
   productId,
   defaultCategoryId,
 }: Readonly<ProductModalProps>) {
-  const { active } = useActiveBusinessStore()
-  const activeBusinessId = active?.id ?? ''
+  const activeBusinessId = useSelectedBusinessId() ?? ''
   const { data: categories = [] } = useGetCategories(activeBusinessId)
   const createMutation = useCreateProduct()
   const updateMutation = useUpdateProduct()

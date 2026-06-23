@@ -1,6 +1,6 @@
 import type { Order, OrderStatus } from '#/entities/order/model/types'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 
 interface OrderTableProps {
   orders: Order[]
@@ -18,7 +18,7 @@ const nextStatusByCurrent: Partial<Record<OrderStatus, OrderStatus>> = {
 const terminal: OrderStatus[] = ['CLOSED', 'CANCELLED', 'PAYMENT_FAILED', 'REFUNDED']
 
 export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
-  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const currency = useActiveBusiness()?.currency ?? 'USD'
 
   if (orders.length === 0) {
     return <p className='text-sm text-[var(--sea-ink-soft)]'>No active orders.</p>

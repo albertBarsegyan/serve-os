@@ -12,9 +12,9 @@ import type {
   CustomerProduct,
 } from '#/shared/api/customer/menu.types'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { Modal } from '#/shared/ui/modal'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -721,8 +721,9 @@ export function CreateStaffOrderDialog({
   open: boolean
   onClose: () => void
 }>) {
-  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
-  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const activeBusiness = useActiveBusiness()
+  const businessId = activeBusiness?.id ?? ''
+  const currency = activeBusiness?.currency ?? 'USD'
 
   const [step, setStep] = useState<Step>('setup')
   const [orderType, setOrderType] = useState<OrderType>('DINE_IN')

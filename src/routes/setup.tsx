@@ -29,13 +29,13 @@ import {
   useCreateBusinessMutation,
   useUpdateBusinessMutation,
 } from '#/features/business/model/business-hooks.ts'
+import { selectBusinessServerFn } from '#/shared/api/business/business.fns.ts'
 import { ImageEntityType } from '#/shared/api/images/images.api.ts'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { stringToCommaSeparated } from '#/shared/libs/utils/naming.utils.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
 import { ImageUpload } from '#/shared/ui/image-upload'
 import { SearchSelect } from '#/shared/ui/search-select'
 import { WorkingHoursPicker } from '#/widgets/shared/working-hours-picker'
@@ -59,7 +59,6 @@ function AdminSetupRoute() {
   const navigate = useNavigate()
   const createBusinessMutation = useCreateBusinessMutation()
   const updateBusinessMutation = useUpdateBusinessMutation()
-  const setActive = useActiveBusinessStore((s) => s.setActive)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   const nameId = useId()
@@ -120,7 +119,7 @@ function AdminSetupRoute() {
         })
       }
 
-      setActive(createdBusiness)
+      await selectBusinessServerFn({ data: createdBusiness.id })
 
       await queryClient.invalidateQueries({ queryKey: ['business'] })
       queryClient.setQueryData<{ user: AuthenticatedUser }>([authQueryKey.ME], (old) => {

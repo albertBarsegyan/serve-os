@@ -17,8 +17,8 @@ import {
   useUpsertPaymentMethodMutation,
 } from '#/features/business/model/business-hooks'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 
 const onlineConfigSchema = z.object({
   clientId: z.string().min(1, 'Client ID is required'),
@@ -340,7 +340,7 @@ const METHOD_META: MethodMeta[] = [
 ]
 
 export function AdminPaymentMethodsContent() {
-  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const activeBusiness = useActiveBusiness()
   const { data: methods = [], isPending } = usePaymentMethodsQuery({
     businessId: activeBusiness?.id,
     enabled: true,

@@ -22,6 +22,7 @@ import {
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import {
   type OrderStatusChangedPayload,
   useKitchenSocket,
@@ -30,7 +31,6 @@ import { StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { Modal } from '#/shared/ui/modal'
 
 const ALL_STATUSES: OrderStatus[] = [
@@ -300,8 +300,9 @@ export function AdminOrdersContent() {
   const [search, setSearch] = useState('')
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
   const [addOrderOpen, setAddOrderOpen] = useState(false)
-  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
-  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
+  const activeBusiness = useActiveBusiness()
+  const currency = activeBusiness?.currency ?? 'USD'
+  const businessId = activeBusiness?.id ?? ''
   const { isOwner, hasPermission } = usePermissions()
   const canAddOrder = isOwner() || hasPermission(StaffPermission.ORDER_CREATE)
 

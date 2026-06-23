@@ -1,17 +1,27 @@
-import {useQuery} from '@tanstack/react-query'
-import {AlertCircle, ArrowRight, CheckCircle2, ChefHat, Clock, Maximize2, Minimize2, Wifi, WifiOff,} from 'lucide-react'
-import {useEffect, useRef, useState} from 'react'
-import {Badge} from '#/components/ui/badge'
-import {Button} from '#/components/ui/button'
-import {Card, CardContent, CardHeader} from '#/components/ui/card'
-import type {Order, OrderStatus} from '#/features/platform/api/platform.types.ts'
-import {kitchenActiveOrdersQueryOptions} from '#/features/platform/lib/query-options.ts'
-import {useUpdateOrderStatusMutation} from '#/features/platform/model/platform-hooks.ts'
-import {cn} from '#/lib/utils'
-import {showError} from '#/shared/libs/hooks/toast.ts'
-import {useKitchenSocket} from '#/shared/libs/hooks/use-kitchen-socket.ts'
-import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
+import { useQuery } from '@tanstack/react-query'
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  ChefHat,
+  Clock,
+  Maximize2,
+  Minimize2,
+  Wifi,
+  WifiOff,
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
+import type { Order, OrderStatus } from '#/features/platform/api/platform.types.ts'
+import { kitchenActiveOrdersQueryOptions } from '#/features/platform/lib/query-options.ts'
+import { useUpdateOrderStatusMutation } from '#/features/platform/model/platform-hooks.ts'
+import { cn } from '#/lib/utils'
+import { showError } from '#/shared/libs/hooks/toast.ts'
+import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
+import { useKitchenSocket } from '#/shared/libs/hooks/use-kitchen-socket.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 
 type Column = 'queue' | 'preparing' | 'ready'
 
@@ -37,7 +47,7 @@ const columns: { title: string; key: Column; icon: typeof AlertCircle; color: st
 ]
 
 export function AdminKitchenContent() {
-  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
+  const businessId = useSelectedBusinessId() ?? ''
   const [isConnected, setIsConnected] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)

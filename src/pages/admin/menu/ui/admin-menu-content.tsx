@@ -35,11 +35,11 @@ import { ProductModal } from '#/features/product/ui/product-modal.tsx'
 import { cn } from '#/lib/utils'
 import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
 import { ImageUpload } from '#/shared/ui/image-upload'
 import { Modal } from '#/shared/ui/modal'
@@ -68,7 +68,7 @@ export function AdminMenuContent() {
   const editDescriptionId = useId()
   const editSortOrderId = useId()
 
-  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const currency = useActiveBusiness()?.currency ?? 'USD'
   const { isOwner, hasPermission } = usePermissions()
   const canEditMenu = isOwner() || hasPermission(StaffPermission.MENU_EDIT)
   const canToggleAvailability = isOwner() || hasPermission(StaffPermission.MENU_AVAILABILITY)

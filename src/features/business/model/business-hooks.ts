@@ -1,6 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
-import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import type {
   BusinessResponse,
   CreateBusinessRequest,
@@ -11,16 +9,12 @@ import {
   createBusinessServerFn,
   deleteBusinessServerFn,
   deletePaymentMethodServerFn,
-  getBusinessServerFn,
   listBusinessesServerFn,
   listPaymentMethodsServerFn,
   selectBusinessServerFn,
   updateBusinessServerFn,
   upsertPaymentMethodServerFn,
 } from '#/shared/api/business/business.fns.ts'
-import useActiveBusinessStore, {
-  type ActiveBusiness,
-} from '#/shared/store/use-active-business.store.ts'
 
 export function useDeleteBusinessMutation() {
   const queryClient = useQueryClient()
@@ -55,12 +49,10 @@ type NavigateFn = () => void | Promise<void>
 
 export function useSelectBusinessMutation({ navigate }: { navigate: NavigateFn }) {
   const queryClient = useQueryClient()
-  const setActive = useActiveBusinessStore((s) => s.setActive)
 
   return useMutation({
-    mutationFn: (business: ActiveBusiness) => selectBusinessServerFn({ data: business.id }),
-    onSuccess: async (_, business) => {
-      setActive(business)
+    mutationFn: (businessId: string) => selectBusinessServerFn({ data: businessId }),
+    onSuccess: async () => {
       await queryClient.invalidateQueries()
       await navigate()
     },
@@ -71,8 +63,8 @@ export function useBusinessSwitcher({ navigate }: { navigate: NavigateFn }) {
   const selectBusinessMutation = useSelectBusinessMutation({ navigate })
 
   return {
-    switchBusiness: (business: ActiveBusiness) => {
-      selectBusinessMutation.mutate(business)
+    switchBusiness: (businessId: string) => {
+      selectBusinessMutation.mutate(businessId)
     },
     isLoading: selectBusinessMutation.isPending,
   }
@@ -125,35 +117,4 @@ export function useDeletePaymentMethodMutation() {
       await queryClient.invalidateQueries({ queryKey: ['payment-methods', businessId] })
     },
   })
-}
-
-/**
- * Ensures the active-business store is populated for staff users.
- * Staff have a fixed businessId in their JWT; we fetch that specific business
- * to get name + currency for the store.
- */
-export function useStaffActiveBusiness(authUser: AuthenticatedUser | null | undefined) {
-  const active = useActiveBusinessStore((s) => s.active)
-  const setActive = useActiveBusinessStore((s) => s.setActive)
-
-  const isStaff = authUser?.type === 'staff'
-  const staffBusinessId = isStaff ? authUser.businessId : null
-  const needsSync = isStaff && active?.id !== staffBusinessId
-
-  const { data: business } = useQuery({
-    queryKey: ['business', staffBusinessId],
-    queryFn: () => getBusinessServerFn({ data: { id: staffBusinessId as string } }),
-    enabled: Boolean(needsSync),
-  })
-
-  useEffect(() => {
-    if (!(needsSync && business)) return
-
-    setActive({
-      id: business.id,
-      name: business.name,
-      currency: business.currency,
-      slug: business.slug,
-    })
-  }, [needsSync, business, setActive])
 }

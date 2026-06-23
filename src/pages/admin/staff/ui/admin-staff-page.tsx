@@ -34,9 +34,9 @@ import {
 } from '#/features/platform/model/platform-hooks.ts'
 import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { StaffRole as StaffRoleEnum } from '#/shared/libs/permissions/index.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
 import { ImageUpload } from '#/shared/ui/image-upload'
 import { Modal } from '#/shared/ui/modal'
@@ -84,7 +84,7 @@ export function AdminStaffPage() {
   const displayNameId3 = useId()
   const roleId3 = useId()
 
-  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const activeBusiness = useActiveBusiness()
   const activeBusinessId = activeBusiness?.id ?? ''
 
   const { data: staffMembers = [], isPending } = useQuery(staffQueryOptions(activeBusinessId))

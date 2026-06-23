@@ -6,7 +6,7 @@ import { Toaster } from 'sonner'
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { getLocale } from '#/paraglide/runtime'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
+import { activeBusinessIdQueryOptions } from '#/shared/libs/hooks/use-active-business.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import { NotFoundContent } from '#/shared/ui/not-found-content'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
@@ -16,6 +16,7 @@ import appCss from '../styles.css?url'
 interface MyRouterContext {
   queryClient: QueryClient
   authUser?: AuthenticatedUser | null
+  selectedBusinessId?: string | null
 }
 
 const THEME_INIT_SCRIPT = `(function(){try{var root=document.documentElement;var stored=localStorage.getItem('theme');var theme=(stored&&JSON.parse(stored).state&&JSON.parse(stored).state.theme)||'light';root.classList.remove('light','dark');root.classList.add(theme);root.setAttribute('data-theme',theme);root.style.colorScheme=theme;}catch(e){document.documentElement.classList.add('light');}try{var ps=localStorage.getItem('color-palette');var pal=(ps&&JSON.parse(ps).state&&JSON.parse(ps).state.palette)||'ocean';document.documentElement.setAttribute('data-palette',pal);}catch(e){document.documentElement.setAttribute('data-palette','ocean');}})();`
@@ -24,14 +25,18 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async ({ context }) => {
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('lang', getLocale())
-      if (!useActiveBusinessStore.persist.hasHydrated()) {
-        await useActiveBusinessStore.persist.rehydrate()
-      }
     }
 
     const { user } = await context.queryClient.ensureQueryData(authUserQueryOptions())
 
-    return { authUser: user }
+    let selectedBusinessId: string | null = null
+    if (user?.type === 'staff') {
+      selectedBusinessId = user.businessId
+    } else if (user?.type === 'owner') {
+      selectedBusinessId = await context.queryClient.ensureQueryData(activeBusinessIdQueryOptions())
+    }
+
+    return { authUser: user, selectedBusinessId }
   },
 
   head: () => ({

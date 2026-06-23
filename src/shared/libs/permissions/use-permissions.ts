@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { useBusinessesQuery } from '#/features/business/model/business-hooks.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
+import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
 import {
   type BusinessFeature,
   ROLE_PERMISSION_MAP,
@@ -13,10 +13,10 @@ export function usePermissions() {
   const { data } = useQuery(authUserQueryOptions())
   const user = data?.user ?? null
 
-  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const businessId = useSelectedBusinessId()
   const { data: businesses = [] } = useBusinessesQuery({ enabled: user?.type === 'owner' })
 
-  const activeBusinessFull = businesses.find((b) => b.id === activeBusiness?.id) ?? null
+  const activeBusinessFull = businesses.find((b) => b.id === businessId) ?? null
 
   const isOwner = () => user?.type === 'owner'
   const isStaff = () => user?.type === 'staff'

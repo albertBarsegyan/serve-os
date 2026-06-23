@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { logoutServerFn, signInServerFn, signUpServerFn } from '#/shared/api/auth/auth.fns.ts'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
 
 export function useSignInMutation() {
   const queryClient = useQueryClient()
@@ -25,16 +24,13 @@ export function useSignUpMutation() {
 
 export const useLogoutMutation = () => {
   const queryClient = useQueryClient()
-  const { setActive } = useActiveBusinessStore()
 
   return useMutation({
     mutationFn: () => logoutServerFn(),
     retry: false,
     onSuccess: async () => {
       await queryClient.cancelQueries()
-
       queryClient.clear()
-      setActive(null)
     },
   })
 }

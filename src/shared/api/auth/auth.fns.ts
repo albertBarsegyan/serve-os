@@ -60,6 +60,10 @@ export const signUpServerFn = createServerFn({ method: 'POST' })
 
 export const logoutServerFn = createServerFn({ method: 'POST' }).handler(
   async (): Promise<string | null> => {
+    await serverApiInstance('auth/business', { method: 'DELETE' })
+      .then(forwardCookies)
+      .catch(() => {})
+
     const request = await serverApiInstance<string>('auth/logout', { method: 'POST' })
 
     forwardCookies(request)

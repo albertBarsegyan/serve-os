@@ -23,14 +23,14 @@ import {
 } from '#/features/business/model/business-hooks'
 import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
+import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { ImageUpload } from '#/shared/ui/image-upload'
 import { SearchSelect } from '#/shared/ui/search-select'
 import { WorkingHoursPicker } from '#/widgets/shared/working-hours-picker.tsx'
 
 export function AdminSettingsContent() {
-  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const selectedBusinessId = useSelectedBusinessId()
   const { data: businesses = [], isPending: isLoadingBusinesses } = useBusinessesQuery({
     enabled: true,
   })
@@ -38,8 +38,8 @@ export function AdminSettingsContent() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   const currentBusiness = useMemo(
-    () => businesses.find((b) => b.id === activeBusiness?.id) ?? null,
-    [businesses, activeBusiness?.id],
+    () => businesses.find((b) => b.id === selectedBusinessId) ?? null,
+    [businesses, selectedBusinessId],
   )
 
   const nameId = useId()
@@ -129,7 +129,7 @@ export function AdminSettingsContent() {
     }
   }
 
-  if (!activeBusiness) {
+  if (!selectedBusinessId) {
     return (
       <div className='space-y-4'>
         <h1 className='text-3xl font-semibold tracking-tight'>Settings</h1>

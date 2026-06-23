@@ -8,10 +8,10 @@ import {
   paymentsQueryOptions,
   staffQueryOptions,
 } from '#/features/platform/lib/query-options.ts'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 
 function formatStatus(s: string) {
   return s
@@ -21,9 +21,10 @@ function formatStatus(s: string) {
 }
 
 export function AdminDashboardPage() {
-  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
-  const businessName = useActiveBusinessStore((s) => s.active?.name)
-  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const activeBusiness = useActiveBusiness()
+  const businessId = activeBusiness?.id ?? ''
+  const businessName = activeBusiness?.name
+  const currency = activeBusiness?.currency ?? 'USD'
 
   const { isOwner, hasPermission } = usePermissions()
   const canViewPayments =

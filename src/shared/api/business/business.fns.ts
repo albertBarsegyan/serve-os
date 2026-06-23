@@ -1,16 +1,16 @@
-import {createServerFn} from '@tanstack/react-start'
-import {getRequest} from '@tanstack/react-start/server'
-import {z} from 'zod'
+import { createServerFn } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
+import { z } from 'zod'
 import type {
-    BusinessPaymentMethodResponse,
-    BusinessResponse,
-    CreateBusinessRequest,
-    UpdateBusinessRequest,
-    UpsertPaymentMethodRequest,
+  BusinessPaymentMethodResponse,
+  BusinessResponse,
+  CreateBusinessRequest,
+  UpdateBusinessRequest,
+  UpsertPaymentMethodRequest,
 } from '#/features/business/api/business.types.ts'
-import {createBusinessRequestSchema} from '#/features/business/lib/schemas/create-business-form.schema.ts'
-import {updateBusinessRequestSchema} from '#/features/business/lib/schemas/update-business-form.schema.ts'
-import {serverApiInstance} from '#/shared/api/server-instance.ts'
+import { createBusinessRequestSchema } from '#/features/business/lib/schemas/create-business-form.schema.ts'
+import { updateBusinessRequestSchema } from '#/features/business/lib/schemas/update-business-form.schema.ts'
+import { serverApiInstance } from '#/shared/api/server-instance.ts'
 import { forwardCookies } from '#/shared/libs/utils/cookie.server'
 import { getCookieValue } from '#/shared/libs/utils/cookie.utils'
 

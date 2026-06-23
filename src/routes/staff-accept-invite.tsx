@@ -10,8 +10,8 @@ import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { useAcceptStaffInviteMutation } from '#/features/platform/model/platform-hooks'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import { Logo } from '#/shared/ui/logo.tsx'
 
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/staff-accept-invite')({
 
 function StaffAcceptInvitePage() {
   const { token } = Route.useSearch()
-  const activeBusiness = useActiveBusinessStore((s) => s.active)
+  const activeBusiness = useActiveBusiness()
 
   const navigate = useNavigate()
   const acceptMutation = useAcceptStaffInviteMutation()

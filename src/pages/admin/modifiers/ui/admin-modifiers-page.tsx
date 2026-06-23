@@ -40,9 +40,9 @@ import {
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
-import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { Modal } from '#/shared/ui/modal'
 import { SearchSelect } from '#/shared/ui/search-select'
 
@@ -52,8 +52,9 @@ type AddModifierValues = z.infer<typeof addModifierSchema>
 type UpdateModifierValues = z.infer<typeof updateModifierSchema>
 
 export function AdminModifiersPage() {
-  const businessId = useActiveBusinessStore((s) => s.active?.id ?? '')
-  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const activeBusiness = useActiveBusiness()
+  const businessId = activeBusiness?.id ?? ''
+  const currency = activeBusiness?.currency ?? 'USD'
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
@@ -589,7 +590,7 @@ function ModifierForm({
   const priceId = useId()
   const positionId = useId()
   const activeId = useId()
-  const currency = useActiveBusinessStore((s) => s.active?.currency ?? 'USD')
+  const currency = useActiveBusiness()?.currency ?? 'USD'
 
   const priceType = form.watch('priceType') ?? 'adjustment'
 
