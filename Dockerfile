@@ -13,6 +13,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # -----------------------
 FROM base AS deps
 
+ENV HUSKY=0
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
 RUN pnpm install --frozen-lockfile
