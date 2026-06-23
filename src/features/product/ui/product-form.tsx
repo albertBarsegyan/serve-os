@@ -216,6 +216,7 @@ export function ProductForm({
           groupId: m.groupId,
           name: m.name,
           priceAdjustment: m.priceAdjustment,
+          priceType: m.priceType,
           position: m.position,
           isActive: m.isActive,
         })),

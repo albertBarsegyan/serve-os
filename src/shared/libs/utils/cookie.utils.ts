@@ -1,7 +1,5 @@
 import { setCookie } from '@tanstack/react-start/server'
 
-export const AUTH_LOGOUT_COOKIE = 'serveos-auth-logged-out'
-
 export function parseSetCookie(raw: string) {
   const [nameValue, ...attrs] = raw.split('; ')
   const eqIdx = nameValue.indexOf('=')
@@ -34,4 +32,38 @@ export function forwardCookies(response: Response): void {
       expires: opts.expires ? new Date(opts.expires as string) : undefined,
     })
   }
+}
+
+export function getCookieValue({
+  cookieData,
+  cookieName,
+}: {
+  cookieName: string
+  cookieData: string | null | undefined
+}): string | null {
+  if (!cookieData) return null
+
+  const len = cookieData.length
+  let i = 0
+
+  while (i < len) {
+    // skip leading spaces
+    while (i < len && cookieData[i] === ' ') i++
+
+    const keyStart = i
+    while (i < len && cookieData[i] !== '=') i++
+    const key = cookieData.slice(keyStart, i)
+
+    i++ // skip '='
+
+    const valueStart = i
+    while (i < len && cookieData[i] !== ';') i++
+    const value = cookieData.slice(valueStart, i)
+
+    if (key === cookieName) return value
+
+    i++ // skip ';'
+  }
+
+  return null
 }
