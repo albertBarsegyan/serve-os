@@ -1,5 +1,7 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import type { StateStorage } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { getCookieValue } from '#/shared/libs/utils/cookie.utils.ts'
 
 export interface ActiveBusiness {
   id: string
@@ -14,23 +16,37 @@ export interface ActiveBusinessState {
   clear: () => void
 }
 
+const COOKIE_NAME = 'active-business'
+const MAX_AGE = 365 * 24 * 60 * 60
+
+const cookieStorage: StateStorage = {
+  getItem(name) {
+    if (typeof document === 'undefined') return null
+    const raw = getCookieValue({ cookieName: name, cookieData: document.cookie })
+    return raw ? decodeURIComponent(raw) : null
+  },
+  setItem(name, value) {
+    if (typeof document === 'undefined') return
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${MAX_AGE}; samesite=lax`
+  },
+  removeItem(name) {
+    if (typeof document === 'undefined') return
+    document.cookie = `${name}=; path=/; max-age=0`
+  },
+}
+
 const useActiveBusinessStore = create<ActiveBusinessState>()(
   persist(
     (set) => ({
       active: null,
-
-      setActive: (business) =>
-        set({
-          active: business,
-        }),
-
-      clear: () =>
-        set({
-          active: null,
-        }),
+      setActive: (business) => set({ active: business }),
+      clear: () => set({ active: null }),
     }),
     {
-      name: 'active-business',
+      name: COOKIE_NAME,
+      storage: createJSONStorage(() => cookieStorage),
+      partialize: (s) => ({ active: s.active }),
+      skipHydration: true,
     },
   ),
 )
