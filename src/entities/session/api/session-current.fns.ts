@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { ScanSessionResponse } from '#/features/platform/api/platform.types'
 import { serverApiInstance } from '#/shared/api/server-instance'
-import { forwardCookies } from '#/shared/libs/utils/cookie.utils'
+import { forwardCookies } from '#/shared/libs/utils/cookie.server'
 
 export const getSessionCurrentServerFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<{ session: ScanSessionResponse | null }> => {

@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { serverApiInstance } from '#/shared/api/server-instance.ts'
-import { forwardCookies } from '#/shared/libs/utils/cookie.utils.ts'
+import { forwardCookies } from '#/shared/libs/utils/cookie.server'
 import type {
   SlugStaffLoginRequest,
   StaffLoginResponse,

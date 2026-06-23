@@ -11,7 +11,8 @@ import type {
 import {createBusinessRequestSchema} from '#/features/business/lib/schemas/create-business-form.schema.ts'
 import {updateBusinessRequestSchema} from '#/features/business/lib/schemas/update-business-form.schema.ts'
 import {serverApiInstance} from '#/shared/api/server-instance.ts'
-import {forwardCookies, getCookieValue} from '#/shared/libs/utils/cookie.utils.ts'
+import { forwardCookies } from '#/shared/libs/utils/cookie.server'
+import { getCookieValue } from '#/shared/libs/utils/cookie.utils'
 
 const selectBusinessRequestSchema = z.string().uuid()
 

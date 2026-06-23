@@ -5,7 +5,7 @@ import type {
   UpdateCategoryRequest,
 } from '#/features/product/api/category.types'
 import { serverApiInstance } from '#/shared/api/server-instance'
-import { forwardCookies } from '#/shared/libs/utils/cookie.utils'
+import { forwardCookies } from '#/shared/libs/utils/cookie.server'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 
 /**

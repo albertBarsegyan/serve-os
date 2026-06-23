@@ -5,7 +5,7 @@ import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { signInSchema } from '#/features/auth/lib/schemas/sign-in-form.schema.ts'
 import { signUpRequestSchema } from '#/features/auth/lib/schemas/sign-up.schema.ts'
 import { serverApiInstance } from '#/shared/api/server-instance.ts'
-import { forwardCookies } from '#/shared/libs/utils/cookie.utils.ts'
+import { forwardCookies } from '#/shared/libs/utils/cookie.server'
 
 const AUTH_COOKIES = ['access_token', 'staff_access_token']
 

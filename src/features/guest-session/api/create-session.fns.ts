@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import type { ScanSessionResponse } from '#/features/platform/api/platform.types'
 import { serverApiInstance } from '#/shared/api/server-instance'
-import { forwardCookies } from '#/shared/libs/utils/cookie.utils'
+import { forwardCookies } from '#/shared/libs/utils/cookie.server'
 
 const createSessionInput = z.object({ qrCode: z.string().uuid() })
 

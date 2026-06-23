@@ -6,6 +6,7 @@ import { Toaster } from 'sonner'
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { getLocale } from '#/paraglide/runtime'
+import useActiveBusinessStore from '#/shared/store/use-active-business.store'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import { NotFoundContent } from '#/shared/ui/not-found-content'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
@@ -23,6 +24,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async ({ context }) => {
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('lang', getLocale())
+      if (!useActiveBusinessStore.persist.hasHydrated()) {
+        await useActiveBusinessStore.persist.rehydrate()
+      }
     }
 
     const { user } = await context.queryClient.ensureQueryData(authUserQueryOptions())
