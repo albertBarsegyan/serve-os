@@ -6,7 +6,7 @@ export function forwardCookies(response: Response): void {
     const { name, value, opts } = parseSetCookie(raw)
     setCookie(name, value, {
       path: opts.path as string,
-      domain: opts.domain as string,
+      ...(opts.domain ? { domain: opts.domain as string } : {}),
       httpOnly: opts.httponly === true,
       secure: opts.secure === true,
       sameSite: opts.samesite as 'lax' | 'strict' | 'none',
