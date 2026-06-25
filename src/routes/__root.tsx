@@ -21,6 +21,19 @@ interface MyRouterContext {
 
 const THEME_INIT_SCRIPT = `(function(){try{var root=document.documentElement;var stored=localStorage.getItem('theme');var theme=(stored&&JSON.parse(stored).state&&JSON.parse(stored).state.theme)||'light';root.classList.remove('light','dark');root.classList.add(theme);root.setAttribute('data-theme',theme);root.style.colorScheme=theme;}catch(e){document.documentElement.classList.add('light');}try{var ps=localStorage.getItem('color-palette');var pal=(ps&&JSON.parse(ps).state&&JSON.parse(ps).state.palette)||'ocean';document.documentElement.setAttribute('data-palette',pal);}catch(e){document.documentElement.setAttribute('data-palette','ocean');}})();`
 
+const GTM_ID = import.meta.env.VITE_GTM_ID
+
+function GtmNoscript() {
+  if (!(import.meta.env.PROD && GTM_ID)) return null
+  const html = `<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe>`
+  return (
+    <>
+      {/** biome-ignore lint/security/noDangerouslySetInnerHtml: GTM noscript fallback, static string, not user input */}
+      <noscript suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
+    </>
+  )
+}
+
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async ({ context }) => {
     if (typeof document !== 'undefined') {
@@ -63,6 +76,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       { rel: 'apple-touch-icon', href: '/favicon/apple-touch-icon.png' },
       { rel: 'manifest', href: '/favicon/site.webmanifest' },
     ],
+    // GTM bootstrap — injected only in production builds with a configured container ID.
+    // TODO: wire a consent gate here before pushing events to window.dataLayer.
+    scripts:
+      import.meta.env.PROD && GTM_ID
+        ? [
+            {
+              children: `window.dataLayer=window.dataLayer||[];(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`,
+            },
+          ]
+        : [],
   }),
   shellComponent: RootDocument,
   errorComponent: RootErrorComponent,
@@ -78,6 +101,7 @@ function RootErrorComponent({ error }: Readonly<{ error: Error }>) {
         <HeadContent />
       </head>
       <body className='font-sans antialiased wrap-anywhere selection:bg-(--selection-bg)'>
+        <GtmNoscript />
         <ErrorBoundary error={error} />
         <Scripts />
       </body>
@@ -94,6 +118,7 @@ function RootDocument({ children }: Readonly<{ children: React.ReactNode }>) {
         <HeadContent />
       </head>
       <body className='font-sans antialiased wrap-anywhere selection:bg-(--selection-bg)'>
+        <GtmNoscript />
         <TanStackQueryProvider>
           {children}
 

@@ -161,6 +161,7 @@ export function Nav() {
             <a href='/#ordering'>Ordering</a>
             <a href='/#how'>How it works</a>
             <a href='/#pricing'>Pricing</a>
+            <a href='https://story.serve-os.net/'>Story</a>
           </nav>
           <div className='nav-right'>
             <PaletteSwitcher triggerClassName='palette-toggle h-[40px] w-[40px] rounded-[11px]' />
@@ -241,6 +242,16 @@ export function Nav() {
           }}
         >
           About
+        </button>
+        <button
+          type='button'
+          className='mob-link'
+          onClick={() => {
+            window.location.href = 'https://story.serve-os.net'
+            close()
+          }}
+        >
+          Story
         </button>
         <div className='mob-ctas'>
           <a className='btn ghost' href='/auth/sign-in' onClick={close}>
