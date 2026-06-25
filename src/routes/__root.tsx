@@ -1,14 +1,14 @@
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import type { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { Toaster } from 'sonner'
-import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
-import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
-import { getLocale } from '#/paraglide/runtime'
-import { activeBusinessIdQueryOptions } from '#/shared/libs/hooks/use-active-business.ts'
-import { ErrorBoundary } from '#/shared/ui/error-boundary'
-import { NotFoundContent } from '#/shared/ui/not-found-content'
+import {TanStackDevtools} from '@tanstack/react-devtools'
+import type {QueryClient} from '@tanstack/react-query'
+import {createRootRouteWithContext, HeadContent, Scripts} from '@tanstack/react-router'
+import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
+import {Toaster} from 'sonner'
+import type {AuthenticatedUser} from '#/features/auth/api/auth.types.ts'
+import {authUserQueryOptions} from '#/features/auth/lib/query-options.ts'
+import {getLocale} from '#/paraglide/runtime'
+import {activeBusinessIdQueryOptions} from '#/shared/libs/hooks/use-active-business.ts'
+import {ErrorBoundary} from '#/shared/ui/error-boundary'
+import {NotFoundContent} from '#/shared/ui/not-found-content'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import TanStackQueryProvider from '../integrations/tanstack-query/root-provider'
 import appCss from '../styles.css?url'
@@ -22,7 +22,7 @@ interface MyRouterContext {
 const THEME_INIT_SCRIPT = `(function(){try{var root=document.documentElement;var stored=localStorage.getItem('theme');var theme=(stored&&JSON.parse(stored).state&&JSON.parse(stored).state.theme)||'light';root.classList.remove('light','dark');root.classList.add(theme);root.setAttribute('data-theme',theme);root.style.colorScheme=theme;}catch(e){document.documentElement.classList.add('light');}try{var ps=localStorage.getItem('color-palette');var pal=(ps&&JSON.parse(ps).state&&JSON.parse(ps).state.palette)||'ocean';document.documentElement.setAttribute('data-palette',pal);}catch(e){document.documentElement.setAttribute('data-palette','ocean');}})();`
 
 const GTAG_ID = import.meta.env.VITE_GTAG_ID
-
+console.log('import.meta.env.PROD', import.meta.env.PROD)
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async ({ context }) => {
     if (typeof document !== 'undefined') {
