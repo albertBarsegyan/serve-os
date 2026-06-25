@@ -1,16 +1,16 @@
-import {useQuery} from '@tanstack/react-query'
-import {createFileRoute, useNavigate} from '@tanstack/react-router'
-import {useEffect} from 'react'
-import {menuQueryOptions} from '#/entities/menu/lib/menu-query-options'
-import {createSessionServerFn} from '#/features/guest-session/api/create-session.fns'
-import type {ScanSessionResponse} from '#/features/platform/api/platform.types'
-import {CustomerMenuPage} from '#/pages/customer/menu/ui/customer-menu-page'
-import {clientApiInstance} from '#/shared/api/client-instance'
-import {resumeSessionServerFn} from '#/shared/api/customer/session.fns'
-import {useSessionRealtime} from '#/shared/realtime/use-session-realtime'
-import {ErrorBoundary} from '#/shared/ui/error-boundary'
+import { useQuery } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
+import { menuQueryOptions } from '#/entities/menu/lib/menu-query-options'
+import { createSessionServerFn } from '#/features/guest-session/api/create-session.fns'
+import type { ScanSessionResponse } from '#/features/platform/api/platform.types'
+import { CustomerMenuPage } from '#/pages/customer/menu/ui/customer-menu-page'
+import { clientApiInstance } from '#/shared/api/client-instance'
+import { resumeSessionServerFn } from '#/shared/api/customer/session.fns'
+import { useSessionRealtime } from '#/shared/realtime/use-session-realtime'
+import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import '#/pages/customer/menu/ui/styles.css'
-import {CustomerMenuPending} from '#/features/customer/menu-pending.tsx'
+import { CustomerMenuPending } from '#/features/customer/menu-pending.tsx'
 
 type CustomerMenuSearch = {
   id: string
@@ -83,7 +83,7 @@ function CustomerMenuRoute() {
     if (resumeQuery.isPending) return
     if (!session) {
       localStorage.removeItem('customer_session_token')
-     void  navigate({ to: '/' })
+      void navigate({ to: '/' })
     }
   }, [loaderSession, resumeQuery.isPending, session, navigate])
 
