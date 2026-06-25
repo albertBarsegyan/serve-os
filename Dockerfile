@@ -26,10 +26,12 @@ RUN pnpm install --frozen-lockfile
 FROM deps AS build
 
 ARG VITE_API_BASE_URL=http://localhost:4000/api
+ARG VITE_GTAG_ID
 
 # Only VITE_* vars are baked into the client bundle by Vite.
 # API_BASE_URL is a server runtime var — injected via docker-compose at startup.
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} \
+    VITE_GTAG_ID=${VITE_GTAG_ID}
 
 COPY . .
 
