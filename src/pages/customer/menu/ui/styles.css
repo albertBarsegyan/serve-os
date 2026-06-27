@@ -1,11 +1,15 @@
+/* ── Fonts ── */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Archivo:wght@400;500;600;700;800&display=swap");
+
 /* ── Theme variables ── */
 
 /* Dark theme (default) */
 .c-app {
-  --c-bg: #0d0d0d;
-  --c-card: #1a1a1a;
-  --c-card2: #242424;
-  --c-card3: #2e2e2e;
+  /* Legacy surface vars (used by cart/payment/order views) */
+  --c-bg: #0c0c0e;
+  --c-card: #17171b;
+  --c-card2: #1f1f24;
+  --c-card3: #28282e;
   --c-text: #ffffff;
   --c-w80: rgba(255, 255, 255, 0.8);
   --c-w60: rgba(255, 255, 255, 0.6);
@@ -14,36 +18,52 @@
   --c-w20: rgba(255, 255, 255, 0.2);
   --c-w10: rgba(255, 255, 255, 0.1);
   --c-w06: rgba(255, 255, 255, 0.06);
-  --c-border: rgba(255, 255, 255, 0.09);
+  --c-border: rgba(255, 255, 255, 0.1);
   --c-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  /* New semantic tokens */
+  --c-accent: #ff6a3d;
+  --c-surface: #17171b;
+  --c-surface-2: rgba(255, 255, 255, 0.05);
+  --c-dim: rgba(255, 255, 255, 0.66);
+  --c-faint: rgba(255, 255, 255, 0.4);
+  --c-hairline: rgba(255, 255, 255, 0.08);
+  /* Fonts */
+  --c-font-display: "Instrument Serif", Georgia, serif;
+  --c-font-body: "Archivo", system-ui, sans-serif;
 }
 
 /* Auto light mode from OS */
 @media (prefers-color-scheme: light) {
   .c-app:not([data-theme="dark"]) {
-    --c-bg: #f8f5f1;
+    --c-bg: #f3efe8;
     --c-card: #ffffff;
-    --c-card2: #f2ede7;
-    --c-card3: #e8e1d9;
-    --c-text: #1a1a1a;
-    --c-w80: rgba(0, 0, 0, 0.8);
-    --c-w60: rgba(0, 0, 0, 0.6);
-    --c-w40: rgba(0, 0, 0, 0.4);
-    --c-w30: rgba(0, 0, 0, 0.3);
-    --c-w20: rgba(0, 0, 0, 0.2);
-    --c-w10: rgba(0, 0, 0, 0.1);
-    --c-w06: rgba(0, 0, 0, 0.06);
-    --c-border: rgba(0, 0, 0, 0.08);
+    --c-card2: #ede8e1;
+    --c-card3: #e4ddd4;
+    --c-text: #1a1714;
+    --c-w80: rgba(26, 23, 20, 0.8);
+    --c-w60: rgba(26, 23, 20, 0.6);
+    --c-w40: rgba(26, 23, 20, 0.4);
+    --c-w30: rgba(26, 23, 20, 0.3);
+    --c-w20: rgba(26, 23, 20, 0.2);
+    --c-w10: rgba(26, 23, 20, 0.1);
+    --c-w06: rgba(26, 23, 20, 0.06);
+    --c-border: rgba(26, 23, 20, 0.1);
     --c-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    --c-accent: #ff6a3d;
+    --c-surface: #ffffff;
+    --c-surface-2: rgba(26, 23, 20, 0.04);
+    --c-dim: rgba(26, 23, 20, 0.6);
+    --c-faint: rgba(26, 23, 20, 0.42);
+    --c-hairline: rgba(26, 23, 20, 0.07);
   }
 }
 
 /* Manual dark override */
 .c-app[data-theme="dark"] {
-  --c-bg: #0d0d0d;
-  --c-card: #1a1a1a;
-  --c-card2: #242424;
-  --c-card3: #2e2e2e;
+  --c-bg: #0c0c0e;
+  --c-card: #17171b;
+  --c-card2: #1f1f24;
+  --c-card3: #28282e;
   --c-text: #ffffff;
   --c-w80: rgba(255, 255, 255, 0.8);
   --c-w60: rgba(255, 255, 255, 0.6);
@@ -52,35 +72,47 @@
   --c-w20: rgba(255, 255, 255, 0.2);
   --c-w10: rgba(255, 255, 255, 0.1);
   --c-w06: rgba(255, 255, 255, 0.06);
-  --c-border: rgba(255, 255, 255, 0.09);
+  --c-border: rgba(255, 255, 255, 0.1);
   --c-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --c-accent: #ff6a3d;
+  --c-surface: #17171b;
+  --c-surface-2: rgba(255, 255, 255, 0.05);
+  --c-dim: rgba(255, 255, 255, 0.66);
+  --c-faint: rgba(255, 255, 255, 0.4);
+  --c-hairline: rgba(255, 255, 255, 0.08);
 }
 
 /* Manual light override */
 .c-app[data-theme="light"] {
-  --c-bg: #f8f5f1;
+  --c-bg: #f3efe8;
   --c-card: #ffffff;
-  --c-card2: #f2ede7;
-  --c-card3: #e8e1d9;
-  --c-text: #1a1a1a;
-  --c-w80: rgba(0, 0, 0, 0.8);
-  --c-w60: rgba(0, 0, 0, 0.6);
-  --c-w40: rgba(0, 0, 0, 0.4);
-  --c-w30: rgba(0, 0, 0, 0.3);
-  --c-w20: rgba(0, 0, 0, 0.2);
-  --c-w10: rgba(0, 0, 0, 0.1);
-  --c-w06: rgba(0, 0, 0, 0.06);
-  --c-border: rgba(0, 0, 0, 0.08);
+  --c-card2: #ede8e1;
+  --c-card3: #e4ddd4;
+  --c-text: #1a1714;
+  --c-w80: rgba(26, 23, 20, 0.8);
+  --c-w60: rgba(26, 23, 20, 0.6);
+  --c-w40: rgba(26, 23, 20, 0.4);
+  --c-w30: rgba(26, 23, 20, 0.3);
+  --c-w20: rgba(26, 23, 20, 0.2);
+  --c-w10: rgba(26, 23, 20, 0.1);
+  --c-w06: rgba(26, 23, 20, 0.06);
+  --c-border: rgba(26, 23, 20, 0.1);
   --c-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  --c-accent: #ff6a3d;
+  --c-surface: #ffffff;
+  --c-surface-2: rgba(26, 23, 20, 0.04);
+  --c-dim: rgba(26, 23, 20, 0.6);
+  --c-faint: rgba(26, 23, 20, 0.42);
+  --c-hairline: rgba(26, 23, 20, 0.07);
 }
 
 /* ── Base ── */
 .c-app {
-  font-family: inherit;
+  font-family: var(--c-font-body);
 }
 
 .c-app textarea::placeholder {
-  color: var(--c-w40);
+  color: var(--c-faint);
 }
 
 /* ── Animations ── */
@@ -98,16 +130,30 @@
   }
 }
 
+.c-sheet {
+  animation: c-slide-up 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes c-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .c-pulse {
   animation: c-pulse 1.4s ease-in-out infinite;
 }
 @keyframes c-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.55);
+    box-shadow: 0 0 0 0 rgba(255, 106, 61, 0.55);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(249, 115, 22, 0);
+    box-shadow: 0 0 0 8px rgba(255, 106, 61, 0);
   }
 }
 

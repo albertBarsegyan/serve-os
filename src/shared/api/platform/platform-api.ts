@@ -269,6 +269,10 @@ export function updateOrderStatus(orderId: string, data: UpdateOrderStatusReques
   return clientApiInstance.patch(`orders/${orderId}/status`, { json: data }).json<Order>()
 }
 
+export function confirmOrder(orderId: string): Promise<Order> {
+  return clientApiInstance.post(`orders/${orderId}/confirm`).json<Order>()
+}
+
 export function listOrders(filters?: {
   status?: OrderStatus
   tableId?: string

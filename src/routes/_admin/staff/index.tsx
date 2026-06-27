@@ -133,7 +133,7 @@ function WaiterWorkspace() {
                   type='button'
                   onClick={() => setActiveFilter(status)}
                   className={cn(
-                    'whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all',
+                    'uppercase whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all',
                     activeFilter === status
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',

@@ -14,14 +14,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
+import { useOrderNotifications } from '#/features/notification'
 import type { Order, OrderStatus } from '#/features/platform/api/platform.types.ts'
 import { kitchenActiveOrdersQueryOptions } from '#/features/platform/lib/query-options.ts'
 import { useUpdateOrderStatusMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError } from '#/shared/libs/hooks/toast.ts'
 import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
-import { useKitchenSocket } from '#/shared/libs/hooks/use-kitchen-socket.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { getSocket } from '#/shared/realtime/socket'
 
 type Column = 'queue' | 'preparing' | 'ready'
 
@@ -66,7 +67,21 @@ export function AdminKitchenContent() {
     }
   }
 
-  useKitchenSocket(businessId, setIsConnected)
+  useOrderNotifications({ room: 'kitchen', id: businessId })
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !businessId) return
+    const socket = getSocket()
+    const onConnect = () => setIsConnected(true)
+    const onDisconnect = () => setIsConnected(false)
+    setIsConnected(socket.connected)
+    socket.on('connect', onConnect)
+    socket.on('disconnect', onDisconnect)
+    return () => {
+      socket.off('connect', onConnect)
+      socket.off('disconnect', onDisconnect)
+    }
+  }, [businessId])
 
   const {
     data: orders = [],

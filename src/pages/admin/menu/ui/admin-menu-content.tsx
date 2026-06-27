@@ -1,29 +1,16 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQuery } from '@tanstack/react-query'
-import { Edit2, Plus, Search, ShoppingBag, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import type { z } from 'zod'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/components/ui/table'
-import type { MenuCategory } from '#/features/platform/api/platform.types.ts'
-import {
-  menuCategoriesQueryOptions,
-  productsQueryOptions,
-} from '#/features/platform/lib/query-options.ts'
-import {
-  createMenuCategorySchema,
-  updateMenuCategorySchema,
-} from '#/features/platform/lib/schemas/platform.schemas.ts'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {useQuery} from '@tanstack/react-query'
+import {Edit2, Plus, Search, ShoppingBag, ToggleLeft, ToggleRight, Trash2} from 'lucide-react'
+import {useId, useMemo, useState} from 'react'
+import {useForm} from 'react-hook-form'
+import type {z} from 'zod'
+import {Badge} from '#/components/ui/badge'
+import {Button} from '#/components/ui/button'
+import {Card, CardContent, CardHeader, CardTitle} from '#/components/ui/card'
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '#/components/ui/table'
+import type {MenuCategory} from '#/features/platform/api/platform.types.ts'
+import {menuCategoriesQueryOptions, productsQueryOptions,} from '#/features/platform/lib/query-options.ts'
+import {createMenuCategorySchema, updateMenuCategorySchema,} from '#/features/platform/lib/schemas/platform.schemas.ts'
 import {
   useCreateMenuCategoryMutation,
   useDeleteMenuCategoryMutation,
@@ -31,18 +18,18 @@ import {
   useSetProductAvailabilityMutation,
   useUpdateMenuCategoryMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import { ProductModal } from '#/features/product/ui/product-modal.tsx'
-import { cn } from '#/lib/utils'
-import { ImageEntityType } from '#/shared/api/images/images.api'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
-import { StaffPermission } from '#/shared/libs/permissions/index.ts'
-import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
-import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
-import { ImageUpload } from '#/shared/ui/image-upload'
-import { Modal } from '#/shared/ui/modal'
+import {ProductModal} from '#/features/product/ui/product-modal.tsx'
+import {cn} from '#/lib/utils'
+import {ImageEntityType} from '#/shared/api/images/images.api'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {useActiveBusiness} from '#/shared/libs/hooks/use-active-business.ts'
+import {StaffPermission} from '#/shared/libs/permissions/index.ts'
+import {usePermissions} from '#/shared/libs/permissions/use-permissions.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import {formatPrice} from '#/shared/libs/utils/price.utils'
+import {ConfirmDeleteModal} from '#/shared/ui/confirm-delete-modal'
+import {ImageUpload} from '#/shared/ui/image-upload'
+import {Modal} from '#/shared/ui/modal'
 
 type CreateCategoryFormValues = z.infer<typeof createMenuCategorySchema>
 type UpdateCategoryFormValues = z.infer<typeof updateMenuCategorySchema>
@@ -400,7 +387,7 @@ export function AdminMenuContent() {
                           <div
                             className={cn(
                               'h-1.5 w-1.5 rounded-full',
-                              item.isAvailable ? 'bg-emerald-500' : 'bg-muted-foreground',
+                              item.isAvailable ? 'bg-white dark:bg-white' : 'bg-muted-foreground',
                             )}
                           />
                           {item.isAvailable ? 'Available' : 'Hidden'}

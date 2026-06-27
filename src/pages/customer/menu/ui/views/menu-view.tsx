@@ -1,5 +1,5 @@
-import { Moon, Plus, Search, ShoppingBag, Sun, UtensilsCrossed } from 'lucide-react'
-import { useState } from 'react'
+import { Moon, Plus, Search, ShoppingCart, Sun } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CustomerCategory, CustomerProduct } from '#/shared/api/customer/menu.types'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { LazyImage } from '#/shared/ui/lazy-image'
@@ -15,6 +15,7 @@ interface MenuViewProps {
   isDark: boolean
   toggleTheme: () => void
   onProductSelect: (p: CustomerProduct) => void
+  onQuickAdd: (p: CustomerProduct) => void
   onCartOpen: () => void
 }
 
@@ -28,232 +29,225 @@ export function MenuView({
   isDark,
   toggleTheme,
   onProductSelect,
+  onQuickAdd,
   onCartOpen,
 }: Readonly<MenuViewProps>) {
   const [activeCatId, setActiveCatId] = useState<string | null>(null)
+  const chipBarRef = useRef<HTMLDivElement>(null)
+  const scrollingRef = useRef(false)
 
   const effectiveCatId = activeCatId ?? categories[0]?.id ?? null
-  const activeProducts = categories.find((c) => c.id === effectiveCatId)?.products ?? []
   const logoInitial = businessName.trim()[0]?.toUpperCase() ?? '?'
+
+  // Update active chip based on scroll position
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (scrollingRef.current) return
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('data-cat-id')
+            if (id) setActiveCatId(id)
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0 },
+    )
+    for (const cat of categories) {
+      const el = document.getElementById(`cat-${cat.id}`)
+      if (el) observer.observe(el)
+    }
+    return () => observer.disconnect()
+  }, [categories])
+
+  // Scroll active chip into view in the chip bar
+  useEffect(() => {
+    if (!(effectiveCatId && chipBarRef.current)) return
+    const chip = chipBarRef.current.querySelector(
+      `[data-chip="${effectiveCatId}"]`,
+    ) as HTMLElement | null
+    chip?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [effectiveCatId])
+
+  const scrollToCategory = useCallback((catId: string) => {
+    const el = document.getElementById(`cat-${catId}`)
+    if (!el) return
+    scrollingRef.current = true
+    setActiveCatId(catId)
+    const top = el.getBoundingClientRect().top + window.scrollY - 120
+    window.scrollTo({ top, behavior: 'smooth' })
+    setTimeout(() => {
+      scrollingRef.current = false
+    }, 900)
+  }, [])
 
   return (
     <div
       className='c-page'
-      style={{ background: C.bg, minHeight: '100dvh', paddingBottom: 84, fontFamily: 'inherit' }}
+      style={{ background: C.bg, minHeight: '100dvh', fontFamily: C.fontBody }}
     >
-      {/* Top bar */}
+      {/* ── Top bar ── */}
       <div
-        id='topBar'
         style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 20,
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
-          padding: '12px 16px 10px',
-          borderBottom: `1px solid ${C.border}`,
-          background: C.card,
+          justifyContent: 'space-between',
+          padding: '10px 16px',
+          background: C.surface,
+          borderBottom: `1px solid ${C.hairline}`,
+          backdropFilter: 'blur(12px)',
         }}
       >
-        {/* Theme toggle — left */}
-        <IconBtn onClick={toggleTheme}>
-          {isDark ? <Sun size={18} color={C.w60} /> : <Moon size={18} color={C.w60} />}
-        </IconBtn>
-
-        {/* Center — business identity */}
-        <div
+        {/* Theme toggle – left */}
+        <button
+          type='button'
+          onClick={toggleTheme}
           style={{
-            flex: 1,
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: 4,
-            minWidth: 0,
+            gap: 6,
+            padding: '7px 12px',
+            borderRadius: C.rFull,
+            background: C.surface2,
+            border: `1px solid ${C.hairline}`,
+            cursor: 'pointer',
           }}
         >
-          {/* Logo / Initial */}
+          {isDark ? <Sun size={15} color={C.dim} /> : <Moon size={15} color={C.dim} />}
+          <span style={{ color: C.dim, fontSize: 12, fontWeight: 600 }}>
+            {isDark ? 'Light' : 'Dark'}
+          </span>
+        </button>
+
+        {/* Right – search + cart */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <TopIconBtn onClick={() => {}}>
+            <Search size={18} color={C.dim} />
+          </TopIconBtn>
+          <CartBtn count={cartCount} onClick={onCartOpen} />
+        </div>
+      </div>
+
+      {/* ── Hero ── */}
+      <div style={{ textAlign: 'center', padding: '32px 16px 24px' }}>
+        <div
+          style={{
+            position: 'relative',
+            width: 104,
+            height: 104,
+            borderRadius: '50%',
+            margin: '0 auto 16px',
+            boxShadow: `0 0 0 3px ${C.surface}, 0 0 28px rgba(255,106,61,0.35)`,
+          }}
+        >
           {businessLogoUrl ? (
-            <div
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: '50%',
-                overflow: 'hidden',
-                flexShrink: 0,
-                border: `2px solid ${C.border}`,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-              }}
-            >
-              <LazyImage
-                src={businessLogoUrl}
-                alt={businessName}
-                imgClassName='w-full h-full object-cover'
-              />
-            </div>
+            <LazyImage
+              src={businessLogoUrl}
+              alt={businessName}
+              imgClassName='w-full h-full object-cover rounded-full'
+            />
           ) : (
             <div
               style={{
-                width: 46,
-                height: 46,
+                width: '100%',
+                height: '100%',
                 borderRadius: '50%',
                 background: C.amberGrad,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0,
-                fontSize: 20,
+                fontSize: 40,
                 fontWeight: 700,
                 color: '#fff',
-                boxShadow: C.shadowAmber,
-                letterSpacing: '-0.02em',
               }}
             >
               {logoInitial}
             </div>
           )}
-
-          {/* Business name */}
-          <p
-            className='line-clamp-1'
-            style={{
-              color: C.white,
-              fontWeight: 700,
-              fontSize: 14,
-              margin: 0,
-              lineHeight: 1.2,
-              maxWidth: 180,
-              textAlign: 'center',
-            }}
-          >
-            {businessName}
-          </p>
-
-          {/* Menu label */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <UtensilsCrossed size={9} color={C.amber} />
-            <span
-              style={{
-                fontSize: 10,
-                color: C.amber,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Menu
-            </span>
-            <UtensilsCrossed size={9} color={C.amber} style={{ transform: 'scaleX(-1)' }} />
-          </div>
         </div>
 
-        {/* Cart — right */}
-        <IconBtn onClick={onCartOpen} highlight={cartCount > 0} count={cartCount}>
-          <ShoppingBag size={18} color={cartCount > 0 ? C.white : C.w60} />
-        </IconBtn>
-      </div>
-
-      {/* Table badge */}
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 16px 0' }}>
-        <div
+        <h1
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-            padding: '4px 12px',
-            background: 'rgba(249,115,22,0.08)',
-            borderRadius: C.rFull,
-            border: `1px solid rgba(249,115,22,0.2)`,
+            fontFamily: C.fontDisplay,
+            fontSize: 30,
+            fontWeight: 400,
+            color: C.white,
+            margin: '0 0 6px',
+            lineHeight: 1.15,
           }}
         >
-          <span style={{ fontSize: 10, color: C.amber, fontWeight: 700, letterSpacing: '0.06em' }}>
-            {tableName}
-          </span>
-        </div>
-      </div>
+          {businessName}
+        </h1>
 
-      {/* Search */}
-      <div style={{ padding: '10px 16px 14px' }}>
+        {/* Status row */}
         <div
           style={{
-            background: C.card,
-            borderRadius: C.r12,
-            border: `1px solid ${C.border}`,
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
-            padding: '11px 14px',
+            justifyContent: 'center',
+            gap: 12,
+            marginTop: 10,
           }}
         >
-          <Search size={16} color={C.w40} />
-          <span style={{ color: C.w40, fontSize: 14 }}>Search dishes, drinks…</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: C.green,
+                boxShadow: '0 0 0 3px rgba(34,197,94,0.2)',
+              }}
+            />
+            <span style={{ color: C.dim, fontSize: 12, fontWeight: 500 }}>Open Now</span>
+          </div>
+          <span style={{ color: C.hairline }}>·</span>
+          <span style={{ color: C.dim, fontSize: 12 }}>Table {tableName}</span>
         </div>
       </div>
 
-      {/* Categories */}
+      {/* ── Sticky category chip bar ── */}
       {categories.length > 0 && (
-        <div style={{ marginTop: 10 }}>
-          <SectionHeader title='Categories' />
+        <div
+          ref={chipBarRef}
+          style={{
+            position: 'sticky',
+            top: 52,
+            zIndex: 15,
+            background: C.bg,
+            borderBottom: `1px solid ${C.hairline}`,
+          }}
+        >
           <div
             className='c-scrollbar-none'
-            style={{
-              display: 'flex',
-              gap: 14,
-              overflowX: 'auto',
-              padding: '4px 16px 10px',
-            }}
+            style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 16px' }}
           >
             {categories.map((cat) => {
               const active = cat.id === effectiveCatId
               return (
                 <button
                   key={cat.id}
+                  data-chip={cat.id}
                   type='button'
-                  onClick={() => setActiveCatId(cat.id)}
+                  onClick={() => scrollToCategory(cat.id)}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 7,
                     flexShrink: 0,
+                    padding: '6px 16px',
+                    borderRadius: C.rFull,
+                    border: `1.5px solid ${active ? C.accent : C.hairline}`,
+                    background: active ? C.accent : 'transparent',
+                    color: active ? '#fff' : C.dim,
+                    fontSize: 13,
+                    fontWeight: 600,
                     cursor: 'pointer',
-                    border: 'none',
-                    background: 'transparent',
-                    padding: '2px 0',
+                    transition: 'all 0.18s ease',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <div
-                    style={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      background: active ? C.amberGrad : C.card,
-                      border: active ? 'none' : `2px solid ${C.border}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                      boxShadow: active ? C.shadowAmber : 'none',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {cat.imageUrl ? (
-                      <img
-                        src={cat.imageUrl}
-                        alt={cat.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: 26 }}>🍽️</span>
-                    )}
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: active ? 700 : 500,
-                      color: active ? C.amber : C.w60,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {cat.name}
-                  </span>
+                  {cat.name}
                 </button>
               )
             })}
@@ -261,36 +255,57 @@ export function MenuView({
         </div>
       )}
 
-      <div style={{ marginTop: 20, padding: '0 16px' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 12,
-          }}
-        >
-          <h3 style={{ color: C.white, fontSize: 15, fontWeight: 700, margin: 0 }}>
-            {categories.find((c) => c.id === effectiveCatId)?.name ?? 'All Items'}
-          </h3>
-          <span style={{ color: C.w40, fontSize: 12 }}>{activeProducts.length} items</span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {activeProducts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 0', color: C.w40, fontSize: 14 }}>
-              No items in this category
+      {/* ── Category sections ── */}
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '4px 16px 120px' }}>
+        {categories.map((cat) => (
+          <section
+            key={cat.id}
+            id={`cat-${cat.id}`}
+            data-cat-id={cat.id}
+            style={{ marginBottom: 28 }}
+          >
+            <h2
+              style={{
+                color: C.white,
+                fontSize: 18,
+                fontWeight: 700,
+                margin: '24px 0 12px',
+                fontFamily: C.fontBody,
+              }}
+            >
+              {cat.name}
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {cat.products.length === 0 ? (
+                <p style={{ color: C.faint, fontSize: 13, margin: 0 }}>No items yet</p>
+              ) : (
+                cat.products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onSelect={onProductSelect}
+                    onQuickAdd={onQuickAdd}
+                  />
+                ))
+              )}
             </div>
-          ) : (
-            activeProducts.map((p) => (
-              <ProductCard key={p.id} product={p} onSelect={onProductSelect} />
-            ))
-          )}
-        </div>
+          </section>
+        ))}
       </div>
 
-      {/* Floating cart button */}
+      {/* ── Floating cart bar ── */}
       {cartCount > 0 && (
-        <div style={{ position: 'fixed', bottom: 80, left: 16, right: 16, zIndex: 40 }}>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'calc(100% - 32px)',
+            maxWidth: 728,
+            zIndex: 40,
+          }}
+        >
           <button
             type='button'
             onClick={onCartOpen}
@@ -330,61 +345,74 @@ export function MenuView({
           </button>
         </div>
       )}
-
-      {/* Bottom nav */}
-      <BottomNav active='home' onCart={onCartOpen} cartCount={cartCount} />
     </div>
   )
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function IconBtn({
+function TopIconBtn({
   onClick,
-  highlight,
-  count,
   children,
-}: Readonly<{
-  onClick: () => void
-  highlight?: boolean
-  count?: number
-  children: React.ReactNode
-}>) {
+}: Readonly<{ onClick: () => void; children: React.ReactNode }>) {
   return (
     <button
       type='button'
       onClick={onClick}
       style={{
-        width: 40,
-        height: 40,
+        width: 38,
+        height: 38,
         borderRadius: '50%',
-        border: `1px solid ${C.border}`,
-        background: highlight ? C.amber : C.card2,
+        border: `1px solid ${C.hairline}`,
+        background: C.surface2,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        position: 'relative',
-        flexShrink: 0,
       }}
     >
       {children}
-      {count != null && count > 0 && (
+    </button>
+  )
+}
+
+function CartBtn({ count, onClick }: Readonly<{ count: number; onClick: () => void }>) {
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      style={{
+        position: 'relative',
+        width: 38,
+        height: 38,
+        borderRadius: '50%',
+        border: `1px solid ${count > 0 ? C.accent : C.hairline}`,
+        background: count > 0 ? C.accent : C.surface2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+      }}
+    >
+      <ShoppingCart size={18} color={count > 0 ? '#fff' : C.dim} />
+      {count > 0 && (
         <span
           style={{
             position: 'absolute',
             top: -4,
             right: -4,
-            width: 18,
+            minWidth: 18,
             height: 18,
-            borderRadius: '50%',
-            background: '#EF4444',
-            color: '#fff',
+            borderRadius: C.rFull,
+            background: '#fff',
+            color: C.accent,
             fontSize: 9,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: 700,
+            fontWeight: 800,
+            padding: '0 3px',
+            border: `1.5px solid ${C.accent}`,
           }}
         >
           {count}
@@ -394,175 +422,159 @@ function IconBtn({
   )
 }
 
-function SectionHeader({ title, action }: Readonly<{ title: string; action?: string }>) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 16px',
-        marginBottom: 10,
-      }}
-    >
-      <h3 style={{ color: C.white, fontSize: 15, fontWeight: 700, margin: 0 }}>{title}</h3>
-      {action && (
-        <button
-          type='button'
-          style={{
-            color: C.amber,
-            fontSize: 12,
-            fontWeight: 600,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          {action}
-        </button>
-      )}
-    </div>
-  )
-}
-
 function ProductCard({
   product,
   onSelect,
+  onQuickAdd,
 }: Readonly<{
   product: CustomerProduct
   onSelect: (p: CustomerProduct) => void
+  onQuickAdd: (p: CustomerProduct) => void
 }>) {
-  const [pressed, setPressed] = useState(false)
   const img = product.imageUrls?.[0] ?? product.imageUrl
+  const unavailable = !product.isAvailable
 
   return (
-    <div
+    <button
+      type='button'
+      onClick={() => onSelect(product)}
+      disabled={unavailable}
       style={{
-        background: C.card,
+        background: C.surface,
         borderRadius: C.r16,
-        border: `1px solid ${C.border}`,
+        border: `1px solid ${C.hairline}`,
         display: 'flex',
         gap: 12,
         padding: 12,
-        overflow: 'hidden',
+        textAlign: 'left',
+        width: '100%',
+        cursor: unavailable ? 'not-allowed' : 'pointer',
+        opacity: unavailable ? 0.55 : 1,
+        transition: 'opacity 0.15s',
       }}
     >
-      <button
-        type='button'
-        onClick={() => onSelect(product)}
+      {/* Text – left */}
+      <div
         style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 0,
           flex: 1,
-          display: 'flex',
-          gap: 12,
-          textAlign: 'left',
           minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 4,
         }}
       >
-        <div
-          style={{
-            width: 82,
-            height: 82,
-            borderRadius: C.r12,
-            flexShrink: 0,
-            background: C.card2,
-            overflow: 'hidden',
-          }}
+        <p
+          className='line-clamp-2'
+          style={{ color: C.white, fontSize: 14, fontWeight: 600, margin: 0, lineHeight: 1.35 }}
         >
-          {img ? (
-            <img
-              src={img}
-              alt={product.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 30,
-              }}
-            >
-              🍽️
-            </div>
-          )}
-        </div>
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}
-        >
+          {product.name}
+        </p>
+
+        {/* Dietary tags */}
+        {product.dietaryFlags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {product.dietaryFlags.slice(0, 3).map((f) => (
+              <span
+                key={f}
+                style={{
+                  padding: '2px 8px',
+                  borderRadius: C.rFull,
+                  background: C.greenBg,
+                  color: C.green,
+                  fontSize: 10,
+                  fontWeight: 600,
+                }}
+              >
+                {DIETARY_SHORT[f] ?? f}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {product.description && (
           <p
             className='line-clamp-2'
+            style={{ color: C.faint, fontSize: 12, margin: 0, lineHeight: 1.45 }}
+          >
+            {product.description}
+          </p>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+          <span style={{ color: C.accent, fontSize: 15, fontWeight: 700 }}>
+            {formatPrice(product.price)}
+          </span>
+          {product.compareAtPrice != null && product.compareAtPrice > product.price && (
+            <s style={{ color: C.faint, fontSize: 12 }}>{formatPrice(product.compareAtPrice)}</s>
+          )}
+        </div>
+      </div>
+
+      {/* Thumbnail – right */}
+      <div style={{ position: 'relative', width: 104, height: 104, flexShrink: 0 }}>
+        {img ? (
+          <img
+            src={img}
+            alt={product.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: C.r16 }}
+          />
+        ) : (
+          <div
             style={{
-              color: C.white,
-              fontSize: 14,
-              fontWeight: 600,
-              margin: '0 0 4px',
-              lineHeight: 1.3,
+              width: '100%',
+              height: '100%',
+              borderRadius: C.r16,
+              background: C.surface2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 32,
             }}
           >
-            {product.name}
-          </p>
-          {product.description && (
-            <p
-              className='line-clamp-2'
-              style={{ color: C.w40, fontSize: 12, margin: '0 0 8px', lineHeight: 1.4 }}
-            >
-              {product.description}
-            </p>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: C.amber, fontSize: 15, fontWeight: 700 }}>
-              {formatPrice(product.price)}
-            </span>
-            {product.compareAtPrice != null && product.compareAtPrice > product.price && (
-              <s style={{ color: C.w30, fontSize: 12 }}>{formatPrice(product.compareAtPrice)}</s>
-            )}
+            🍽️
           </div>
-        </div>
-      </button>
-      <button
-        type='button'
-        disabled={!product.isAvailable}
-        onClick={() => {
-          setPressed(true)
-          setTimeout(() => setPressed(false), 150)
-          onSelect(product)
-        }}
-        style={{
-          flexShrink: 0,
-          width: 36,
-          height: 36,
-          borderRadius: C.r12,
-          background: product.isAvailable ? C.amberGrad : C.card2,
-          border: 'none',
-          cursor: product.isAvailable ? 'pointer' : 'not-allowed',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          alignSelf: 'flex-end',
-          transform: pressed ? 'scale(0.85)' : 'scale(1)',
-          transition: 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1)',
-        }}
-      >
-        <Plus size={18} color={product.isAvailable ? '#fff' : C.w30} />
-      </button>
-    </div>
+        )}
+        {/* Floating add button */}
+        {!unavailable && (
+          <button
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation()
+              onQuickAdd(product)
+            }}
+            style={{
+              position: 'absolute',
+              bottom: 6,
+              right: 6,
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              background: C.accent,
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(255,106,61,0.4)',
+            }}
+          >
+            <Plus size={16} color='#fff' />
+          </button>
+        )}
+      </div>
+    </button>
   )
 }
 
+const DIETARY_SHORT: Record<string, string> = {
+  vegan: 'Vegan',
+  vegetarian: 'Veg',
+  gluten_free: 'GF',
+  dairy_free: 'DF',
+}
+
+// Kept for use in the loading skeleton inside customer-menu-content
 export function BottomNav({
   active,
   onCart,
@@ -583,8 +595,8 @@ export function BottomNav({
         bottom: 0,
         left: 0,
         right: 0,
-        background: C.card,
-        borderTop: `1px solid ${C.border}`,
+        background: C.surface,
+        borderTop: `1px solid ${C.hairline}`,
         display: 'flex',
         padding: '8px 0 20px',
         zIndex: 50,
@@ -612,7 +624,7 @@ export function BottomNav({
             style={{
               fontSize: 10,
               fontWeight: 600,
-              color: tab.key === active ? C.amber : C.w40,
+              color: tab.key === active ? C.accent : C.faint,
             }}
           >
             {tab.label}
@@ -627,7 +639,7 @@ export function BottomNav({
                 width: 16,
                 height: 16,
                 borderRadius: '50%',
-                background: '#EF4444',
+                background: C.accent,
                 color: '#fff',
                 fontSize: 9,
                 display: 'flex',

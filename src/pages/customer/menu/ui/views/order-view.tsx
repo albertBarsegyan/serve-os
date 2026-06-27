@@ -1,7 +1,11 @@
 import { Check, Clock, MapPin } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useOrderStatusSocket } from '#/shared/libs/hooks/use-order-status-socket'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { useOrderNotifications } from '#/features/notification'
+import { cancelCustomerOrder } from '#/shared/api/customer/customer-api'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
+import { CLIENT_EVENTS } from '#/shared/realtime/events'
+import { getSocket } from '#/shared/realtime/socket'
 import { C } from '../customer-theme'
 
 export type CustomerOrderStatus =
@@ -47,13 +51,66 @@ interface OrderViewProps {
 }
 
 export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderViewProps>) {
-  const currentStatus = useOrderStatusSocket(sessionToken, order.orderId)
-  const [elapsed, setElapsed] = useState(Date.now() - order.placedAt)
+  const [currentStatus, setCurrentStatus] = useState<CustomerOrderStatus>('placed')
+  const [isCancelling, setIsCancelling] = useState(false)
+  const callWaiterCooldownRef = useRef(false)
 
+  useOrderNotifications({
+    room: 'session',
+    id: sessionToken,
+    handlers: {
+      'order:confirmed': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('confirmed')
+      },
+      'order:preparing': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('preparing')
+      },
+      'order:ready': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('ready')
+      },
+      'order:served': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('served')
+      },
+      'order:paid': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('served')
+      },
+      'order:cancelled': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('cancelled')
+      },
+    },
+  })
+
+  const [elapsed, setElapsed] = useState(Date.now() - order.placedAt)
   useEffect(() => {
     const id = setInterval(() => setElapsed(Date.now() - order.placedAt), 1000)
     return () => clearInterval(id)
   }, [order.placedAt])
+
+  async function handleCancel() {
+    setIsCancelling(true)
+    try {
+      await cancelCustomerOrder(order.orderId, sessionToken)
+      setCurrentStatus('cancelled')
+    } catch {
+      toast.error('Could not cancel the order. Please ask a waiter for help.')
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  function handleCallWaiter() {
+    if (callWaiterCooldownRef.current) {
+      toast.info('Waiter already notified — give them a moment!', { position: 'top-center' })
+      return
+    }
+    callWaiterCooldownRef.current = true
+    setTimeout(() => {
+      callWaiterCooldownRef.current = false
+    }, 5000)
+
+    getSocket().emit(CLIENT_EVENTS.CALL_WAITER, { sessionToken })
+    toast.success('Waiter has been called!', { position: 'top-center' })
+  }
 
   const isCancelled = currentStatus === 'cancelled'
   const isServed = currentStatus === 'served'
@@ -297,11 +354,54 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
         </div>
         <div style={{ height: 1, background: C.border, margin: '12px 0' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: C.white, fontSize: 14, fontWeight: 700 }}>Total Paid</span>
+          <span style={{ color: C.white, fontSize: 14, fontWeight: 700 }}>Total</span>
           <span style={{ color: C.amber, fontSize: 16, fontWeight: 800 }}>
             {formatPrice(order.total)}
           </span>
         </div>
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <button
+          type='button'
+          onClick={handleCallWaiter}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: 'rgba(249,115,22,0.10)',
+            border: `1px solid ${C.amber}`,
+            borderRadius: C.r16,
+            color: C.amber,
+            fontWeight: 700,
+            fontSize: 15,
+            cursor: 'pointer',
+          }}
+        >
+          🙋 Call Waiter
+        </button>
+
+        {currentStatus === 'placed' && (
+          <button
+            type='button'
+            onClick={() => void handleCancel()}
+            disabled={isCancelling}
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: 'transparent',
+              border: `1px solid ${C.red}`,
+              borderRadius: C.r16,
+              color: C.red,
+              fontWeight: 700,
+              fontSize: 15,
+              cursor: isCancelling ? 'not-allowed' : 'pointer',
+              opacity: isCancelling ? 0.6 : 1,
+            }}
+          >
+            {isCancelling ? 'Cancelling…' : '✕ Cancel Order'}
+          </button>
+        )}
       </div>
 
       {/* Back to menu — only after served */}

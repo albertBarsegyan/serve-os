@@ -1,27 +1,23 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import {
-  Check,
-  Copy,
-  Edit2,
-  LayoutGrid,
-  Minus,
-  Plus,
-  QrCode,
-  Trash2,
-  Upload,
-  Users,
-  X,
-} from 'lucide-react'
+import { Check, Copy, LayoutGrid, Plus, Upload, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useId, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
-import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import type { TableEntity } from '#/features/platform/api/platform.types.ts'
-import { tablesQueryOptions } from '#/features/platform/lib/query-options.ts'
+import { useOrderNotifications } from '#/features/notification'
+import type {
+  Order,
+  OrderStatus,
+  Payment,
+  TableEntity,
+} from '#/features/platform/api/platform.types.ts'
+import {
+  ordersQueryOptions,
+  paymentsQueryOptions,
+  tablesQueryOptions,
+} from '#/features/platform/lib/query-options.ts'
 import {
   createTableSchema,
   updateTableSchema,
@@ -35,11 +31,12 @@ import {
   useUploadTableImageMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
 import { useTablePermissions } from '#/shared/libs/hooks/use-table-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
-import { LazyImage } from '#/shared/ui/lazy-image.tsx'
 import { Modal } from '#/shared/ui/modal'
+import { AdminTable } from './admin-table'
 
 type CreateTableFormValues = z.infer<typeof createTableSchema>
 type UpdateTableFormValues = z.infer<typeof updateTableSchema>
@@ -49,17 +46,6 @@ type FilterTab = 'all' | 'active' | 'inactive' | 'reserved' | 'available'
 interface SelectedTable {
   label: string
   qrCode: string
-}
-
-function TableImagePlaceholder({ number }: { number: number }) {
-  return (
-    <div className='flex h-full w-full items-center justify-center bg-muted'>
-      <div className='flex flex-col items-center gap-1 text-muted-foreground'>
-        <LayoutGrid className='h-8 w-8' />
-        <span className='text-lg font-bold'>{number}</span>
-      </div>
-    </div>
-  )
 }
 
 interface ImageUploadFieldProps {
@@ -75,7 +61,7 @@ function ImageUploadField({ value, previewFile, onChange }: ImageUploadFieldProp
   return (
     <div className='space-y-2'>
       <p className='text-xs font-semibold uppercase text-muted-foreground'>Table Image</p>
-      <div className='relative h-36 w-full overflow-hidden rounded-xl border border-dashed border-border bg-muted'>
+      <div className='relative h-50 w-full overflow-hidden rounded-xl border border-dashed border-border bg-muted'>
         {previewUrl ? (
           <>
             <img src={previewUrl} alt='Table preview' className='h-full w-full object-cover' />
@@ -281,6 +267,51 @@ export function AdminTablesContent() {
     setReservationMutation.isPending ||
     uploadImageMutation.isPending
 
+  const businessId = useSelectedBusinessId() ?? ''
+  const { data: allOrders = [] } = useQuery(ordersQueryOptions())
+  const { data: allPayments = [] } = useQuery(paymentsQueryOptions())
+
+  const [waiterCalledTableIds, setWaiterCalledTableIds] = useState<Set<string>>(new Set())
+
+  useOrderNotifications({
+    room: 'business',
+    id: businessId,
+    handlers: {
+      'order:call-waiter': (payload) => {
+        const tid = payload.tableId
+        if (tid) {
+          setWaiterCalledTableIds((prev) => new Set([...prev, tid]))
+        }
+      },
+    },
+  })
+
+  const ACTIVE_STATUSES = useMemo(
+    () =>
+      new Set<OrderStatus>(['CREATED', 'CONFIRMED', 'IN_KITCHEN', 'READY', 'DELIVERED', 'CLOSED']),
+    [],
+  )
+
+  const activeOrderByTableId = useMemo(() => {
+    const map = new Map<string, Order>()
+    for (const order of allOrders) {
+      if (order.tableId && ACTIVE_STATUSES.has(order.status) && !map.has(order.tableId)) {
+        map.set(order.tableId, order)
+      }
+    }
+    return map
+  }, [allOrders, ACTIVE_STATUSES])
+
+  const pendingPaymentByOrderId = useMemo(() => {
+    const map = new Map<string, Payment>()
+    for (const payment of allPayments) {
+      if (payment.status === 'PENDING') {
+        map.set(payment.orderId, payment)
+      }
+    }
+    return map
+  }, [allPayments])
+
   return (
     <div className='space-y-6'>
       {/* Header */}
@@ -339,7 +370,7 @@ export function AdminTablesContent() {
 
       {/* Skeletons */}
       {isPending && (
-        <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
           {skeletonCards.map((id) => (
             <div key={id} className='h-64 animate-pulse rounded-2xl bg-muted' />
           ))}
@@ -373,131 +404,40 @@ export function AdminTablesContent() {
 
       {/* Table cards grid */}
       {!isPending && visibleTables.length > 0 && (
-        <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
           {visibleTables.map((table) => {
             const isSessionReserved = Boolean(table.currentSessionId)
             const reservedLabel = isSessionReserved ? 'Guest Session' : 'Reserved by Staff'
+            const activeOrder = activeOrderByTableId.get(table.id) ?? null
+            const pendingPayment = activeOrder
+              ? (pendingPaymentByOrderId.get(activeOrder.id) ?? null)
+              : null
 
             return (
-              <Card
+              <AdminTable
                 key={table.id}
-                className={`overflow-hidden rounded-2xl shadow-sm transition-all hover:shadow-md pt-0 ${
-                  !table.isActive ? 'opacity-60 grayscale' : ''
-                } ${table.isReserved ? 'ring-2 ring-amber-400/60' : ''}`}
-              >
-                {/* Image area */}
-                <div className='relative h-44 w-full overflow-hidden bg-muted'>
-                  {table.imageUrl ? (
-                    <LazyImage
-                      src={table.imageUrl}
-                      alt={`Table ${table.number}`}
-                      className='h-full w-full object-contain pt-4'
-                    />
-                  ) : (
-                    <TableImagePlaceholder number={table.number} />
-                  )}
-
-                  <div className='absolute left-2 top-2 flex flex-col gap-1'>
-                    <Badge
-                      variant={table.isActive ? 'success' : 'outline'}
-                      className='text-[10px] capitalize shadow'
-                    >
-                      {table.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                    {table.isReserved && (
-                      <Badge variant='warning' className='text-[10px] shadow'>
-                        {reservedLabel}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <CardHeader className='px-3 pt-2 pb-0'>
-                  <CardTitle className='text-base font-bold'>Table {table.number}</CardTitle>
-                </CardHeader>
-
-                <CardContent className='px-3 pb-3'>
-                  <div className='mb-3 flex items-center gap-1.5 text-muted-foreground'>
-                    <Users className='h-3.5 w-3.5' />
-                    <span className='text-xs'>{table.capacity} seats</span>
-                  </div>
-
-                  {/* Action row */}
-                  <div className='flex flex-wrap gap-1.5'>
-                    {/* QR code — always visible */}
-                    <Button
-                      variant='outline'
-                      size='icon'
-                      className='h-7 w-7 rounded-lg'
-                      title='QR Code'
-                      onClick={() => {
-                        setSelectedTable({ label: `Table ${table.number}`, qrCode: table.qrCode })
-                        setIsQrModalOpen(true)
-                      }}
-                    >
-                      <QrCode className='h-3.5 w-3.5' />
-                    </Button>
-
-                    {perms.canEdit && (
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-7 w-7 rounded-lg border border-border'
-                        title='Edit table'
-                        onClick={() => openEditTable(table)}
-                      >
-                        <Edit2 className='h-3.5 w-3.5' />
-                      </Button>
-                    )}
-
-                    {perms.canToggleStatus && (
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-7 w-7 rounded-lg border border-border'
-                        title={table.isActive ? 'Deactivate' : 'Activate'}
-                        disabled={isBusy}
-                        onClick={() => void handleToggleStatus(table)}
-                      >
-                        {table.isActive ? (
-                          <Minus className='h-3.5 w-3.5' />
-                        ) : (
-                          <Plus className='h-3.5 w-3.5' />
-                        )}
-                      </Button>
-                    )}
-
-                    {perms.canManageReservation && (
-                      <Button
-                        variant={table.isReserved ? 'destructive' : 'outline'}
-                        size='icon'
-                        className='h-7 w-7 rounded-lg'
-                        title={table.isReserved ? 'Unreserve' : 'Reserve'}
-                        disabled={isBusy || isSessionReserved}
-                        onClick={() => void handleToggleReservation(table)}
-                      >
-                        {table.isReserved ? (
-                          <X className='h-3.5 w-3.5' />
-                        ) : (
-                          <Check className='h-3.5 w-3.5' />
-                        )}
-                      </Button>
-                    )}
-
-                    {perms.canDelete && (
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-7 w-7 rounded-lg border border-border text-destructive hover:bg-destructive/10'
-                        title='Delete'
-                        onClick={() => setDeletingTable(table)}
-                      >
-                        <Trash2 className='h-3.5 w-3.5' />
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                table={table}
+                activeOrder={activeOrder}
+                pendingPayment={pendingPayment}
+                perms={perms}
+                handleToggleStatus={handleToggleStatus}
+                handleToggleReservation={handleToggleReservation}
+                openEditTable={openEditTable}
+                setDeletingTable={setDeletingTable}
+                setSelectedTable={setSelectedTable}
+                setIsQrModalOpen={setIsQrModalOpen}
+                isBusy={isBusy}
+                isSessionReserved={isSessionReserved}
+                reservedLabel={reservedLabel}
+                waiterCalled={waiterCalledTableIds.has(table.id)}
+                onAcknowledgeWaiter={() => {
+                  setWaiterCalledTableIds((prev) => {
+                    const next = new Set(prev)
+                    next.delete(table.id)
+                    return next
+                  })
+                }}
+              />
             )
           })}
         </div>

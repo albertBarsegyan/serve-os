@@ -46,6 +46,12 @@ export function createCustomerOrder(
     .json<CustomerOrderResponse>()
 }
 
+export function cancelCustomerOrder(orderId: string, sessionToken: string): Promise<void> {
+  return clientApiInstance
+    .post(`orders/${orderId}/cancel`, { headers: { 'x-session-token': sessionToken } })
+    .json<void>()
+}
+
 export function createCustomerPayment(
   orderId: string,
   method: 'CASH' | 'POS' | 'ONLINE',

@@ -12,10 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { useOrderNotifications } from '#/features/notification'
 import { CreateStaffOrderDialog } from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
 import type { OrderStatus } from '#/features/platform/api/platform.types.ts'
 import { orderByIdQueryOptions, ordersQueryOptions } from '#/features/platform/lib/query-options.ts'
 import {
+  useConfirmOrderMutation,
   useProcessCashPaymentMutation,
   useProcessPosPaymentMutation,
   useUpdateOrderStatusMutation,
@@ -23,10 +25,6 @@ import {
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
-import {
-  type OrderStatusChangedPayload,
-  useKitchenSocket,
-} from '#/shared/libs/hooks/use-kitchen-socket.ts'
 import { StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -306,12 +304,7 @@ export function AdminOrdersContent() {
   const { isOwner, hasPermission } = usePermissions()
   const canAddOrder = isOwner() || hasPermission(StaffPermission.ORDER_CREATE)
 
-  useKitchenSocket(businessId, undefined, (payload: OrderStatusChangedPayload) => {
-    if (payload.status === 'READY') {
-      const label = payload.tableName ? `Table ${payload.tableName}` : 'An order'
-      showSuccess(`${label} is ready to serve!`)
-    }
-  })
+  useOrderNotifications({ room: 'business', id: businessId })
 
   const { data: orders = [], isPending, isError, error, refetch } = useQuery(ordersQueryOptions())
 
@@ -335,7 +328,18 @@ export function AdminOrdersContent() {
     DELIVERED: 'CLOSED',
   }
 
+  const confirmMutation = useConfirmOrderMutation()
   const updateMutation = useUpdateOrderStatusMutation()
+  const isBusyGlobal = confirmMutation.isPending || updateMutation.isPending
+
+  const confirmOrderAction = async (orderId: string) => {
+    try {
+      await confirmMutation.mutateAsync(orderId)
+      showSuccess('Order confirmed and sent to kitchen')
+    } catch (mutationError) {
+      showError(getResponseErrorMessage(mutationError))
+    }
+  }
 
   const moveOrderForward = async (
     orderId: string,
@@ -403,7 +407,7 @@ export function AdminOrdersContent() {
                   key={status}
                   onClick={() => setActiveFilter(status)}
                   className={cn(
-                    'whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all',
+                    'uppercase whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all',
                     activeFilter === status
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
@@ -502,13 +506,25 @@ export function AdminOrdersContent() {
                       >
                         <Eye className='h-4 w-4' />
                       </Button>
-                      {nextStatus[order.status] && (
+                      {order.status === 'CREATED' && (
+                        <Button
+                          variant='default'
+                          size='sm'
+                          type='button'
+                          className='rounded-full'
+                          disabled={isBusyGlobal}
+                          onClick={() => void confirmOrderAction(order.id)}
+                        >
+                          Confirm
+                        </Button>
+                      )}
+                      {order.status !== 'CREATED' && nextStatus[order.status] && (
                         <Button
                           variant='secondary'
                           size='sm'
                           type='button'
                           className='rounded-full'
-                          disabled={updateMutation.isPending}
+                          disabled={isBusyGlobal}
                           onClick={() => {
                             const next = nextStatus[order.status]
                             if (next) void moveOrderForward(order.id, next)

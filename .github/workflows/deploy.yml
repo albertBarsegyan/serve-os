@@ -59,6 +59,7 @@ jobs:
           # build time — stored as a repo Variable (not a Secret).
           build-args: |
             VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
+            VITE_GTAG_ID=${{ secrets.VITE_GTAG_ID }}
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}

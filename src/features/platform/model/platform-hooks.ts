@@ -37,6 +37,7 @@ import {
   addModifierToGroup,
   changePassword,
   closeSession,
+  confirmOrder,
   confirmPayment,
   createMenuCategory,
   createModifierGroup,
@@ -417,6 +418,18 @@ export function useCreateStaffOrderMutation() {
     mutationFn: (data: CreateStaffOrderRequest) => createStaffOrder(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
+    },
+  })
+}
+
+export function useConfirmOrderMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (orderId: string) => confirmOrder(orderId),
+    onSuccess: (_, orderId) => {
+      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.orderById(orderId) })
     },
   })
 }

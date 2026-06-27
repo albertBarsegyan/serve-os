@@ -5,6 +5,7 @@ import { cartItemTotal, useCartStore } from '#/features/cart/model/cart.store'
 import type { CustomerPaymentMethod } from '#/features/platform/api/platform.types'
 import { fetchCustomerMenu } from '#/shared/api/customer/customer-api'
 import type { CustomerProduct } from '#/shared/api/customer/menu.types'
+import { showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { C } from './customer-theme'
 import { CartView } from './views/cart-view'
 import { BottomNav, MenuView } from './views/menu-view'
@@ -140,6 +141,26 @@ export function CustomerMenuContent({
     setView('order')
   }
 
+  function handleQuickAdd(product: CustomerProduct) {
+    const hasRequired = product.modifierGroups.some(
+      (g) => g.isRequired && g.modifiers.some((m) => m.isActive),
+    )
+    if (hasRequired) {
+      setSelectedProduct(product)
+      setView('product')
+      return
+    }
+    addItem({
+      productId: product.id,
+      productName: product.name,
+      basePrice: product.price,
+      quantity: 1,
+      notes: '',
+      selectedModifiers: [],
+    })
+    showSuccess(`${product.name} added`)
+  }
+
   function handleBackToMenu() {
     sessionStorage.removeItem(ssKey)
     setOrderRecord(null)
@@ -263,6 +284,7 @@ export function CustomerMenuContent({
             setSelectedProduct(p)
             setView('product')
           }}
+          onQuickAdd={handleQuickAdd}
           onCartOpen={() => setView('cart')}
         />
       )}
