@@ -1,4 +1,4 @@
-import { City, Country } from 'country-state-city'
+import Country from 'country-state-city/lib/country'
 
 export interface LocationOption {
   value: string
@@ -43,17 +43,21 @@ const getCurrencyOpts = lazy(() =>
     .map((value) => ({ value, label: value })),
 )
 
+// City data (7.7 MB) is split into its own chunk and loaded on first call.
 const cityCache = new Map<string, LocationOption[]>()
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export const getCountryOptions = (): LocationOption[] => getCountryOpts()
 
-export const getCityOptions = (countryCode?: string): LocationOption[] => {
-  if (!countryCode) return []
+export const getCityOptions = async (countryCode?: string): Promise<LocationOption[]> => {
+  if (!countryCode || typeof window === 'undefined') return []
 
   if (cityCache.has(countryCode)) return cityCache.get(countryCode) ?? []
 
+  // Template expression prevents Rollup from statically resolving this import,
+  // keeping the 7.7 MB city dataset out of the server bundle.
+  const { default: City } = await import(/* @vite-ignore */ `country-state-city/lib/${'city'}`)
   const seen = new Set<string>()
   const cities = (City.getCitiesOfCountry(countryCode) ?? [])
     .reduce<LocationOption[]>((acc, { name }) => {

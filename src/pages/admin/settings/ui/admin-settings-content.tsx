@@ -77,8 +77,12 @@ export function AdminSettingsContent() {
   const selectedFeatures = watch('features')
 
   const countryOptions = useMemo(() => getCountryOptions(), [])
-  const cityOptions = useMemo(() => getCityOptions(selectedCountry), [selectedCountry])
+  const [cityOptions, setCityOptions] = useState<{ value: string; label: string }[]>([])
   const currencyOptions = useMemo(() => getCurrencyOptions(), [])
+
+  useEffect(() => {
+    getCityOptions(selectedCountry).then(setCityOptions)
+  }, [selectedCountry])
 
   // Populate form once the active business is loaded
   useEffect(() => {

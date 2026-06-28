@@ -88,8 +88,12 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
   const selectedFeatures = watch('features')
 
   const countryOptions = useMemo(() => getCountryOptions(), [])
-  const cityOptions = getCityOptions(selectedCountry)
+  const [cityOptions, setCityOptions] = useState<{ value: string; label: string }[]>([])
   const currencyOptions = useMemo(() => getCurrencyOptions(), [])
+
+  useEffect(() => {
+    getCityOptions(selectedCountry).then(setCityOptions)
+  }, [selectedCountry])
 
   useEffect(() => {
     if (mode === 'edit' && currentBusiness?.location) {

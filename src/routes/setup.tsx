@@ -93,8 +93,12 @@ function AdminSetupRoute() {
 
   const generatedSlug = stringToCommaSeparated(watch('name')) || 'sunset-bistro'
   const countryOptions = useMemo(() => getCountryOptions(), [])
-  const cityOptions = useMemo(() => getCityOptions(selectedCountry), [selectedCountry])
+  const [cityOptions, setCityOptions] = useState<{ value: string; label: string }[]>([])
   const currencyOptions = useMemo(() => getCurrencyOptions(), [])
+
+  useEffect(() => {
+    getCityOptions(selectedCountry).then(setCityOptions)
+  }, [selectedCountry])
 
   useEffect(() => {
     if (selectedCity && !cityOptions.some((option) => option.value === selectedCity)) {
