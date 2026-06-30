@@ -20,7 +20,7 @@ interface MyRouterContext {
   selectedBusinessId?: string | null
 }
 
-const THEME_INIT_SCRIPT = `(function(){try{var root=document.documentElement;var stored=localStorage.getItem('theme');var theme=(stored&&JSON.parse(stored).state&&JSON.parse(stored).state.theme)||'light';root.classList.remove('light','dark');root.classList.add(theme);root.setAttribute('data-theme',theme);root.style.colorScheme=theme;}catch(e){document.documentElement.classList.add('light');}try{var ps=localStorage.getItem('color-palette');var pal=(ps&&JSON.parse(ps).state&&JSON.parse(ps).state.palette)||'ocean';document.documentElement.setAttribute('data-palette',pal);}catch(e){document.documentElement.setAttribute('data-palette','ocean');}})();`
+const THEME_INIT_SCRIPT = `(function(){try{var root=document.documentElement;var stored=localStorage.getItem('theme');var theme=(stored&&JSON.parse(stored).state&&JSON.parse(stored).state.theme)||'light';root.classList.remove('light','dark');root.classList.add(theme);root.setAttribute('data-theme',theme);root.style.colorScheme=theme;var tc={light:'#ffffff',dark:'#05140B'};var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',tc[theme]||'#05140B');}catch(e){document.documentElement.classList.add('light');}try{var ps=localStorage.getItem('color-palette');var pal=(ps&&JSON.parse(ps).state&&JSON.parse(ps).state.palette)||'ocean';document.documentElement.setAttribute('data-palette',pal);}catch(e){document.documentElement.setAttribute('data-palette','ocean');}})();`
 
 const GTAG_ID = import.meta.env.VITE_GTAG_ID
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -53,8 +53,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         title: 'ServeOS - Next-Gen Hospitality OS',
       },
-      // PWA / theme meta
-      { name: 'theme-color', content: '#ffffff' },
+      // PWA / theme meta — theme-color is a static element placed before the
+      // THEME_INIT_SCRIPT in the shell so the script can update it synchronously.
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
       { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
       { name: 'apple-mobile-web-app-title', content: 'Serve OS' },
@@ -97,6 +97,8 @@ function RootErrorComponent({ error }: Readonly<{ error: Error }>) {
   return (
     <html lang={getLocale()} suppressHydrationWarning>
       <head>
+        {/* Default dark — THEME_INIT_SCRIPT reads this element and overwrites content before first paint */}
+        <meta name='theme-color' content='#05140B' />
         {/** biome-ignore lint/security/noDangerouslySetInnerHtml: hardcoded theme init script, not user input */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />

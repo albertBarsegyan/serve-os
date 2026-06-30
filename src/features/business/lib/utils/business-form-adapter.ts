@@ -2,11 +2,11 @@ import type { CreateBusinessFormValues } from '#/features/business/lib/schemas/c
 import { formatBackendLocation } from '#/features/business/lib/utils/location-options.ts'
 
 export const businessFormAdapter = {
-  toApi: (formData: CreateBusinessFormValues) => {
+  toApi: async (formData: CreateBusinessFormValues) => {
     return {
       name: formData.name.trim(),
       type: formData.type,
-      location: formatBackendLocation(formData.locationCity, formData.locationCountry),
+      location: await formatBackendLocation(formData.locationCity, formData.locationCountry),
       currency: formData.currency.trim().toUpperCase(),
       ...(formData.workingHoursJson.trim()
         ? { workingHours: formData.workingHoursJson.trim() }

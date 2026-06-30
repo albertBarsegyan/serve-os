@@ -143,25 +143,25 @@ const STATUS_CONFIG: Record<TableStatus, StatusConfig> = {
 // ── Tone maps (literal Tailwind classes — no dynamic construction) ─────────────
 
 const TONE_BADGE: Record<TableStatus, string> = {
-  free: 'bg-slate-500/15 text-slate-300 border border-slate-500/30',
-  new: 'bg-sky-500/15 text-sky-300 border border-sky-500/30',
-  confirmed: 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30',
-  preparing: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
-  ready: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
-  served: 'bg-teal-500/15 text-teal-300 border border-teal-500/30',
-  payment: 'bg-orange-500/15 text-orange-300 border border-orange-500/30',
-  paid: 'bg-green-500/15 text-green-300 border border-green-500/30',
+  free: 'bg-slate-500 text-slate-300 border border-slate-500/30',
+  new: 'bg-sky-500 text-sky-100 border border-sky-500/30',
+  confirmed: 'bg-indigo-500 text-indigo-300 border border-indigo-500/30',
+  preparing: 'bg-amber-500 text-amber-200 border border-amber-500/30',
+  ready: 'bg-emerald-500 text-emerald-100 border border-emerald-500/30',
+  served: 'bg-teal-500 text-teal-100 border border-teal-500/30',
+  payment: 'bg-orange-500 text-orange-100 border border-orange-500/30',
+  paid: 'bg-green-500 text-green-200 border border-green-600',
 }
 
 const TONE_DOT: Record<TableStatus, string> = {
-  free: 'bg-slate-400',
-  new: 'bg-sky-400',
+  free: 'bg-slate-300',
+  new: 'bg-sky-100',
   confirmed: 'bg-indigo-400',
-  preparing: 'bg-amber-400',
-  ready: 'bg-emerald-400',
-  served: 'bg-teal-400',
-  payment: 'bg-orange-400',
-  paid: 'bg-green-400',
+  preparing: 'bg-amber-200',
+  ready: 'bg-emerald-100',
+  served: 'bg-teal-100',
+  payment: 'bg-orange-100',
+  paid: 'bg-green-200',
 }
 
 const TONE_HERO: Record<TableStatus, string> = {
@@ -230,7 +230,11 @@ const ACTIVE_ORDER_STATUSES = new Set<OrderStatus>([
   'CLOSED',
 ])
 
-function deriveStatus(order: Order | null, pendingPayment: Payment | null): TableStatus {
+function deriveStatus(
+  order: Order | null,
+  pendingPayment: Payment | null,
+  currentSessionId: string | null,
+): TableStatus {
   if (!(order && ACTIVE_ORDER_STATUSES.has(order.status))) return 'free'
   switch (order.status) {
     case 'CREATED':
@@ -245,7 +249,9 @@ function deriveStatus(order: Order | null, pendingPayment: Payment | null): Tabl
       if (order.paymentStatus === 'PAID') return 'paid'
       return pendingPayment ? 'payment' : 'served'
     case 'CLOSED':
-      return 'paid'
+      // refreshLifecycle auto-closes the session when the order reaches CLOSED.
+      // If the session is already gone there is nothing left to close — show free.
+      return currentSessionId ? 'paid' : 'free'
     default:
       return 'free'
   }
@@ -258,7 +264,7 @@ function StatusPill({ status }: { status: TableStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold',
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-md font-semibold',
         TONE_BADGE[status],
       )}
     >
@@ -344,7 +350,7 @@ export function AdminTable({
   const [showPaymentChoice, setShowPaymentChoice] = useState(false)
   const [localWaiterCalled, setLocalWaiterCalled] = useState(false)
 
-  const status = deriveStatus(activeOrder, pendingPayment)
+  const status = deriveStatus(activeOrder, pendingPayment, table.currentSessionId)
   const config = STATUS_CONFIG[status]
   const StatusIcon = config.icon
 
@@ -475,12 +481,13 @@ export function AdminTable({
         )}
       >
         {/* Banner */}
-        <div className='relative aspect-[4/3] w-full bg-muted'>
+        <div className='relative aspect-video w-full bg-muted'>
           {table.imageUrl ? (
             <LazyImage
               src={table.imageUrl}
               alt={`Table ${table.number}`}
-              imgClassName='h-full w-full object-contain block'
+              className='absolute inset-0'
+              imgClassName='h-full w-full object-contain'
             />
           ) : (
             <div
@@ -504,9 +511,9 @@ export function AdminTable({
         </div>
 
         {/* Body */}
-        <div className='p-3'>
-          <div className='flex items-start justify-between gap-1.5'>
-            <span className='text-base font-bold'>Table {table.number}</span>
+        <div className='p-2'>
+          <div className='flex items-start justify-between gap-1'>
+            <span className='text-sm font-bold'>Table {table.number}</span>
             <div className='flex shrink-0 flex-wrap justify-end gap-1'>
               <Badge
                 variant={table.isActive ? 'success' : 'outline'}
@@ -550,7 +557,7 @@ export function AdminTable({
                 type='button'
                 aria-label='Close dialog'
                 onClick={() => setIsOpen(false)}
-                className='absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                className='absolute right-4 top-4 z-10 bg-red-600 flex h-11 w-11 items-center justify-center rounded-xl border border-border text-white shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
               >
                 <X className='h-6 w-6' />
               </button>

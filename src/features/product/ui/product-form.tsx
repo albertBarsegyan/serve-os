@@ -1,3 +1,20 @@
+import type { DragEndEvent } from '@dnd-kit/core'
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { ImageIcon, Loader2, Plus, Trash2, X } from 'lucide-react'
@@ -9,6 +26,7 @@ import { Checkbox } from '#/components/ui/checkbox'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { Textarea } from '#/components/ui/textarea'
+import { useReorderProductImages } from '#/entities/product/api/product-hooks'
 import type { ModifierGroup, ModifierPriceType } from '#/features/platform/api/platform.types'
 import { modifierGroupsQueryOptions } from '#/features/platform/lib/query-options'
 import {
@@ -143,6 +161,41 @@ export function ProductForm({
   const selectedAllergens = (watch('allergens') ?? []) as Allergen[]
 
   const MAX_IMAGES = 4
+
+  const reorderMutation = useReorderProductImages()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  // IDs stable within a render: url + positional index avoids collisions on duplicate URLs
+  const sortableIds = imageUrls.map((url, i) => `${url}__${i}`)
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = sortableIds.indexOf(String(active.id))
+    const newIndex = sortableIds.indexOf(String(over.id))
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const prev = [...imageUrls]
+    const reordered = arrayMove(imageUrls, oldIndex, newIndex)
+    setValue('imageUrls', reordered, { shouldDirty: true, shouldValidate: true })
+
+    if (mode === 'edit' && initialData?.id) {
+      reorderMutation.mutate(
+        { businessId, productId: initialData.id, imageUrls: reordered },
+        {
+          onError: () => {
+            setValue('imageUrls', prev, { shouldDirty: true })
+            toast.error('Failed to save image order')
+          },
+        },
+      )
+    }
+  }
 
   const handleImageFilesSelected = useCallback(
     async (files: FileList | null) => {
@@ -643,51 +696,44 @@ export function ProductForm({
           <div className='text-sm font-medium'>
             Images
             <span className='ml-1.5 text-xs font-normal text-muted-foreground'>
-              ({imageUrls.length}/{MAX_IMAGES})
+              ({imageUrls.length}/{MAX_IMAGES}) · drag to reorder
             </span>
           </div>
         </div>
 
-        <div className='grid grid-cols-4 gap-2'>
-          {imageUrls.map((url, index) => (
-            <div
-              key={url + String(index)}
-              className='relative aspect-square overflow-hidden rounded-xl border border-input bg-muted'
-            >
-              <img
-                src={url}
-                alt={`Product view ${index + 1}`}
-                className='h-full w-full object-cover'
-              />
-              <button
-                type='button'
-                onClick={() => handleRemoveImage(index)}
-                className='absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors'
-                aria-label='Remove image'
-              >
-                <X className='h-3 w-3' />
-              </button>
-            </div>
-          ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
+            <div className='grid grid-cols-4 gap-2'>
+              {imageUrls.map((url, index) => (
+                <SortableImageItem
+                  key={sortableIds[index]}
+                  id={sortableIds[index]}
+                  url={url}
+                  index={index}
+                  onRemove={() => handleRemoveImage(index)}
+                />
+              ))}
 
-          {imageUrls.length < MAX_IMAGES && (
-            <button
-              type='button'
-              disabled={isUploadingImage}
-              onClick={() => imageInputRef.current?.click()}
-              className='flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-input bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 cursor-pointer'
-            >
-              {isUploadingImage ? (
-                <Loader2 className='h-5 w-5 animate-spin' />
-              ) : (
-                <>
-                  <ImageIcon className='h-5 w-5' />
-                  <span className='text-[10px] font-medium'>Add photo</span>
-                </>
+              {imageUrls.length < MAX_IMAGES && (
+                <button
+                  type='button'
+                  disabled={isUploadingImage}
+                  onClick={() => imageInputRef.current?.click()}
+                  className='flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-input bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 cursor-pointer'
+                >
+                  {isUploadingImage ? (
+                    <Loader2 className='h-5 w-5 animate-spin' />
+                  ) : (
+                    <>
+                      <ImageIcon className='h-5 w-5' />
+                      <span className='text-[10px] font-medium'>Add photo</span>
+                    </>
+                  )}
+                </button>
               )}
-            </button>
-          )}
-        </div>
+            </div>
+          </SortableContext>
+        </DndContext>
 
         <input
           ref={imageInputRef}
@@ -920,5 +966,60 @@ export function ProductForm({
         {isLoading ? 'Saving...' : mode === 'create' ? 'Create Product' : 'Update Product'}
       </Button>
     </form>
+  )
+}
+
+// ── SortableImageItem ──────────────────────────────────────────────────────────
+
+function SortableImageItem({
+  id,
+  url,
+  index,
+  onRemove,
+}: {
+  id: string
+  url: string
+  index: number
+  onRemove: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+      }}
+      {...attributes}
+      {...listeners}
+      className={`relative aspect-square touch-none overflow-hidden rounded-xl border-2 bg-muted ${
+        index === 0 ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-input'
+      }`}
+    >
+      <img
+        src={url}
+        alt={`Product view ${index + 1}`}
+        className='h-full w-full object-cover pointer-events-none select-none'
+        draggable={false}
+      />
+      {index === 0 && (
+        <div className='absolute bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-500 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-white'>
+          Cover
+        </div>
+      )}
+      <button
+        type='button'
+        onClick={onRemove}
+        onPointerDown={(e) => e.stopPropagation()}
+        className='absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors'
+        aria-label='Remove image'
+      >
+        <X className='h-3 w-3' />
+      </button>
+    </div>
   )
 }

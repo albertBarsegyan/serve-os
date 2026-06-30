@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query'
 import {
   createFileRoute,
   Link,
@@ -254,7 +253,6 @@ function AdminLayout() {
   const location = useLocation()
   const navigation = useNavigate()
 
-  const queryClient = useQueryClient()
   const { authUser } = useRouteContext({ from: '/_admin' })
   const { isOwner, canSee, hasPermission } = usePermissions()
   const activeBusiness = useActiveBusiness()
@@ -322,8 +320,6 @@ function AdminLayout() {
         const businessId = authUser.businessId
         const slug = activeBusiness?.slug
         await logoutStaffMutation.mutateAsync(businessId)
-        await queryClient.cancelQueries()
-        queryClient.clear()
         showSuccess(authUiMessage.SUCCESS_LOGOUT)
         await navigation({ to: slug ? `/b/${slug}/staff-login` : '/auth/sign-in' })
       } else {

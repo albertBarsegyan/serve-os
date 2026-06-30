@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys.ts'
 import type {
   CreateProductRequest,
+  ProductResponse,
   UpdateProductRequest,
 } from '#/features/product/api/product.types'
+import { clientApiInstance } from '#/shared/api/client-instance'
 import {
   createProductServerFn,
   deleteProductServerFn,
@@ -72,6 +74,32 @@ export function useDeleteProduct() {
       deleteProductServerFn({ data: { businessId, productId } }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, variables.businessId] })
+      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+    },
+  })
+}
+
+function reorderProductImagesApi(productId: string, imageUrls: string[]): Promise<ProductResponse> {
+  return clientApiInstance
+    .patch(`menu/products/${productId}/images/reorder`, { json: { imageUrls } })
+    .json<ProductResponse>()
+}
+
+export function useReorderProductImages() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      productId,
+      imageUrls,
+    }: {
+      businessId: string
+      productId: string
+      imageUrls: string[]
+    }) => reorderProductImagesApi(productId, imageUrls),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId] })
+      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId, data.id] })
       queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
     },
   })

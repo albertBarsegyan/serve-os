@@ -168,6 +168,8 @@ export function useCloseSessionMutation() {
     mutationFn: (sessionId: string) => closeSession(sessionId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.sessions() })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+      void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
     },
   })
 }
@@ -430,6 +432,7 @@ export function useConfirmOrderMutation() {
     onSuccess: (_, orderId) => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'orders'] })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.orderById(orderId) })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.kitchenOrders() })
     },
   })
 }
@@ -445,6 +448,7 @@ export function useUpdateOrderStatusMutation() {
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.orderById(variables.orderId),
       })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.kitchenOrders() })
     },
   })
 }

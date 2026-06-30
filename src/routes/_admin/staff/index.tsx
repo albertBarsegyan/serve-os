@@ -15,7 +15,10 @@ import {
 } from '#/components/ui/table'
 import type { OrderStatus } from '#/features/platform/api/platform.types.ts'
 import { ordersQueryOptions } from '#/features/platform/lib/query-options.ts'
-import { useUpdateOrderStatusMutation } from '#/features/platform/model/platform-hooks.ts'
+import {
+  useConfirmOrderMutation,
+  useUpdateOrderStatusMutation,
+} from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
@@ -48,7 +51,7 @@ const WAITER_STATUSES: (OrderStatus | 'all')[] = [
   'DELIVERED',
 ]
 
-const WAITER_NEXT: Partial<Record<OrderStatus, OrderStatus>> = {
+const WAITER_NEXT: Partial<Record<OrderStatus, Exclude<OrderStatus, 'CREATED'>>> = {
   CREATED: 'CONFIRMED',
   READY: 'DELIVERED',
   DELIVERED: 'CLOSED',
@@ -77,6 +80,7 @@ function WaiterWorkspace() {
 
   const { data: orders = [], isPending, isError, error, refetch } = useQuery(ordersQueryOptions())
 
+  const confirmMutation = useConfirmOrderMutation()
   const updateMutation = useUpdateOrderStatusMutation()
 
   const filteredOrders = useMemo(() => {
@@ -90,9 +94,13 @@ function WaiterWorkspace() {
     )
   }, [orders, activeFilter, search])
 
-  const advance = async (orderId: string, status: OrderStatus) => {
+  const advance = async (orderId: string, status: Exclude<OrderStatus, 'CREATED'>) => {
     try {
-      await updateMutation.mutateAsync({ orderId, data: { status } })
+      if (status === 'CONFIRMED') {
+        await confirmMutation.mutateAsync(orderId)
+      } else {
+        await updateMutation.mutateAsync({ orderId, data: { status } })
+      }
       showSuccess('Order updated')
     } catch (err) {
       showError(getResponseErrorMessage(err))
