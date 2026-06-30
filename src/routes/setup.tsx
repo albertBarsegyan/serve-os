@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Building2, MapPin } from 'lucide-react'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { FeatureSelector } from '#/components/feature-selector'
 import { Button } from '#/components/ui/button'
@@ -21,9 +21,11 @@ import {
 } from '#/features/business/lib/schemas/create-business-form.schema.ts'
 import { businessFormAdapter } from '#/features/business/lib/utils/business-form-adapter.ts'
 import {
+  type CurrencyOption,
   getCityOptions,
   getCountryOptions,
   getCurrencyOptions,
+  type LocationOption,
 } from '#/features/business/lib/utils/location-options.ts'
 import {
   useCreateBusinessMutation,
@@ -92,9 +94,18 @@ function AdminSetupRoute() {
   const selectedCity = watch('locationCity')
 
   const generatedSlug = stringToCommaSeparated(watch('name')) || 'sunset-bistro'
-  const countryOptions = useMemo(() => getCountryOptions(), [])
-  const cityOptions = useMemo(() => getCityOptions(selectedCountry), [selectedCountry])
-  const currencyOptions = useMemo(() => getCurrencyOptions(), [])
+  const [countryOptions, setCountryOptions] = useState<LocationOption[]>([])
+  const [cityOptions, setCityOptions] = useState<LocationOption[]>([])
+  const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>([])
+
+  useEffect(() => {
+    getCountryOptions().then(setCountryOptions)
+    getCurrencyOptions().then(setCurrencyOptions)
+  }, [])
+
+  useEffect(() => {
+    getCityOptions(selectedCountry).then(setCityOptions)
+  }, [selectedCountry])
 
   useEffect(() => {
     if (selectedCity && !cityOptions.some((option) => option.value === selectedCity)) {
@@ -109,7 +120,7 @@ function AdminSetupRoute() {
   const onSubmit = async (values: CreateBusinessFormValues) => {
     try {
       const createdBusiness = await createBusinessMutation.mutateAsync({
-        data: businessFormAdapter.toApi(values),
+        data: await businessFormAdapter.toApi(values),
       })
 
       if (logoUrl) {

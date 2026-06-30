@@ -1,5 +1,15 @@
-import { Check, ChevronLeft, Clock, Heart, Minus, Plus, Share2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Heart,
+  Minus,
+  Plus,
+  Share2,
+  X,
+} from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CartModifier } from '#/features/cart/model/cart.store'
 import type { CustomerModifierGroup, CustomerProduct } from '#/shared/api/customer/menu.types'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
@@ -26,8 +36,13 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
   const [groupSelections, setGroupSelections] = useState<Record<string, string[]>>({})
   const [notes, setNotes] = useState('')
   const [faved, setFaved] = useState(false)
+  const [activeIdx, setActiveIdx] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
-  const img = product.imageUrls?.[0] ?? product.imageUrl
+  const images =
+    product.imageUrls?.length > 0 ? product.imageUrls : product.imageUrl ? [product.imageUrl] : []
+
+  const displayedImg = images[activeIdx] ?? null
   const activeGroups = product.modifierGroups.filter((g) => g.modifiers.some((m) => m.isActive))
 
   const isValid = useMemo(() => {
@@ -75,6 +90,15 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
     }
   }
 
+  function openLightbox() {
+    setLightboxOpen(true)
+  }
+
+  function closeLightbox(finalIdx: number) {
+    setActiveIdx(finalIdx)
+    setLightboxOpen(false)
+  }
+
   const canAdd = isValid && product.isAvailable
 
   return (
@@ -89,10 +113,22 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
       }}
     >
       {/* ── Background image + scrim ── */}
-      <div style={{ position: 'absolute', inset: 0 }}>
-        {img ? (
+      <button
+        type='button'
+        aria-label={images.length > 1 ? 'Open image gallery' : undefined}
+        onClick={images.length > 1 ? openLightbox : undefined}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          cursor: images.length > 1 ? 'pointer' : 'default',
+          padding: 0,
+          border: 'none',
+          background: 'transparent',
+        }}
+      >
+        {displayedImg ? (
           <img
-            src={img}
+            src={displayedImg}
             alt={product.name}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
@@ -107,7 +143,7 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
               'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.88) 100%)',
           }}
         />
-      </div>
+      </button>
 
       {/* ── Top controls ── */}
       <div
@@ -275,6 +311,55 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
             className='c-scrollbar-none'
             style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}
           >
+            {/* Thumbnail strip — only when 2+ images */}
+            {images.length > 1 && (
+              <div
+                className='c-scrollbar-none'
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  overflowX: 'auto',
+                  marginBottom: 16,
+                  paddingBottom: 2,
+                }}
+              >
+                {images.map((imgUrl, i) => (
+                  <button
+                    key={imgUrl + String(i)}
+                    type='button'
+                    aria-label={`View image ${i + 1}`}
+                    onClick={() => setActiveIdx(i)}
+                    style={{
+                      flexShrink: 0,
+                      width: 64,
+                      height: 64,
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      border:
+                        i === activeIdx
+                          ? '2px solid rgba(255,255,255,0.9)'
+                          : '2px solid rgba(255,255,255,0.2)',
+                      cursor: 'pointer',
+                      padding: 0,
+                      transition: 'border-color 0.15s ease',
+                      background: 'transparent',
+                    }}
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`Thumbnail ${i + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* TODO: Size / variant selector — requires product_variants field from API */}
 
             {/* Modifier groups */}
@@ -423,6 +508,11 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
           </div>
         </div>
       </div>
+
+      {/* ── Fullscreen lightbox ── */}
+      {lightboxOpen && (
+        <ProductGalleryLightbox images={images} initialIdx={activeIdx} onClose={closeLightbox} />
+      )}
     </div>
   )
 }
@@ -527,7 +617,7 @@ function ModifierGroup({
         {group.minSelections > 0 && (
           <span style={{ color: C.faint, fontSize: 10, marginLeft: 'auto' }}>
             Choose {group.minSelections}
-            {group.maxSelections != null ? `–${group.maxSelections}` : '+'}
+            {group.maxSelections == null ? '+' : `–${group.maxSelections}`}
           </span>
         )}
       </div>
@@ -598,6 +688,212 @@ function ModifierGroup({
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ── ProductGalleryLightbox ─────────────────────────────────────────────────────
+
+function ProductGalleryLightbox({
+  images,
+  initialIdx,
+  onClose,
+}: Readonly<{
+  images: string[]
+  initialIdx: number
+  onClose: (finalIdx: number) => void
+}>) {
+  const [idx, setIdx] = useState(initialIdx)
+  const touchStartX = useRef(0)
+
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose(idx)
+      if (e.key === 'ArrowLeft') setIdx((i) => Math.max(0, i - 1))
+      if (e.key === 'ArrowRight') setIdx((i) => Math.min(images.length - 1, i + 1))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [idx, images.length, onClose])
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    if (Math.abs(dx) > 50) {
+      if (dx < 0) setIdx((i) => Math.min(images.length - 1, i + 1))
+      else setIdx((i) => Math.max(0, i - 1))
+    }
+  }
+
+  return (
+    <div
+      role='dialog'
+      aria-modal='true'
+      aria-label='Image gallery'
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 200,
+        background: 'rgba(0,0,0,0.96)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Close */}
+      <button
+        type='button'
+        aria-label='Close gallery'
+        onClick={() => onClose(idx)}
+        style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.15)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 10,
+        }}
+      >
+        <X size={20} color='#fff' />
+      </button>
+
+      {/* Main image */}
+      <img
+        src={images[idx]}
+        alt={`${idx + 1} of ${images.length}`}
+        style={{
+          maxWidth: '100%',
+          maxHeight: 'calc(100dvh - 120px)',
+          objectFit: 'contain',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          display: 'block',
+        }}
+        draggable={false}
+      />
+
+      {/* Previous */}
+      {idx > 0 && (
+        <button
+          type='button'
+          aria-label='Previous image'
+          onClick={() => setIdx((i) => i - 1)}
+          style={{
+            position: 'absolute',
+            left: 16,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.15)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <ChevronLeft size={22} color='#fff' />
+        </button>
+      )}
+
+      {/* Next */}
+      {idx < images.length - 1 && (
+        <button
+          type='button'
+          aria-label='Next image'
+          onClick={() => setIdx((i) => i + 1)}
+          style={{
+            position: 'absolute',
+            right: 16,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.15)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <ChevronRight size={22} color='#fff' />
+        </button>
+      )}
+
+      {/* Dot indicators */}
+      {images.length > 1 && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 28,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 6,
+          }}
+        >
+          {images.map((_, i) => (
+            <button
+              key={String(i)}
+              type='button'
+              aria-label={`Go to image ${i + 1}`}
+              onClick={() => setIdx(i)}
+              style={{
+                width: i === idx ? 20 : 8,
+                height: 8,
+                borderRadius: 4,
+                background: i === idx ? '#fff' : 'rgba(255,255,255,0.35)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Backdrop tap to close */}
+      <button
+        type='button'
+        aria-label='Close gallery'
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: -1,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+        onClick={() => onClose(idx)}
+      />
     </div>
   )
 }

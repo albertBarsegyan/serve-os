@@ -15,17 +15,15 @@ function resolveWsUrl(): string {
 let _socket: Socket | undefined
 
 export function getSocket(): Socket {
-  if (typeof window === 'undefined') {
+  if (globalThis.window === undefined) {
     throw new Error('getSocket() must only be called client-side')
   }
-  if (!_socket) {
-    _socket = io(resolveWsUrl(), {
-      withCredentials: true,
-      transports: ['websocket', 'polling'],
-      // autoConnect false so callers control when the connection opens.
-      autoConnect: false,
-    })
-  }
+  _socket ??= io(resolveWsUrl(), {
+    withCredentials: true,
+    transports: ['websocket', 'polling'],
+    // autoConnect false so callers control when the connection opens.
+    autoConnect: false,
+  })
   return _socket
 }
 

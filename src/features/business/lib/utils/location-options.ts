@@ -1,4 +1,14 @@
-import { City, Country } from 'country-state-city'
+import {
+  getCountries as _getCountries,
+  getCountryNameByCode as _getCountryNameByCode,
+  configure,
+  getAllCitiesOfCountry,
+} from '@countrystatecity/countries-browser'
+
+// Use locally-served data instead of the default jsDelivr CDN.
+// Dev:  Vite middleware streams files from node_modules (cscDataPlugin).
+// Prod: files are copied to .output/public/csc-data/ during build (cscDataPlugin).
+configure({ baseURL: '/csc-data' })
 
 export interface LocationOption {
   value: string
@@ -10,52 +20,40 @@ export interface CurrencyOption {
   label: string
 }
 
-// ─── Lazy singletons ──────────────────────────────────────────────────────────
+let countryOptsPromise: Promise<LocationOption[]> | null = null
+let currencyOptsPromise: Promise<CurrencyOption[]> | null = null
 
-const lazy = <T>(init: () => T): (() => T) => {
-  let cache: T | undefined
-  let initialized = false
-  return () => {
-    if (!initialized) {
-      cache = init()
-      initialized = true
-    }
-    return cache as T
-  }
+const loadCountryOpts = (): Promise<LocationOption[]> => {
+  countryOptsPromise ??= _getCountries().then((countries) =>
+    countries
+      .map(({ iso2, name }) => ({ value: iso2, label: name }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  )
+  return countryOptsPromise
 }
 
-const getCountries = lazy(() => Country.getAllCountries())
-const getCountryMap = lazy(() => new Map(getCountries().map((c) => [c.isoCode, c])))
-const getCountryOpts = lazy(() =>
-  getCountries()
-    .map(({ isoCode, name }) => ({ value: isoCode, label: name }))
-    .sort((a, b) => a.label.localeCompare(b.label)),
-)
-const getCurrencyOpts = lazy(() =>
-  Array.from(
-    new Set(
-      getCountries()
-        .filter((c) => c.currency)
-        .map((c) => c.currency.toUpperCase()),
-    ),
+const loadCurrencyOpts = (): Promise<CurrencyOption[]> => {
+  currencyOptsPromise ??= _getCountries().then((countries) =>
+    Array.from(new Set(countries.filter((c) => c.currency).map((c) => c.currency.toUpperCase())))
+      .sort((a, b) => a.localeCompare(b))
+      .map((value) => ({ value, label: value })),
   )
-    .sort((a, b) => a.localeCompare(b))
-    .map((value) => ({ value, label: value })),
-)
+  return currencyOptsPromise
+}
 
 const cityCache = new Map<string, LocationOption[]>()
 
-// ─── Public API ───────────────────────────────────────────────────────────────
+export const getCountryOptions = (): Promise<LocationOption[]> => loadCountryOpts()
 
-export const getCountryOptions = (): LocationOption[] => getCountryOpts()
+export const getCityOptions = async (countryCode?: string): Promise<LocationOption[]> => {
+  if (!countryCode || typeof window === 'undefined') return []
 
-export const getCityOptions = (countryCode?: string): LocationOption[] => {
-  if (!countryCode) return []
+  const cached = cityCache.get(countryCode)
+  if (cached) return cached
 
-  if (cityCache.has(countryCode)) return cityCache.get(countryCode) ?? []
-
+  const rawCities = await getAllCitiesOfCountry(countryCode)
   const seen = new Set<string>()
-  const cities = (City.getCitiesOfCountry(countryCode) ?? [])
+  const cities = rawCities
     .reduce<LocationOption[]>((acc, { name }) => {
       if (!seen.has(name)) {
         seen.add(name)
@@ -69,18 +67,23 @@ export const getCityOptions = (countryCode?: string): LocationOption[] => {
   return cities
 }
 
-export const getCountryNameByCode = (countryCode?: string): string | undefined =>
-  countryCode ? getCountryMap().get(countryCode)?.name : undefined
-
-export const getCountryCurrencyByCode = (countryCode?: string): string | undefined => {
+export const getCountryNameByCode = async (countryCode?: string): Promise<string | undefined> => {
   if (!countryCode) return undefined
-  const currency = getCountryMap().get(countryCode)?.currency
-  return currency ? currency.toUpperCase() : undefined
+  return (await _getCountryNameByCode(countryCode)) ?? undefined
 }
 
-export const getCurrencyOptions = (): CurrencyOption[] => getCurrencyOpts()
+export const getCountryCurrencyByCode = async (
+  countryCode?: string,
+): Promise<string | undefined> => {
+  if (!countryCode) return undefined
+  const countries = await _getCountries()
+  const country = countries.find((c) => c.iso2 === countryCode)
+  return country?.currency ? country.currency.toUpperCase() : undefined
+}
 
-export const formatBackendLocation = (city: string, countryCode: string): string => {
-  const countryLabel = getCountryNameByCode(countryCode) ?? countryCode
+export const getCurrencyOptions = (): Promise<CurrencyOption[]> => loadCurrencyOpts()
+
+export const formatBackendLocation = async (city: string, countryCode: string): Promise<string> => {
+  const countryLabel = (await getCountryNameByCode(countryCode)) ?? countryCode
   return `${city.trim()}, ${countryLabel.trim()}`
 }

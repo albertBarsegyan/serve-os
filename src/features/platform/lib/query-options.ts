@@ -103,6 +103,7 @@ export function kitchenActiveOrdersQueryOptions() {
   return queryOptions({
     queryKey: platformQueryKeys.kitchenOrders(),
     queryFn: fetchActiveKitchenOrders,
+    refetchInterval: 15000,
   })
 }
 

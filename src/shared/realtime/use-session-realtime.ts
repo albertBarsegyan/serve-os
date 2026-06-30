@@ -19,7 +19,7 @@ export function useSessionRealtime(token: string): void {
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !token) return
+    if (globalThis.window === undefined || !token) return
 
     const socket = getSocket()
 

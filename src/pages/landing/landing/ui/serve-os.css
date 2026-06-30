@@ -693,7 +693,7 @@ section {
 }
 .dash {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 160px 1fr;
   min-height: 380px;
 }
 .dash-side {
@@ -1820,6 +1820,34 @@ footer.site {
   .about-lead {
     font-size: 17px;
   }
+
+  /* Dashboard mockup: icon-only sidebar on tablet */
+  .dash {
+    grid-template-columns: 44px 1fr;
+  }
+  .dash-side .brandrow {
+    justify-content: center;
+    font-size: 0;
+    gap: 0;
+  }
+  .navit {
+    font-size: 0;
+    justify-content: center;
+    padding: 8px 6px;
+    gap: 0;
+  }
+  .navit svg {
+    width: 16px;
+    height: 16px;
+  }
+  /* KPIs: 2×2 grid */
+  .kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* Stack chart and top-items cards */
+  .dash-lower {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 480px) {
   .wrap {
@@ -1866,5 +1894,21 @@ footer.site {
   .mob-ctas .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  /* Dashboard mockup: hide sidebar entirely on mobile */
+  .dash {
+    grid-template-columns: 1fr;
+    min-height: 300px;
+  }
+  .dash-side {
+    display: none;
+  }
+  .dash-main {
+    padding: 10px;
+    gap: 8px;
+  }
+  .kpi .val {
+    font-size: 17px;
   }
 }

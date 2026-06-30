@@ -19,6 +19,10 @@ function applyTheme(theme: Theme, animate = false) {
   root.classList.add(theme)
   root.setAttribute('data-theme', theme)
   root.style.colorScheme = theme
+
+  const bg = getComputedStyle(root).getPropertyValue('--background').trim()
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+  if (meta && bg) meta.content = bg
 }
 
 const useThemeStore = create<ThemeState>()(

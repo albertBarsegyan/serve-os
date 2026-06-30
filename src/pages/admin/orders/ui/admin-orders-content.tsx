@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ClipboardList, Eye, Filter, MoreHorizontal, Plus, Search } from 'lucide-react'
+import { ClipboardList, Eye, Filter, Plus, Search } from 'lucide-react'
 import { useId, useMemo, useState } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -298,6 +298,7 @@ export function AdminOrdersContent() {
   const [search, setSearch] = useState('')
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
   const [addOrderOpen, setAddOrderOpen] = useState(false)
+  const [pendingOrderIds, setPendingOrderIds] = useState<Set<string>>(new Set())
   const activeBusiness = useActiveBusiness()
   const currency = activeBusiness?.currency ?? 'USD'
   const businessId = activeBusiness?.id ?? ''
@@ -330,14 +331,24 @@ export function AdminOrdersContent() {
 
   const confirmMutation = useConfirmOrderMutation()
   const updateMutation = useUpdateOrderStatusMutation()
-  const isBusyGlobal = confirmMutation.isPending || updateMutation.isPending
+
+  const markPending = (orderId: string) => setPendingOrderIds((prev) => new Set([...prev, orderId]))
+  const clearPending = (orderId: string) =>
+    setPendingOrderIds((prev) => {
+      const next = new Set(prev)
+      next.delete(orderId)
+      return next
+    })
 
   const confirmOrderAction = async (orderId: string) => {
+    markPending(orderId)
     try {
       await confirmMutation.mutateAsync(orderId)
-      showSuccess('Order confirmed and sent to kitchen')
+      showSuccess('Order confirmed')
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
+    } finally {
+      clearPending(orderId)
     }
   }
 
@@ -345,11 +356,14 @@ export function AdminOrdersContent() {
     orderId: string,
     status: 'IN_KITCHEN' | 'READY' | 'DELIVERED' | 'CLOSED' | 'CANCELLED',
   ) => {
+    markPending(orderId)
     try {
       await updateMutation.mutateAsync({ orderId, data: { status } })
       showSuccess('Order status updated')
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
+    } finally {
+      clearPending(orderId)
     }
   }
 
@@ -512,10 +526,10 @@ export function AdminOrdersContent() {
                           size='sm'
                           type='button'
                           className='rounded-full'
-                          disabled={isBusyGlobal}
+                          disabled={pendingOrderIds.has(order.id)}
                           onClick={() => void confirmOrderAction(order.id)}
                         >
-                          Confirm
+                          {pendingOrderIds.has(order.id) ? 'Confirming…' : 'Confirm'}
                         </Button>
                       )}
                       {order.status !== 'CREATED' && nextStatus[order.status] && (
@@ -524,18 +538,17 @@ export function AdminOrdersContent() {
                           size='sm'
                           type='button'
                           className='rounded-full'
-                          disabled={isBusyGlobal}
+                          disabled={pendingOrderIds.has(order.id)}
                           onClick={() => {
                             const next = nextStatus[order.status]
                             if (next) void moveOrderForward(order.id, next)
                           }}
                         >
-                          To {String(nextStatus[order.status]).toLowerCase().replaceAll('_', ' ')}
+                          {pendingOrderIds.has(order.id)
+                            ? '…'
+                            : `To ${String(nextStatus[order.status]).toLowerCase().replaceAll('_', ' ')}`}
                         </Button>
                       )}
-                      <Button variant='ghost' size='icon' className='rounded-full' type='button'>
-                        <MoreHorizontal className='h-4 w-4' />
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

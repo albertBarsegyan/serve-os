@@ -12,10 +12,12 @@ import {
   updateBusinessFormSchema,
 } from '#/features/business/lib/schemas/update-business-form.schema'
 import {
+  type CurrencyOption,
   getCityOptions,
   getCountryNameByCode,
   getCountryOptions,
   getCurrencyOptions,
+  type LocationOption,
 } from '#/features/business/lib/utils/location-options'
 import {
   useBusinessesQuery,
@@ -76,9 +78,18 @@ export function AdminSettingsContent() {
   const selectedType = watch('type')
   const selectedFeatures = watch('features')
 
-  const countryOptions = useMemo(() => getCountryOptions(), [])
-  const cityOptions = useMemo(() => getCityOptions(selectedCountry), [selectedCountry])
-  const currencyOptions = useMemo(() => getCurrencyOptions(), [])
+  const [countryOptions, setCountryOptions] = useState<LocationOption[]>([])
+  const [cityOptions, setCityOptions] = useState<LocationOption[]>([])
+  const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>([])
+
+  useEffect(() => {
+    getCountryOptions().then(setCountryOptions)
+    getCurrencyOptions().then(setCurrencyOptions)
+  }, [])
+
+  useEffect(() => {
+    getCityOptions(selectedCountry).then(setCityOptions)
+  }, [selectedCountry])
 
   // Populate form once the active business is loaded
   useEffect(() => {
@@ -110,7 +121,8 @@ export function AdminSettingsContent() {
     if (!currentBusiness) return
 
     try {
-      const countryLabel = getCountryNameByCode(values.locationCountry) ?? values.locationCountry
+      const countryLabel =
+        (await getCountryNameByCode(values.locationCountry)) ?? values.locationCountry
       const payload: UpdateBusinessRequest = {
         logoUrl,
         name: values.name.trim(),
