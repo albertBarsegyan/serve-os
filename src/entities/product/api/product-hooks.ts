@@ -19,7 +19,7 @@ const PRODUCTS_QUERY_KEY = 'products'
 export function useGetProducts(businessId: string) {
   return useQuery({
     queryKey: [PRODUCTS_QUERY_KEY, businessId],
-    queryFn: () => getProductsServerFn({ data: { businessId } }),
+    queryFn: () => getProductsServerFn(),
     enabled: !!businessId,
   })
 }
@@ -27,7 +27,7 @@ export function useGetProducts(businessId: string) {
 export function useGetProduct(businessId: string, productId: string) {
   return useQuery({
     queryKey: [PRODUCTS_QUERY_KEY, businessId, productId],
-    queryFn: () => getProductServerFn({ data: { businessId, productId } }),
+    queryFn: () => getProductServerFn({ data: { productId } }),
     enabled: !!businessId && !!productId,
   })
 }
@@ -41,6 +41,8 @@ export function useCreateProduct() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId] })
       queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products-paged'] })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
 }
@@ -62,6 +64,8 @@ export function useUpdateProduct() {
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId] })
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId, data.id] })
       queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products-paged'] })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
 }
@@ -75,6 +79,8 @@ export function useDeleteProduct() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, variables.businessId] })
       queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products-paged'] })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
 }
@@ -101,6 +107,8 @@ export function useReorderProductImages() {
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId] })
       queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId, data.id] })
       queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products-paged'] })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
 }

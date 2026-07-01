@@ -16,7 +16,7 @@ export const CATEGORIES_QUERY_KEY = 'categories'
 export function useGetCategories(businessId: string) {
   return useQuery({
     queryKey: [CATEGORIES_QUERY_KEY, businessId],
-    queryFn: () => getCategoriesServerFn({ data: { businessId } }),
+    queryFn: () => getCategoriesServerFn(),
     enabled: !!businessId,
   })
 }
@@ -24,7 +24,7 @@ export function useGetCategories(businessId: string) {
 export function useGetCategory(businessId: string, categoryId: string) {
   return useQuery({
     queryKey: [CATEGORIES_QUERY_KEY, businessId, categoryId],
-    queryFn: () => getCategoryServerFn({ data: { businessId, categoryId } }),
+    queryFn: () => getCategoryServerFn({ data: { categoryId } }),
     enabled: !!businessId && !!categoryId,
   })
 }

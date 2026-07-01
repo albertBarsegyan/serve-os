@@ -42,21 +42,19 @@ export const createProductServerFn = createServerFn({
  */
 export const getProductsServerFn = createServerFn({
   method: 'GET',
-})
-  .inputValidator((data: { businessId: string }) => data)
-  .handler(async (): Promise<ProductResponse[]> => {
-    const request = await serverApiInstance<ProductResponse[]>(`menu/products`, {
-      method: 'GET',
-    })
-
-    forwardCookies(request)
-
-    if (!request.ok) {
-      throw new Error('Failed to fetch products')
-    }
-
-    return request.json()
+}).handler(async (): Promise<ProductResponse[]> => {
+  const request = await serverApiInstance<ProductResponse[]>(`menu/products`, {
+    method: 'GET',
   })
+
+  forwardCookies(request)
+
+  if (!request.ok) {
+    throw new Error('Failed to fetch products')
+  }
+
+  return request.json()
+})
 
 /**
  * Get single product
@@ -64,7 +62,7 @@ export const getProductsServerFn = createServerFn({
 export const getProductServerFn = createServerFn({
   method: 'GET',
 })
-  .inputValidator((data: { businessId: string; productId: string }) => data)
+  .inputValidator((data: { productId: string }) => data)
   .handler(async ({ data }): Promise<ProductResponse> => {
     const request = await serverApiInstance<ProductResponse>(`menu/products/${data.productId}`, {
       method: 'GET',

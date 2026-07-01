@@ -4,7 +4,7 @@ import { cn } from '#/lib/utils'
 import { type ImageEntityType, uploadImage } from '#/shared/api/images/images.api'
 import { ImageEditorDialog } from '#/shared/ui/image-editor-dialog'
 
-const ALLOWED_MIME_TYPES = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp']
+const ALLOWED_MIME_TYPES = new Set(['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'])
 const MAX_FILE_SIZE = 3 * 1024 * 1024 // 3 MB
 
 type ImageUploadProps = {
@@ -17,6 +17,7 @@ type ImageUploadProps = {
   className?: string
   previewShape?: 'square' | 'circle'
   enableEditor?: boolean
+  id?: string
 }
 
 export function ImageUpload({
@@ -28,7 +29,8 @@ export function ImageUpload({
   className,
   previewShape = 'square',
   enableEditor = false,
-}: ImageUploadProps) {
+  id,
+}: Readonly<ImageUploadProps>) {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editorSrc, setEditorSrc] = useState<string | null>(null)
@@ -52,7 +54,7 @@ export function ImageUpload({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    if (!ALLOWED_MIME_TYPES.has(file.type)) {
       setError('Only SVG, PNG, JPG, JPEG, and WebP files are allowed')
       if (inputRef.current) inputRef.current.value = ''
       return
@@ -136,6 +138,7 @@ export function ImageUpload({
       {error && <p className='text-xs text-red-600'>{error}</p>}
 
       <input
+        id={id}
         ref={inputRef}
         type='file'
         accept='.svg,.png,.jpg,.jpeg,.webp'

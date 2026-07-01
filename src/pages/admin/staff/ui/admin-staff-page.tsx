@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { useRouteContext } from '@tanstack/react-router'
 import { Copy, Edit2, LockOpen, Search, Trash2, UserPlus } from 'lucide-react'
 import { useId, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -35,7 +34,8 @@ import {
 import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
-import { StaffRole as StaffRoleEnum } from '#/shared/libs/permissions/index.ts'
+import { StaffPermission } from '#/shared/libs/permissions/index.ts'
+import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
 import { ImageUpload } from '#/shared/ui/image-upload'
@@ -60,10 +60,8 @@ function isStaffLocked(member: StaffMember): boolean {
 }
 
 export function AdminStaffPage() {
-  const { authUser } = useRouteContext({ from: '/_admin' })
-  const canUnlock =
-    authUser?.type === 'owner' ||
-    (authUser?.type === 'staff' && authUser.role === StaffRoleEnum.MANAGER)
+  const { isOwner, hasPermission } = usePermissions()
+  const canUnlock = isOwner() || hasPermission(StaffPermission.STAFF_MANAGE)
 
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
