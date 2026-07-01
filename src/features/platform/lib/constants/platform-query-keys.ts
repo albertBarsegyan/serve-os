@@ -20,6 +20,19 @@ export const platformQueryKeys = {
       filters?.categoryId ?? 'all-categories',
       filters?.availableOnly ? 'available-only' : 'all',
     ] as const,
+  productsPaged: (
+    page: number,
+    limit: number,
+    filters?: { categoryId?: string; availableOnly?: boolean },
+  ) =>
+    [
+      ...platformQueryKeys.root,
+      'products-paged',
+      page,
+      limit,
+      filters?.categoryId ?? 'all-categories',
+      filters?.availableOnly ? 'available-only' : 'all',
+    ] as const,
 
   modifierGroups: (businessId: string) =>
     [...platformQueryKeys.root, 'modifier-groups', businessId] as const,
@@ -28,22 +41,33 @@ export const platformQueryKeys = {
   modifiers: (businessId: string, groupId: string) =>
     [...platformQueryKeys.modifierGroupById(businessId, groupId), 'modifiers'] as const,
 
-  orders: (filters?: { status?: string; tableId?: string; limit?: number; offset?: number }) =>
+  orders: (filters?: { status?: string; tableId?: string }) =>
     [
       ...platformQueryKeys.root,
       'orders',
       filters?.status ?? 'all-statuses',
       filters?.tableId ?? 'all-tables',
-      filters?.limit ?? 'no-limit',
-      filters?.offset ?? 0,
+    ] as const,
+  ordersPaged: (page: number, limit: number, filters?: { status?: string; tableId?: string }) =>
+    [
+      ...platformQueryKeys.root,
+      'orders-paged',
+      page,
+      limit,
+      filters?.status ?? 'all-statuses',
+      filters?.tableId ?? 'all-tables',
     ] as const,
   orderById: (orderId: string) => [...platformQueryKeys.root, 'orders', orderId] as const,
 
   kitchenOrders: () => [...platformQueryKeys.root, 'kitchen-orders'] as const,
 
   payments: () => [...platformQueryKeys.root, 'payments'] as const,
+  paymentsPaged: (page: number, limit: number) =>
+    [...platformQueryKeys.root, 'payments-paged', page, limit] as const,
 
   staff: (businessId: string) => [...platformQueryKeys.root, 'staff', businessId] as const,
+  staffPaged: (businessId: string, page: number, limit: number) =>
+    [...platformQueryKeys.root, 'staff-paged', businessId, page, limit] as const,
   staffById: (businessId: string, staffId: string) =>
     [...platformQueryKeys.staff(businessId), staffId] as const,
 }

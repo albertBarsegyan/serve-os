@@ -12,9 +12,13 @@ import {
   listModifierGroups,
   listModifiers,
   listOrders,
+  listOrdersPaged,
   listPayments,
+  listPaymentsPaged,
   listProducts,
+  listProductsPaged,
   listStaff,
+  listStaffPaged,
   listTables,
 } from '#/shared/api/platform/platform-api.ts'
 
@@ -127,5 +131,44 @@ export function staffByIdQueryOptions(businessId: string, staffId: string) {
     queryKey: platformQueryKeys.staffById(businessId, staffId),
     queryFn: () => getStaffById(businessId, staffId),
     enabled: Boolean(businessId) && Boolean(staffId),
+  })
+}
+
+// ── Paginated variants ────────────────────────────────────────────────────────
+
+export function pagedOrdersQueryOptions(
+  page: number,
+  limit: number,
+  filters?: { status?: OrderStatus; tableId?: string },
+) {
+  return queryOptions({
+    queryKey: platformQueryKeys.ordersPaged(page, limit, filters),
+    queryFn: () => listOrdersPaged({ page, limit, ...filters }),
+  })
+}
+
+export function pagedPaymentsQueryOptions(page: number, limit: number) {
+  return queryOptions({
+    queryKey: platformQueryKeys.paymentsPaged(page, limit),
+    queryFn: () => listPaymentsPaged({ page, limit }),
+  })
+}
+
+export function pagedProductsQueryOptions(
+  page: number,
+  limit: number,
+  filters?: { categoryId?: string; availableOnly?: boolean },
+) {
+  return queryOptions({
+    queryKey: platformQueryKeys.productsPaged(page, limit, filters),
+    queryFn: () => listProductsPaged({ page, limit, ...filters }),
+  })
+}
+
+export function pagedStaffQueryOptions(businessId: string, page: number, limit: number) {
+  return queryOptions({
+    queryKey: platformQueryKeys.staffPaged(businessId, page, limit),
+    queryFn: () => listStaffPaged(businessId, { page, limit }),
+    enabled: Boolean(businessId),
   })
 }

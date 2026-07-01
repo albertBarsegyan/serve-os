@@ -13,13 +13,14 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import type { PaymentMethod, PaymentStatus } from '#/features/platform/api/platform.types.ts'
-import { paymentsQueryOptions } from '#/features/platform/lib/query-options.ts'
+import { pagedPaymentsQueryOptions } from '#/features/platform/lib/query-options.ts'
 import { useConfirmPaymentMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
+import { type PageLimit, PaginationControls } from '#/shared/ui/pagination-controls'
 
 function statusBadgeVariant(status: PaymentStatus): 'success' | 'warning' | 'outline' {
   if (status === 'CONFIRMED') return 'success'
@@ -38,17 +39,21 @@ const ALL_STATUSES: (PaymentStatus | 'all')[] = ['all', 'PENDING', 'CONFIRMED', 
 export function AdminPaymentsContent() {
   const [activeFilter, setActiveFilter] = useState<PaymentStatus | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState<PageLimit>(20)
   const currency = useActiveBusiness()?.currency ?? 'USD'
 
   const {
-    data: payments = [],
+    data: pagedPayments,
     isPending,
     isError,
     error,
     refetch,
-  } = useQuery(paymentsQueryOptions())
+  } = useQuery(pagedPaymentsQueryOptions(page, limit))
 
   const confirmMutation = useConfirmPaymentMutation()
+
+  const payments = pagedPayments?.data ?? []
 
   const filteredPayments = useMemo(() => {
     const byStatus =
@@ -71,6 +76,16 @@ export function AdminPaymentsContent() {
     }
   }
 
+  const handleFilterChange = (status: PaymentStatus | 'all') => {
+    setActiveFilter(status)
+    setPage(1)
+  }
+
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    setPage(1)
+  }
+
   return (
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
@@ -81,7 +96,7 @@ export function AdminPaymentsContent() {
         <div className='flex items-center gap-2'>
           <Badge variant='outline' className='h-8 rounded-full bg-muted px-4 text-xs font-semibold'>
             <CreditCard className='mr-1.5 h-3.5 w-3.5' />
-            {payments.filter((p) => p.status === 'PENDING').length} pending
+            {payments.filter((p) => p.status === 'PENDING').length} pending this page
           </Badge>
         </div>
       </div>
@@ -107,7 +122,7 @@ export function AdminPaymentsContent() {
                 <button
                   key={status}
                   type='button'
-                  onClick={() => setActiveFilter(status)}
+                  onClick={() => handleFilterChange(status)}
                   className={cn(
                     'uppercase whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all',
                     activeFilter === status
@@ -123,10 +138,10 @@ export function AdminPaymentsContent() {
               <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
               <input
                 type='text'
-                placeholder='Search payments…'
+                placeholder='Search this page…'
                 className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
           </div>
@@ -204,6 +219,19 @@ export function AdminPaymentsContent() {
               ))}
             </TableBody>
           </Table>
+          {pagedPayments && pagedPayments.total > 0 && (
+            <PaginationControls
+              page={page}
+              limit={limit}
+              total={pagedPayments.total}
+              totalPages={pagedPayments.totalPages}
+              onPageChange={setPage}
+              onLimitChange={(l) => {
+                setLimit(l)
+                setPage(1)
+              }}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

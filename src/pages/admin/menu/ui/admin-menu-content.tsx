@@ -18,7 +18,7 @@ import {
 import type { MenuCategory } from '#/features/platform/api/platform.types.ts'
 import {
   menuCategoriesQueryOptions,
-  productsQueryOptions,
+  pagedProductsQueryOptions,
 } from '#/features/platform/lib/query-options.ts'
 import {
   createMenuCategorySchema,
@@ -43,6 +43,7 @@ import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
 import { ImageUpload } from '#/shared/ui/image-upload'
 import { Modal } from '#/shared/ui/modal'
+import { type PageLimit, PaginationControls } from '#/shared/ui/pagination-controls'
 
 type CreateCategoryFormValues = z.infer<typeof createMenuCategorySchema>
 type UpdateCategoryFormValues = z.infer<typeof updateMenuCategorySchema>
@@ -50,6 +51,8 @@ type UpdateCategoryFormValues = z.infer<typeof updateMenuCategorySchema>
 export function AdminMenuContent() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState<PageLimit>(20)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<MenuCategory | null>(null)
@@ -74,7 +77,20 @@ export function AdminMenuContent() {
   const canToggleAvailability = isOwner() || hasPermission(StaffPermission.MENU_AVAILABILITY)
 
   const categoriesQuery = useQuery(menuCategoriesQueryOptions(true))
-  const productsQuery = useQuery(productsQueryOptions())
+
+  const activeCategoryId = useMemo(() => {
+    if (activeCategory === 'All') return undefined
+    return (categoriesQuery.data ?? []).find((c) => c.name === activeCategory)?.id
+  }, [activeCategory, categoriesQuery.data])
+
+  const productsQuery = useQuery(
+    pagedProductsQueryOptions(
+      page,
+      limit,
+      activeCategoryId ? { categoryId: activeCategoryId } : undefined,
+    ),
+  )
+  const pagedProducts = productsQuery.data
 
   const createCategoryMutation = useCreateMenuCategoryMutation()
   const updateCategoryMutation = useUpdateMenuCategoryMutation()
@@ -109,27 +125,18 @@ export function AdminMenuContent() {
       .map((category) => ({ id: category.id, label: category.name }))
   }, [categoriesQuery.data])
 
-  const products = productsQuery.data ?? []
+  const products = pagedProducts?.data ?? []
 
   const filteredItems = useMemo(() => {
-    const byCategory =
-      activeCategory === 'All'
-        ? products
-        : products.filter((item) => {
-            const category = categoryOptions.find((option) => option.id === item.categoryId)
-            return category?.label === activeCategory
-          })
-
     const needle = search.trim().toLowerCase()
-    if (!needle) return byCategory
-
-    return byCategory.filter((item) =>
+    if (!needle) return products
+    return products.filter((item) =>
       [item.name, item.description ?? '', String(item.price)]
         .join(' ')
         .toLowerCase()
         .includes(needle),
     )
-  }, [activeCategory, categoryOptions, products, search])
+  }, [products, search])
 
   const onCategorySubmit = async (values: CreateCategoryFormValues) => {
     try {
@@ -179,7 +186,10 @@ export function AdminMenuContent() {
     try {
       await deleteCategoryMutation.mutateAsync(deletingCategory.id)
       showSuccess('Category deleted')
-      if (activeCategory === deletingCategory.name) setActiveCategory('All')
+      if (activeCategory === deletingCategory.name) {
+        setActiveCategory('All')
+        setPage(1)
+      }
       setDeletingCategory(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -259,7 +269,10 @@ export function AdminMenuContent() {
           <CardContent className='space-y-1 p-2 pt-0'>
             <button
               type='button'
-              onClick={() => setActiveCategory('All')}
+              onClick={() => {
+                setActiveCategory('All')
+                setPage(1)
+              }}
               className={cn(
                 'w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-all',
                 activeCategory === 'All'
@@ -273,7 +286,10 @@ export function AdminMenuContent() {
               <div key={category.id} className='group flex items-center gap-1'>
                 <button
                   type='button'
-                  onClick={() => setActiveCategory(category.name)}
+                  onClick={() => {
+                    setActiveCategory(category.name)
+                    setPage(1)
+                  }}
                   className={cn(
                     'flex flex-1 items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all',
                     activeCategory === category.name
@@ -326,7 +342,10 @@ export function AdminMenuContent() {
                   placeholder='Search products...'
                   className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => {
+                    setSearch(event.target.value)
+                    setPage(1)
+                  }}
                 />
               </div>
             </div>
@@ -456,6 +475,19 @@ export function AdminMenuContent() {
                 })}
               </TableBody>
             </Table>
+            {pagedProducts && pagedProducts.total > 0 && (
+              <PaginationControls
+                page={page}
+                limit={limit}
+                total={pagedProducts.total}
+                totalPages={pagedProducts.totalPages}
+                onPageChange={setPage}
+                onLimitChange={(l) => {
+                  setLimit(l)
+                  setPage(1)
+                }}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

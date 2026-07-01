@@ -1,3 +1,12 @@
+// ── Shared pagination types ───────────────────────────────────────────────────
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 // ── Re-exports: business domain (authoritative source for BusinessFeature) ────
 export { BusinessFeature } from '#/features/business/api/business-domain.ts'
 

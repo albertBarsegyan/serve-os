@@ -20,6 +20,7 @@ import type {
   ModifierGroup,
   Order,
   OrderStatus,
+  PaginatedResponse,
   Payment,
   ProcessPaymentRequest,
   Product,
@@ -43,11 +44,14 @@ import type {
 } from '#/features/platform/api/platform.types.ts'
 import { clientApiInstance } from '#/shared/api/client-instance.ts'
 
-type ListResponse<T> = T[] | { data?: T[] }
+type ListResponse<T> =
+  | T[]
+  | { data: T[]; total?: number; page?: number; limit?: number; totalPages?: number }
+  | { data?: T[] }
 
 function unwrapList<T>(payload: ListResponse<T>): T[] {
   if (Array.isArray(payload)) return payload
-  return payload.data ?? []
+  return (payload as { data?: T[] }).data ?? []
 }
 
 // --- Tables ---
@@ -149,10 +153,30 @@ export function listProducts(filters?: {
       searchParams: {
         ...(filters?.categoryId ? { categoryId: filters.categoryId } : {}),
         ...(filters?.availableOnly ? { availableOnly: 'true' } : {}),
+        limit: '500',
+        page: '1',
       },
     })
     .json<ListResponse<Product>>()
     .then(unwrapList)
+}
+
+export function listProductsPaged(params: {
+  page: number
+  limit: number
+  categoryId?: string
+  availableOnly?: boolean
+}): Promise<PaginatedResponse<Product>> {
+  return clientApiInstance
+    .get('menu/products', {
+      searchParams: {
+        page: String(params.page),
+        limit: String(params.limit),
+        ...(params.categoryId ? { categoryId: params.categoryId } : {}),
+        ...(params.availableOnly ? { availableOnly: 'true' } : {}),
+      },
+    })
+    .json<PaginatedResponse<Product>>()
 }
 
 export function updateProduct(productId: string, data: UpdateProductRequest): Promise<Product> {
@@ -273,23 +297,36 @@ export function confirmOrder(orderId: string): Promise<Order> {
   return clientApiInstance.post(`orders/${orderId}/confirm`).json<Order>()
 }
 
-export function listOrders(filters?: {
-  status?: OrderStatus
-  tableId?: string
-  limit?: number
-  offset?: number
-}): Promise<Order[]> {
+export function listOrders(filters?: { status?: OrderStatus; tableId?: string }): Promise<Order[]> {
   return clientApiInstance
     .get('orders', {
       searchParams: {
         ...(filters?.status ? { status: filters.status } : {}),
         ...(filters?.tableId ? { tableId: filters.tableId } : {}),
-        ...(typeof filters?.limit === 'number' ? { limit: String(filters.limit) } : {}),
-        ...(typeof filters?.offset === 'number' ? { offset: String(filters.offset) } : {}),
+        limit: '500',
+        page: '1',
       },
     })
     .json<ListResponse<Order>>()
     .then(unwrapList)
+}
+
+export function listOrdersPaged(params: {
+  page: number
+  limit: number
+  status?: OrderStatus
+  tableId?: string
+}): Promise<PaginatedResponse<Order>> {
+  return clientApiInstance
+    .get('orders', {
+      searchParams: {
+        page: String(params.page),
+        limit: String(params.limit),
+        ...(params.status ? { status: params.status } : {}),
+        ...(params.tableId ? { tableId: params.tableId } : {}),
+      },
+    })
+    .json<PaginatedResponse<Order>>()
 }
 
 export function getOrderById(orderId: string): Promise<Order> {
@@ -311,7 +348,21 @@ export function createPayment(data: CreatePaymentRequest): Promise<Payment> {
 }
 
 export function listPayments(): Promise<Payment[]> {
-  return clientApiInstance.get('payments').json<ListResponse<Payment>>().then(unwrapList)
+  return clientApiInstance
+    .get('payments', { searchParams: { limit: '500', page: '1' } })
+    .json<ListResponse<Payment>>()
+    .then(unwrapList)
+}
+
+export function listPaymentsPaged(params: {
+  page: number
+  limit: number
+}): Promise<PaginatedResponse<Payment>> {
+  return clientApiInstance
+    .get('payments', {
+      searchParams: { page: String(params.page), limit: String(params.limit) },
+    })
+    .json<PaginatedResponse<Payment>>()
 }
 
 export function confirmPayment(paymentId: string, data: ConfirmPaymentRequest): Promise<Payment> {
@@ -386,9 +437,20 @@ export function changePassword(data: ChangePasswordRequest): Promise<void> {
 
 export async function listStaff(businessId: string): Promise<StaffMember[]> {
   const payload = await clientApiInstance
-    .get(`businesses/${businessId}/staff`)
+    .get(`businesses/${businessId}/staff`, { searchParams: { limit: '500', page: '1' } })
     .json<ListResponse<StaffMember>>()
   return unwrapList(payload)
+}
+
+export function listStaffPaged(
+  businessId: string,
+  params: { page: number; limit: number },
+): Promise<PaginatedResponse<StaffMember>> {
+  return clientApiInstance
+    .get(`businesses/${businessId}/staff`, {
+      searchParams: { page: String(params.page), limit: String(params.limit) },
+    })
+    .json<PaginatedResponse<StaffMember>>()
 }
 
 export function getStaffById(businessId: string, staffId: string): Promise<StaffMember> {

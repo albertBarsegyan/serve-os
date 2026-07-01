@@ -757,8 +757,8 @@ export function AdminTable({
           document.body,
         )}
 
-      {/* Start-order dialog for free tables */}
       <CreateStaffOrderDialog
+        selectedTableId={table.id}
         open={isCreateOrderOpen}
         onClose={() => setIsCreateOrderOpen(false)}
       />
