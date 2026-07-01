@@ -10,11 +10,7 @@ import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
-import {
-  type BusinessType,
-  businessTypeLabels,
-  FEATURE_PRESETS,
-} from '#/features/business/api/business-domain.ts'
+import { businessTypeLabels, FEATURE_PRESETS } from '#/features/business/api/business-domain.ts'
 import {
   type CreateBusinessFormValues,
   createBusinessFormSchema,
@@ -389,7 +385,7 @@ function AdminSetupRoute() {
                     <FeatureSelector
                       selectedFeatures={field.value}
                       onFeaturesChange={field.onChange}
-                      selectedType={selectedType as BusinessType}
+                      selectedType={selectedType}
                     />
                   )}
                 />
