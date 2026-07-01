@@ -7,6 +7,7 @@ import type { ScanSessionResponse } from '#/features/platform/api/platform.types
 import { CustomerMenuPage } from '#/pages/customer/menu/ui/customer-menu-page'
 import { clientApiInstance } from '#/shared/api/client-instance'
 import { resumeSessionServerFn } from '#/shared/api/customer/session.fns'
+import { absoluteUrl, buildSeoMeta } from '#/shared/libs/seo/meta.ts'
 import { useSessionRealtime } from '#/shared/realtime/use-session-realtime'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import '#/pages/customer/menu/ui/styles.css'
@@ -48,6 +49,32 @@ export const Route = createFileRoute('/customer/menu')({
 
     return session
   },
+
+  head: ({ loaderData }) => ({
+    meta: [
+      ...buildSeoMeta({
+        title: loaderData ? `Menu at ${loaderData.businessName}` : 'Customer Menu',
+        description: loaderData
+          ? `Browse the menu and order online at ${loaderData.businessName}.`
+          : undefined,
+        image: loaderData?.businessLogoUrl ?? undefined,
+        path: '/customer/menu',
+      }),
+      ...(loaderData
+        ? [
+            {
+              'script:ld+json': {
+                '@context': 'https://schema.org',
+                '@type': 'Restaurant',
+                name: loaderData.businessName,
+                image: loaderData.businessLogoUrl ?? undefined,
+                menu: absoluteUrl('/customer/menu'),
+              },
+            },
+          ]
+        : []),
+    ],
+  }),
 
   pendingComponent: CustomerMenuPending,
   component: CustomerMenuRoute,

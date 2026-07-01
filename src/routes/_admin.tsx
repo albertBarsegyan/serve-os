@@ -50,6 +50,7 @@ import {
 } from '#/shared/libs/hooks/use-active-business.ts'
 import { BusinessFeature, StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
+import { noIndexMeta } from '#/shared/libs/seo/meta.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary.tsx'
 import { Logo } from '#/shared/ui/logo.tsx'
@@ -71,6 +72,7 @@ function AdminErrorComponent({ error }: Readonly<{ error: Error }>) {
 export const Route = createFileRoute('/_admin')({
   component: AdminLayout,
   errorComponent: AdminErrorComponent,
+  head: () => ({ meta: noIndexMeta }),
   beforeLoad: ({ context, location }) => {
     if (!context.authUser) throw redirect({ to: '/auth/sign-in' })
     if (

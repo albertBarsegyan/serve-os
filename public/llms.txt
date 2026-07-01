@@ -1,0 +1,15 @@
+# ServeOS
+
+> ServeOS is a next-generation hospitality operations platform for restaurants, cafes, bars, food trucks, hotels, and event venues. It combines QR-code table ordering, kitchen display, table and order management, staff permissions, and payments into a single system.
+
+Guests scan a QR code at their table to browse a live menu and order directly from their phone. Staff and owners manage orders, kitchen tickets, tables, menus, staff access, and payments from a web dashboard.
+
+## Public pages
+
+- [Home](/): Product overview and marketing landing page.
+- [About](/about): Information about ServeOS.
+
+## Notes for AI agents
+
+- The customer ordering flow (`/customer/menu`) is scoped to a single table session via QR code or session cookie. It cannot be browsed generically without an active session, so it is not listed as a stable public URL here.
+- Dashboard, order management, kitchen display, menu management, staff, and account pages require authentication and are not part of the public site — do not attempt to summarize or cite them as public content.
