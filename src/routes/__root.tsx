@@ -7,6 +7,7 @@ import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
 import { getLocale } from '#/paraglide/runtime'
 import { activeBusinessIdQueryOptions } from '#/shared/libs/hooks/use-active-business.ts'
+import { buildSeoMeta } from '#/shared/libs/seo/meta.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import { NotFoundContent } from '#/shared/ui/not-found-content'
 import { PwaUpdatePrompt } from '#/shared/ui/pwa-update-prompt'
@@ -50,9 +51,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         name: 'viewport',
         content: 'width=device-width, initial-scale=1',
       },
-      {
-        title: 'ServeOS - Next-Gen Hospitality OS',
-      },
+      ...buildSeoMeta(),
       // PWA / theme meta — theme-color is a static element placed before the
       // THEME_INIT_SCRIPT in the shell so the script can update it synchronously.
       { name: 'apple-mobile-web-app-capable', content: 'yes' },

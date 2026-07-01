@@ -1,0 +1,31 @@
+# ServeOS
+
+> ServeOS is a next-generation hospitality operations platform for restaurants, cafes, bars, food trucks, hotels, and event venues. It combines QR-code table ordering, kitchen display, table and order management, staff permissions, and payments into a single system.
+
+## What ServeOS does
+
+- **QR table ordering**: guests scan a per-table QR code, browse a live menu with categories, product images, dietary flags, allergens, and modifiers, and place an order from their own phone.
+- **Kitchen display (KDS)**: kitchen staff see incoming orders in real time and update ticket status as items are prepared.
+- **Order & table management**: staff track order status (created, confirmed, in kitchen, ready, delivered, closed, cancelled, payment failed, refunded) and manage table state.
+- **Menu management**: owners and managers build categories, products, prices, availability, images, and modifier groups.
+- **Staff & permissions**: owners invite staff with role-based permissions (e.g. order view, menu edit, kitchen view, staff management).
+- **Payments**: businesses configure payment methods (cash, POS, online) and take payments per order.
+- **Multi-business support**: an owner account can manage multiple businesses (restaurant, cafe, bar, fast food, food truck, hotel, event venue) from one dashboard.
+
+## Public pages
+
+- [Home](/): Product overview and marketing landing page.
+- [About](/about): Information about ServeOS.
+
+## Pages that are not public
+
+The following areas require an authenticated session and are intentionally excluded from indexing and from this file's public page list (see `/robots.txt`):
+
+- `/dashboard`, `/orders`, `/kitchen`, `/menu`, `/modifiers`, `/tables`, `/payments`, `/payment-methods`, `/settings`, `/staff`, `/user-settings`, `/businesses` — owner/staff admin dashboard.
+- `/auth/sign-in`, `/auth/sign-up` — authentication.
+- `/customer/menu` — the live customer ordering page. It is reachable publicly but is scoped to a single table session (via QR code or session cookie), so it has no stable, generically-crawlable URL and is not listed as a sitemap entry.
+
+## Notes for AI agents
+
+- Do not attempt to summarize or cite content behind the admin dashboard or auth pages — it is private, per-business operational data, not public content.
+- If asked to help a user find "the menu" for a specific ServeOS-powered business, note that menus are only accessible via that business's own QR code or a direct link they provide, not through this site's public pages.

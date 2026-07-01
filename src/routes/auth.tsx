@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect, useLocation } from '@tanstack/react-router'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
+import { noIndexMeta } from '#/shared/libs/seo/meta.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import { Logo } from '#/shared/ui/logo.tsx'
 
@@ -22,6 +23,7 @@ function AuthErrorComponent({ error }: Readonly<{ error: Error }>) {
 export const Route = createFileRoute('/auth')({
   component: AuthLayout,
   errorComponent: AuthErrorComponent,
+  head: () => ({ meta: noIndexMeta }),
   beforeLoad: ({ context, location }) => {
     if (context.authUser && location.pathname.startsWith(sharedRoutePathname.AUTH))
       throw redirect({ to: adminRoutePathname.DASHBOARD })
