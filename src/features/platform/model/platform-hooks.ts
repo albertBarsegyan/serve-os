@@ -209,6 +209,9 @@ export function useDeleteMenuCategoryMutation() {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(false) })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.root, 'products-paged'],
+      })
     },
   })
 }
@@ -220,6 +223,9 @@ export function useCreateProductMutation() {
     mutationFn: (data: CreateProductRequest) => createProduct(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.root, 'products-paged'],
+      })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
@@ -233,6 +239,9 @@ export function useUpdateProductMutation() {
       updateProduct(productId, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.root, 'products-paged'],
+      })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
@@ -245,6 +254,9 @@ export function useDeleteProductMutation() {
     mutationFn: (productId: string) => deleteProduct(productId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.root, 'products-paged'],
+      })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
@@ -258,6 +270,9 @@ export function useSetProductAvailabilityMutation() {
       setProductAvailability(productId, isAvailable),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.root, 'products-paged'],
+      })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
@@ -271,6 +286,9 @@ export function useSyncProductModifierGroupsMutation() {
       syncProductModifierGroups(productId, groupIds),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.root, 'products-paged'],
+      })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
     },
   })
@@ -587,8 +605,14 @@ export function useLoginStaffWithPinMutation() {
 }
 
 export function useLogoutStaffMutation() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (businessId: string) => logoutStaff(businessId),
+    onSuccess: async () => {
+      await queryClient.cancelQueries()
+      queryClient.clear()
+    },
   })
 }
 

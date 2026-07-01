@@ -78,19 +78,36 @@ export function AdminMenuContent() {
 
   const categoriesQuery = useQuery(menuCategoriesQueryOptions(true))
 
-  const activeCategoryId = useMemo(() => {
+  const activeCategoryData = useMemo(() => {
     if (activeCategory === 'All') return undefined
-    return (categoriesQuery.data ?? []).find((c) => c.name === activeCategory)?.id
+    return (categoriesQuery.data ?? []).find((c) => c.name === activeCategory)
   }, [activeCategory, categoriesQuery.data])
 
-  const productsQuery = useQuery(
-    pagedProductsQueryOptions(
+  // Categories are fetched with their products already included, so selecting a
+  // category filters that data in memory instead of firing another request.
+  const productsQuery = useQuery({
+    ...pagedProductsQueryOptions(page, limit),
+    enabled: activeCategory === 'All',
+  })
+
+  const pagedProducts = useMemo(() => {
+    if (activeCategory === 'All') return productsQuery.data
+
+    const categoryProducts = activeCategoryData?.products ?? []
+    const total = categoryProducts.length
+    const start = (page - 1) * limit
+
+    return {
+      data: categoryProducts.slice(start, start + limit),
+      total,
       page,
       limit,
-      activeCategoryId ? { categoryId: activeCategoryId } : undefined,
-    ),
-  )
-  const pagedProducts = productsQuery.data
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    }
+  }, [activeCategory, activeCategoryData, page, limit, productsQuery.data])
+
+  const isProductsPending =
+    activeCategory === 'All' ? productsQuery.isPending : categoriesQuery.isPending
 
   const createCategoryMutation = useCreateMenuCategoryMutation()
   const updateCategoryMutation = useUpdateMenuCategoryMutation()
@@ -362,7 +379,7 @@ export function AdminMenuContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {productsQuery.isPending && (
+                {isProductsPending && (
                   <TableRow>
                     <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
                       Loading products...
@@ -370,7 +387,7 @@ export function AdminMenuContent() {
                   </TableRow>
                 )}
 
-                {!productsQuery.isPending && products.length === 0 && (
+                {!isProductsPending && products.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className='py-16'>
                       <div className='flex flex-col items-center justify-center text-center'>
@@ -393,7 +410,7 @@ export function AdminMenuContent() {
                   </TableRow>
                 )}
 
-                {!productsQuery.isPending && products.length > 0 && filteredItems.length === 0 && (
+                {!isProductsPending && products.length > 0 && filteredItems.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
                       No products match your search.

@@ -51,29 +51,28 @@ export const Route = createFileRoute('/customer/menu')({
   },
 
   head: ({ loaderData }) => ({
-    meta: [
-      ...buildSeoMeta({
-        title: loaderData ? `Menu at ${loaderData.businessName}` : 'Customer Menu',
-        description: loaderData
-          ? `Browse the menu and order online at ${loaderData.businessName}.`
-          : undefined,
-        image: loaderData?.businessLogoUrl ?? undefined,
-        path: '/customer/menu',
-      }),
-      ...(loaderData
-        ? [
-            {
-              'script:ld+json': {
-                '@context': 'https://schema.org',
-                '@type': 'Restaurant',
-                name: loaderData.businessName,
-                image: loaderData.businessLogoUrl ?? undefined,
-                menu: absoluteUrl('/customer/menu'),
-              },
-            },
-          ]
-        : []),
-    ],
+    meta: buildSeoMeta({
+      title: loaderData ? `Menu at ${loaderData.businessName}` : 'Customer Menu',
+      description: loaderData
+        ? `Browse the menu and order online at ${loaderData.businessName}.`
+        : undefined,
+      image: loaderData?.businessLogoUrl ?? undefined,
+      path: '/customer/menu',
+    }),
+    scripts: loaderData
+      ? [
+          {
+            type: 'application/ld+json',
+            children: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Restaurant',
+              name: loaderData.businessName,
+              image: loaderData.businessLogoUrl ?? undefined,
+              menu: absoluteUrl('/customer/menu'),
+            }),
+          },
+        ]
+      : undefined,
   }),
 
   pendingComponent: CustomerMenuPending,

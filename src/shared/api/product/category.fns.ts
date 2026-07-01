@@ -42,21 +42,19 @@ export const createCategoryServerFn = createServerFn({
  */
 export const getCategoriesServerFn = createServerFn({
   method: 'GET',
-})
-  .inputValidator((data: { businessId: string }) => data)
-  .handler(async (): Promise<CategoryResponse[]> => {
-    const request = await serverApiInstance<CategoryResponse[]>(`menu/categories`, {
-      method: 'GET',
-    })
-
-    forwardCookies(request)
-
-    if (!request.ok) {
-      throw new Error('Failed to fetch categories')
-    }
-
-    return request.json()
+}).handler(async (): Promise<CategoryResponse[]> => {
+  const request = await serverApiInstance<CategoryResponse[]>(`menu/categories`, {
+    method: 'GET',
   })
+
+  forwardCookies(request)
+
+  if (!request.ok) {
+    throw new Error('Failed to fetch categories')
+  }
+
+  return request.json()
+})
 
 /**
  * Get single category
@@ -64,7 +62,7 @@ export const getCategoriesServerFn = createServerFn({
 export const getCategoryServerFn = createServerFn({
   method: 'GET',
 })
-  .inputValidator((data: { businessId: string; categoryId: string }) => data)
+  .inputValidator((data: { categoryId: string }) => data)
   .handler(async ({ data }): Promise<CategoryResponse> => {
     const request = await serverApiInstance<CategoryResponse>(
       `menu/categories/${data.categoryId}`,

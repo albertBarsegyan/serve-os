@@ -32,6 +32,7 @@ import { ImageEntityType } from '#/shared/api/images/images.api.ts'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { activeBusinessIdQueryOptions } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { stringToCommaSeparated } from '#/shared/libs/utils/naming.utils.ts'
 import { ImageUpload } from '#/shared/ui/image-upload'
@@ -128,6 +129,7 @@ function AdminSetupRoute() {
 
       await selectBusinessServerFn({ data: createdBusiness.id })
 
+      queryClient.setQueryData(activeBusinessIdQueryOptions().queryKey, createdBusiness.id)
       await queryClient.invalidateQueries({ queryKey: ['business'] })
       queryClient.setQueryData<{ user: AuthenticatedUser }>([authQueryKey.ME], (old) => {
         if (!old) return old
@@ -190,11 +192,15 @@ function AdminSetupRoute() {
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
             <div className='grid gap-5 sm:grid-cols-2'>
               <div className='sm:col-span-2'>
-                <Label className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+                <Label
+                  htmlFor='imageUpload'
+                  className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
+                >
                   Business logo
                 </Label>
                 <div className='mt-2'>
                   <ImageUpload
+                    id='imageUpload'
                     value={logoUrl}
                     onChange={setLogoUrl}
                     entityType={ImageEntityType.BUSINESS_LOGO}
