@@ -14,6 +14,8 @@ export type CustomerOrderStatus =
   | 'preparing'
   | 'ready'
   | 'served'
+  | 'payment'
+  | 'paid'
   | 'cancelled'
 
 export interface OrderRecord {
@@ -31,16 +33,28 @@ const STEPS: Array<{ status: CustomerOrderStatus; label: string; icon: string }>
   { status: 'preparing', label: 'Being Prepared', icon: '👨‍🍳' },
   { status: 'ready', label: 'Ready to Serve', icon: '🍽️' },
   { status: 'served', label: 'Served', icon: '🎉' },
+  { status: 'payment', label: 'Payment', icon: '💳' },
+  { status: 'paid', label: 'All Done', icon: '✨' },
 ]
 
-const STATUS_ORDER: CustomerOrderStatus[] = ['placed', 'confirmed', 'preparing', 'ready', 'served']
+const STATUS_ORDER: CustomerOrderStatus[] = [
+  'placed',
+  'confirmed',
+  'preparing',
+  'ready',
+  'served',
+  'payment',
+  'paid',
+]
 
 const STATUS_HINT: Record<CustomerOrderStatus, string> = {
   placed: 'Waiting for confirmation…',
   confirmed: 'Confirmed! Sending to kitchen…',
   preparing: 'Our kitchen is working on it!',
   ready: 'Ready to be served!',
-  served: 'Enjoy your meal!',
+  served: 'Enjoy your meal! Payment will follow shortly.',
+  payment: 'Payment is being processed…',
+  paid: 'Payment confirmed. Thank you!',
   cancelled: 'Your order was cancelled.',
 }
 
@@ -71,8 +85,11 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       'order:served': (p) => {
         if (p.orderId === order.orderId) setCurrentStatus('served')
       },
+      'order:payment-open': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('payment')
+      },
       'order:paid': (p) => {
-        if (p.orderId === order.orderId) setCurrentStatus('served')
+        if (p.orderId === order.orderId) setCurrentStatus('paid')
       },
       'order:cancelled': (p) => {
         if (p.orderId === order.orderId) setCurrentStatus('cancelled')
@@ -114,6 +131,8 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
 
   const isCancelled = currentStatus === 'cancelled'
   const isServed = currentStatus === 'served'
+  const isPayment = currentStatus === 'payment'
+  const isPaid = currentStatus === 'paid'
   const currentIdx = STATUS_ORDER.indexOf(currentStatus)
 
   const elapsedMin = Math.floor(elapsed / 60000)
@@ -186,12 +205,18 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       {/* Header */}
       <div style={{ padding: '24px 20px 0', textAlign: 'center' }}>
         <div
-          className={isServed ? '' : 'c-pulse'}
+          className={isPaid || isServed ? '' : 'c-pulse'}
           style={{
             width: 64,
             height: 64,
             borderRadius: '50%',
-            background: isServed ? C.greenBg : 'rgba(249,115,22,0.12)',
+            background: isPaid
+              ? C.greenBg
+              : isServed
+                ? 'rgba(34,197,94,0.12)'
+                : isPayment
+                  ? 'rgba(99,102,241,0.12)'
+                  : 'rgba(249,115,22,0.12)',
             margin: '0 auto 14px',
             display: 'flex',
             alignItems: 'center',
@@ -199,10 +224,10 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
             fontSize: 32,
           }}
         >
-          {isServed ? '🎉' : '⏳'}
+          {isPaid ? '✨' : isServed ? '🎉' : isPayment ? '💳' : '⏳'}
         </div>
         <h1 style={{ color: C.white, fontSize: 20, fontWeight: 800, margin: '0 0 6px' }}>
-          {isServed ? 'Enjoy your meal!' : 'Order in Progress'}
+          {isPaid ? 'All done! Thank you!' : isServed ? 'Enjoy your meal!' : 'Order in Progress'}
         </h1>
         <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>
           #{order.orderId.slice(0, 8).toUpperCase()} · Table {order.tableNumber}
@@ -210,7 +235,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       </div>
 
       {/* Status hint */}
-      {!isServed && (
+      {!isPaid && (
         <div
           style={{
             margin: '20px 16px 0',
@@ -404,8 +429,8 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
         )}
       </div>
 
-      {/* Back to menu — only after served */}
-      {isServed && (
+      {/* Back to menu — only after payment is confirmed */}
+      {isPaid && (
         <div style={{ padding: '20px 16px 0' }}>
           <button
             type='button'

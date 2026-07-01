@@ -15,7 +15,10 @@ import {
 import { useOrderNotifications } from '#/features/notification'
 import { CreateStaffOrderDialog } from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
 import type { OrderStatus } from '#/features/platform/api/platform.types.ts'
-import { orderByIdQueryOptions, ordersQueryOptions } from '#/features/platform/lib/query-options.ts'
+import {
+  orderByIdQueryOptions,
+  pagedOrdersQueryOptions,
+} from '#/features/platform/lib/query-options.ts'
 import {
   useConfirmOrderMutation,
   useProcessCashPaymentMutation,
@@ -30,6 +33,7 @@ import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { Modal } from '#/shared/ui/modal'
+import { type PageLimit, PaginationControls } from '#/shared/ui/pagination-controls'
 
 const ALL_STATUSES: OrderStatus[] = [
   'CREATED',
@@ -96,15 +100,9 @@ function OrderDetailModal({
   const pay = async (method: 'cash' | 'pos') => {
     try {
       if (method === 'cash') {
-        await cashMutation.mutateAsync({
-          orderId,
-          data: { tipAmount: parsedTip || undefined },
-        })
+        await cashMutation.mutateAsync({ orderId, data: { tipAmount: parsedTip || undefined } })
       } else {
-        await posMutation.mutateAsync({
-          orderId,
-          data: { tipAmount: parsedTip || undefined },
-        })
+        await posMutation.mutateAsync({ orderId, data: { tipAmount: parsedTip || undefined } })
       }
       showSuccess(`Payment processed via ${method === 'cash' ? 'Cash' : 'POS'}`)
       onClose()
@@ -137,8 +135,7 @@ function OrderDetailModal({
       )}
       {order && (
         <div className='space-y-6'>
-          {/* Meta row */}
-          <div className='flex flex-wrap gap-3 text-sm'>
+          <div className='flex flex-wrap gap-3 text-sm items-center'>
             <span className='flex items-center gap-1.5'>
               <span className='text-muted-foreground'>Status:</span>
               <Badge variant={statusBadgeVariant(order.status)} className='capitalize'>
@@ -172,7 +169,6 @@ function OrderDetailModal({
             </span>
           </div>
 
-          {/* Items */}
           <div>
             <p className='mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
               Items
@@ -207,7 +203,6 @@ function OrderDetailModal({
             </div>
           </div>
 
-          {/* Total */}
           <div className='flex items-center justify-between rounded-xl bg-muted px-4 py-3'>
             <span className='text-sm font-semibold'>Total</span>
             <span className='font-mono font-bold'>
@@ -215,7 +210,6 @@ function OrderDetailModal({
             </span>
           </div>
 
-          {/* Payment actions */}
           {canPay && (
             <div className='space-y-3 rounded-xl border border-border p-4'>
               <p className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
@@ -296,6 +290,8 @@ function OrderDetailModal({
 export function AdminOrdersContent() {
   const [activeFilter, setActiveFilter] = useState<OrderStatus | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState<PageLimit>(20)
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
   const [addOrderOpen, setAddOrderOpen] = useState(false)
   const [pendingOrderIds, setPendingOrderIds] = useState<Set<string>>(new Set())
@@ -307,18 +303,37 @@ export function AdminOrdersContent() {
 
   useOrderNotifications({ room: 'business', id: businessId })
 
-  const { data: orders = [], isPending, isError, error, refetch } = useQuery(ordersQueryOptions())
+  const statusFilter = activeFilter === 'all' ? undefined : activeFilter
+  const {
+    data: pagedOrders,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery(
+    pagedOrdersQueryOptions(page, limit, statusFilter ? { status: statusFilter } : undefined),
+  )
+
+  const orders = pagedOrders?.data ?? []
 
   const filteredOrders = useMemo(() => {
-    const byStatus =
-      activeFilter === 'all' ? orders : orders.filter((order) => order.status === activeFilter)
     const needle = search.trim().toLowerCase()
-    if (!needle) return byStatus
-    return byStatus.filter((order) => {
+    if (!needle) return orders
+    return orders.filter((order) => {
       const tableLabel = order.tableId ? `table ${order.tableId}` : 'table -'
       return [order.id, order.status, tableLabel].join(' ').toLowerCase().includes(needle)
     })
-  }, [activeFilter, orders, search])
+  }, [orders, search])
+
+  const handleFilterChange = (status: OrderStatus | 'all') => {
+    setActiveFilter(status)
+    setPage(1)
+  }
+
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    setPage(1)
+  }
 
   const nextStatus: Partial<
     Record<OrderStatus, 'IN_KITCHEN' | 'READY' | 'DELIVERED' | 'CLOSED' | 'CANCELLED'>
@@ -380,11 +395,9 @@ export function AdminOrdersContent() {
           <Button variant='outline' size='sm' className='rounded-full' type='button'>
             <Filter className='mr-2 h-4 w-4' /> Filter
           </Button>
-
-          <Button disabled={!orders.length} size='sm' className='rounded-full' type='button'>
+          <Button disabled={!pagedOrders?.total} size='sm' className='rounded-full' type='button'>
             Export CSV
           </Button>
-
           {canAddOrder && (
             <Button
               size='sm'
@@ -419,7 +432,7 @@ export function AdminOrdersContent() {
                 <button
                   type='button'
                   key={status}
-                  onClick={() => setActiveFilter(status)}
+                  onClick={() => handleFilterChange(status)}
                   className={cn(
                     'uppercase whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all',
                     activeFilter === status
@@ -435,10 +448,10 @@ export function AdminOrdersContent() {
               <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
               <input
                 type='text'
-                placeholder='Search orders...'
+                placeholder='Search this page…'
                 className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => handleSearch(event.target.value)}
               />
             </div>
           </div>
@@ -478,7 +491,6 @@ export function AdminOrdersContent() {
                   </TableCell>
                 </TableRow>
               )}
-
               {!isPending && orders.length > 0 && filteredOrders.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className='h-32 text-center text-muted-foreground'>
@@ -486,7 +498,6 @@ export function AdminOrdersContent() {
                   </TableCell>
                 </TableRow>
               )}
-
               {filteredOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className='pl-8 font-bold'>
@@ -555,6 +566,19 @@ export function AdminOrdersContent() {
               ))}
             </TableBody>
           </Table>
+          {pagedOrders && pagedOrders.total > 0 && (
+            <PaginationControls
+              page={page}
+              limit={limit}
+              total={pagedOrders.total}
+              totalPages={pagedOrders.totalPages}
+              onPageChange={setPage}
+              onLimitChange={(l) => {
+                setLimit(l)
+                setPage(1)
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 

@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import type { StaffMember, StaffRole } from '#/features/platform/api/platform.types.ts'
-import { staffQueryOptions } from '#/features/platform/lib/query-options.ts'
+import { pagedStaffQueryOptions } from '#/features/platform/lib/query-options.ts'
 import {
   createStaffWithInviteSchema,
   createStaffWithPasswordSchema,
@@ -40,6 +40,7 @@ import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
 import { ImageUpload } from '#/shared/ui/image-upload'
 import { Modal } from '#/shared/ui/modal'
+import { type PageLimit, PaginationControls } from '#/shared/ui/pagination-controls'
 import { SearchSelect } from '#/shared/ui/search-select'
 
 type InviteFormValues = z.infer<typeof createStaffWithInviteSchema>
@@ -65,6 +66,8 @@ export function AdminStaffPage() {
     (authUser?.type === 'staff' && authUser.role === StaffRoleEnum.MANAGER)
 
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState<PageLimit>(20)
   const [createMode, setCreateMode] = useState<CreateMode | null>(null)
   const [editingMember, setEditingMember] = useState<StaffMember | null>(null)
   const [editingAvatarUrl, setEditingAvatarUrl] = useState<string | null>(null)
@@ -87,7 +90,10 @@ export function AdminStaffPage() {
   const activeBusiness = useActiveBusiness()
   const activeBusinessId = activeBusiness?.id ?? ''
 
-  const { data: staffMembers = [], isPending } = useQuery(staffQueryOptions(activeBusinessId))
+  const { data: pagedStaff, isPending } = useQuery(
+    pagedStaffQueryOptions(activeBusinessId, page, limit),
+  )
+  const staffMembers = pagedStaff?.data ?? []
 
   const createWithInviteMutation = useCreateStaffWithInviteMutation()
   const createWithPasswordMutation = useCreateStaffWithPasswordMutation()
@@ -279,7 +285,10 @@ export function AdminStaffPage() {
                 placeholder='Search staff...'
                 className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
               />
             </div>
           </div>
@@ -403,6 +412,19 @@ export function AdminStaffPage() {
               ))}
             </TableBody>
           </Table>
+          {pagedStaff && pagedStaff.total > 0 && (
+            <PaginationControls
+              page={page}
+              limit={limit}
+              total={pagedStaff.total}
+              totalPages={pagedStaff.totalPages}
+              onPageChange={setPage}
+              onLimitChange={(l) => {
+                setLimit(l)
+                setPage(1)
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 

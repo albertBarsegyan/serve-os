@@ -3,6 +3,7 @@ import { ChevronLeft, Minus, Plus, ShoppingCart, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '#/components/ui/button'
 import { Select } from '#/components/ui/select'
+import type { TableEntity } from '#/features/platform/api/platform.types.ts'
 import { tablesQueryOptions } from '#/features/platform/lib/query-options'
 import { useCreateStaffOrderMutation } from '#/features/platform/model/platform-hooks'
 import { fetchCustomerMenu } from '#/shared/api/customer/customer-api'
@@ -717,9 +718,11 @@ function ReviewStep({
 export function CreateStaffOrderDialog({
   open,
   onClose,
+  selectedTableId,
 }: Readonly<{
   open: boolean
   onClose: () => void
+  selectedTableId: TableEntity['id']
 }>) {
   const activeBusiness = useActiveBusiness()
   const businessId = activeBusiness?.id ?? ''
@@ -727,14 +730,14 @@ export function CreateStaffOrderDialog({
 
   const [step, setStep] = useState<Step>('setup')
   const [orderType, setOrderType] = useState<OrderType>('DINE_IN')
-  const [tableId, setTableId] = useState('')
+  const [tableId, setTableId] = useState(() => selectedTableId)
   const [customerName, setCustomerName] = useState('')
   const [orderNotes, setOrderNotes] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH')
   const [cartItems, setCartItems] = useState<CartItem[]>([])
 
   const { data: tables = [] } = useQuery(tablesQueryOptions())
-  const selectedTable = tables.find((t) => t.id === tableId)
+  const changedTable = tables.find((t) => t.id === tableId)
 
   const createOrderMutation = useCreateStaffOrderMutation()
 
@@ -833,7 +836,7 @@ export function CreateStaffOrderDialog({
           <ReviewStep
             items={cartItems}
             orderType={orderType}
-            tableNumber={selectedTable?.number}
+            tableNumber={changedTable?.number}
             customerName={customerName}
             notes={orderNotes}
             onNotesChange={setOrderNotes}
