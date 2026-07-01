@@ -98,20 +98,18 @@ export interface ScanSessionResponse {
   paymentMethods: CustomerPaymentMethod[]
 }
 
-export interface SessionBillItem {
-  productId: string
-  productName: string
-  quantity: number
-  unitPrice: string
-  totalPrice: string
+export interface SessionBillGroup {
+  sessionToken: string
+  orders: Order[]
+  subtotal: number
+  tipTotal: number
 }
 
 export interface SessionBill {
   sessionId: string
-  tableId: string
-  items: SessionBillItem[]
-  subtotal: string
-  total: string
+  tableId: string | null
+  businessId: string
+  groups: SessionBillGroup[]
 }
 
 // ── Tables ────────────────────────────────────────────────────────────────────
