@@ -1,25 +1,21 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { Building2, MapPin } from 'lucide-react'
-import { useEffect, useId, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { FeatureSelector } from '#/components/feature-selector'
-import { Button } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
-import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
-import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {useQueryClient} from '@tanstack/react-query'
+import {createFileRoute, redirect, useNavigate} from '@tanstack/react-router'
+import {Building2, MapPin} from 'lucide-react'
+import {useEffect, useId, useState} from 'react'
+import {Controller, useForm} from 'react-hook-form'
+import {FeatureSelector} from '#/components/feature-selector'
+import {Button} from '#/components/ui/button'
+import {Input} from '#/components/ui/input'
+import {Label} from '#/components/ui/label'
+import type {AuthenticatedUser} from '#/features/auth/api/auth.types.ts'
+import {authQueryKey} from '#/features/auth/lib/constants/auth-query-keys.ts'
+import {businessTypeLabels, FEATURE_PRESETS} from '#/features/business/api/business-domain.ts'
 import {
-  type BusinessType,
-  businessTypeLabels,
-  FEATURE_PRESETS,
-} from '#/features/business/api/business-domain.ts'
-import {
-  type CreateBusinessFormValues,
   createBusinessFormSchema,
+  type CreateBusinessFormValues,
 } from '#/features/business/lib/schemas/create-business-form.schema.ts'
-import { businessFormAdapter } from '#/features/business/lib/utils/business-form-adapter.ts'
+import {businessFormAdapter} from '#/features/business/lib/utils/business-form-adapter.ts'
 import {
   type CurrencyOption,
   getCityOptions,
@@ -27,20 +23,17 @@ import {
   getCurrencyOptions,
   type LocationOption,
 } from '#/features/business/lib/utils/location-options.ts'
-import {
-  useCreateBusinessMutation,
-  useUpdateBusinessMutation,
-} from '#/features/business/model/business-hooks.ts'
-import { selectBusinessServerFn } from '#/shared/api/business/business.fns.ts'
-import { ImageEntityType } from '#/shared/api/images/images.api.ts'
-import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
-import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { stringToCommaSeparated } from '#/shared/libs/utils/naming.utils.ts'
-import { ImageUpload } from '#/shared/ui/image-upload'
-import { SearchSelect } from '#/shared/ui/search-select'
-import { WorkingHoursPicker } from '#/widgets/shared/working-hours-picker'
+import {useCreateBusinessMutation, useUpdateBusinessMutation,} from '#/features/business/model/business-hooks.ts'
+import {selectBusinessServerFn} from '#/shared/api/business/business.fns.ts'
+import {ImageEntityType} from '#/shared/api/images/images.api.ts'
+import {adminRoutePathname} from '#/shared/libs/constants/route-pathname/admin.ts'
+import {sharedRoutePathname} from '#/shared/libs/constants/route-pathname/shared.ts'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import {stringToCommaSeparated} from '#/shared/libs/utils/naming.utils.ts'
+import {ImageUpload} from '#/shared/ui/image-upload'
+import {SearchSelect} from '#/shared/ui/search-select'
+import {WorkingHoursPicker} from '#/widgets/shared/working-hours-picker'
 
 export const Route = createFileRoute('/setup')({
   component: AdminSetupRoute,
@@ -389,7 +382,7 @@ function AdminSetupRoute() {
                     <FeatureSelector
                       selectedFeatures={field.value}
                       onFeaturesChange={field.onChange}
-                      selectedType={selectedType as BusinessType}
+                      selectedType={selectedType}
                     />
                   )}
                 />
