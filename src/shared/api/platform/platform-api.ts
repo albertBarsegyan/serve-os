@@ -24,6 +24,7 @@ import type {
   Payment,
   ProcessPaymentRequest,
   Product,
+  RefundOrderRequest,
   ScanSessionRequest,
   ScanSessionResponse,
   SessionBill,
@@ -295,6 +296,10 @@ export function updateOrderStatus(orderId: string, data: UpdateOrderStatusReques
 
 export function confirmOrder(orderId: string): Promise<Order> {
   return clientApiInstance.post(`orders/${orderId}/confirm`).json<Order>()
+}
+
+export function refundOrder(orderId: string, data: RefundOrderRequest): Promise<Order> {
+  return clientApiInstance.post(`orders/${orderId}/refund`, { json: data }).json<Order>()
 }
 
 export function listOrders(filters?: { status?: OrderStatus; tableId?: string }): Promise<Order[]> {

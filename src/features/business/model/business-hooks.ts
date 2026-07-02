@@ -5,6 +5,7 @@ import type {
   UpdateBusinessRequest,
   UpsertPaymentMethodRequest,
 } from '#/features/business/api/business.types.ts'
+import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys.ts'
 import {
   createBusinessServerFn,
   deleteBusinessServerFn,
@@ -53,7 +54,10 @@ export function useSelectBusinessMutation({ navigate }: { navigate: NavigateFn }
   return useMutation({
     mutationFn: (businessId: string) => selectBusinessServerFn({ data: businessId }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries()
+      await queryClient.invalidateQueries({ queryKey: ['active-business-id'] })
+      await queryClient.invalidateQueries({ queryKey: ['business'] })
+      await queryClient.invalidateQueries({ queryKey: platformQueryKeys.root })
+      await queryClient.invalidateQueries({ queryKey: ['customer-menu'] })
       await navigate()
     },
   })

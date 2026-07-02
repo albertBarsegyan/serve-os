@@ -292,6 +292,11 @@ export interface UpdateOrderStatusRequest {
   status: Exclude<OrderStatus, 'CREATED' | 'CONFIRMED'>
 }
 
+// Matches backend RefundOrderDto — refundId is an external reference, generated if omitted
+export interface RefundOrderRequest {
+  refundId?: string
+}
+
 // ── Payments ──────────────────────────────────────────────────────────────────
 export interface Payment {
   id: string

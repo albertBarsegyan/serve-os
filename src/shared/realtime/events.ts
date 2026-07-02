@@ -32,6 +32,8 @@ export const SERVER_EVENTS = {
   ORDER_CALL_WAITER: 'order:call-waiter',
   ORDER_PAYMENT_OPEN: 'order:payment-open',
   ORDER_PAID: 'order:paid',
+  ORDER_PAYMENT_FAILED: 'order:payment-failed',
+  ORDER_REFUNDED: 'order:refunded',
 } as const
 
 // ── Payload types ─────────────────────────────────────────────────────────────
@@ -39,11 +41,14 @@ export const SERVER_EVENTS = {
 export interface OrderStatusChangedPayload {
   orderId: string
   status: string
+  customerStatus: string
+  // DELIVERED and CLOSED both map to customerStatus 'served' — use paymentStatus to tell
+  // "served, awaiting payment" and "paid, all done" apart on resync.
+  paymentStatus: string
   previousStatus: string | null
   tableId: string | null
   tableName: string | null
   sessionToken: string | null
-  paymentStatus?: string | null
   updatedAt: string
   actor: { type: string; id: string; role?: string }
 }
@@ -116,4 +121,14 @@ export interface OrderPaidPayload {
   paymentId: string
   customerStatus: string
   at: string
+}
+
+/** Emitted for order:payment-failed */
+export interface PaymentFailedPayload extends OrderEventPayload {
+  reason: string
+}
+
+/** Emitted for order:refunded */
+export interface OrderRefundedPayload extends OrderEventPayload {
+  refundId: string
 }

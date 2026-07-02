@@ -38,6 +38,11 @@ export function useSessionRealtime(token: string): void {
 
     function onSessionClosed(_payload: SessionClosedPayload) {
       void queryClient.invalidateQueries({ queryKey: ['session', token] })
+      // Table session has ended (e.g. the order was fully paid) — drop the stored
+      // credential so a stale/closed token never gets reused for a future visit.
+      if (localStorage.getItem('customer_session_token') === token) {
+        localStorage.removeItem('customer_session_token')
+      }
     }
 
     socket.on('connect', join)
@@ -45,7 +50,6 @@ export function useSessionRealtime(token: string): void {
     socket.on(SERVER_EVENTS.PAYMENT_RECORDED, onPaymentRecorded)
     socket.on(SERVER_EVENTS.SESSION_CLOSED, onSessionClosed)
 
-    // If already connected, join immediately; otherwise open the connection.
     if (socket.connected) {
       join()
     } else {

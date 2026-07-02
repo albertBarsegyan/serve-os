@@ -23,6 +23,7 @@ import {
   useConfirmOrderMutation,
   useProcessCashPaymentMutation,
   useProcessPosPaymentMutation,
+  useRefundOrderMutation,
   useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
@@ -47,7 +48,9 @@ const ALL_STATUSES: OrderStatus[] = [
   'REFUNDED',
 ]
 
-function statusBadgeVariant(status: OrderStatus): 'success' | 'info' | 'warning' | 'outline' {
+function statusBadgeVariant(
+  status: OrderStatus,
+): 'success' | 'info' | 'warning' | 'outline' | 'destructive' {
   switch (status) {
     case 'CLOSED':
       return 'success'
@@ -57,6 +60,9 @@ function statusBadgeVariant(status: OrderStatus): 'success' | 'info' | 'warning'
     case 'IN_KITCHEN':
     case 'CONFIRMED':
       return 'warning'
+    case 'PAYMENT_FAILED':
+    case 'REFUNDED':
+      return 'destructive'
     default:
       return 'outline'
   }
@@ -86,14 +92,33 @@ function OrderDetailModal({
   const cashMutation = useProcessCashPaymentMutation()
   const posMutation = useProcessPosPaymentMutation()
   const cancelMutation = useUpdateOrderStatusMutation()
+  const refundMutation = useRefundOrderMutation()
 
-  const isBusy = cashMutation.isPending || posMutation.isPending || cancelMutation.isPending
+  const isBusy =
+    cashMutation.isPending ||
+    posMutation.isPending ||
+    cancelMutation.isPending ||
+    refundMutation.isPending
 
   const canTakePayment = isOwner() || hasPermission(StaffPermission.PAYMENT_TAKE)
   const canCancel =
     (isOwner() || hasPermission(StaffPermission.ORDER_CANCEL)) &&
     order != null &&
     (['CREATED', 'CONFIRMED', 'IN_KITCHEN'] as OrderStatus[]).includes(order.status)
+  const canRefund =
+    (isOwner() || hasPermission(StaffPermission.PAYMENT_REFUND)) &&
+    order != null &&
+    order.status === 'CLOSED'
+
+  const refund = async () => {
+    try {
+      await refundMutation.mutateAsync({ orderId, data: {} })
+      showSuccess('Order refunded')
+      onClose()
+    } catch (err) {
+      showError(getResponseErrorMessage(err))
+    }
+  }
 
   const parsedTip = Number(tipAmount) || 0
 
@@ -276,6 +301,22 @@ function OrderDetailModal({
                 }}
               >
                 {cancelMutation.isPending ? 'Cancelling…' : 'Cancel Order'}
+              </Button>
+            </div>
+          )}
+
+          {canRefund && (
+            <div className='rounded-xl border border-destructive/20 p-4'>
+              <p className='mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+                Refund Order
+              </p>
+              <Button
+                variant='outline'
+                className='w-full rounded-xl border-destructive text-destructive hover:bg-destructive/10'
+                disabled={isBusy}
+                onClick={() => void refund()}
+              >
+                {refundMutation.isPending ? 'Refunding…' : 'Refund Order'}
               </Button>
             </div>
           )}
@@ -590,7 +631,11 @@ export function AdminOrdersContent() {
         />
       )}
 
-      <CreateStaffOrderDialog open={addOrderOpen} onClose={() => setAddOrderOpen(false)} />
+      <CreateStaffOrderDialog
+        selectedTableId=''
+        open={addOrderOpen}
+        onClose={() => setAddOrderOpen(false)}
+      />
     </div>
   )
 }
