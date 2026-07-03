@@ -560,36 +560,6 @@ export function SiteCta() {
 }
 
 export function SiteFooter() {
-  const cols: [string, [string, string][]][] = [
-    [
-      'Product',
-      [
-        ['Features', '/#features'],
-        ['Tableside ordering', '/#ordering'],
-        ['Pricing', '/#pricing'],
-        ['Integrations', '/'],
-      ],
-    ],
-    [
-      'Company',
-      [
-        ['About', '/about'],
-        ['Customers', '/'],
-        ['Careers', '/'],
-        ['Contact', '/'],
-      ],
-    ],
-    [
-      'Support',
-      [
-        ['Help center', '/'],
-        ['Setup guide', '/'],
-        ['Status', '/'],
-        ['Privacy', '/'],
-      ],
-    ],
-  ]
-
   return <Footer />
 }
 
