@@ -10,23 +10,12 @@ import {
   createProductServerFn,
   deleteProductServerFn,
   getProductServerFn,
-  getProductsServerFn,
   updateProductServerFn,
 } from '#/shared/api/product/product.fns'
 
-const PRODUCTS_QUERY_KEY = 'products'
-
-export function useGetProducts(businessId: string) {
-  return useQuery({
-    queryKey: [PRODUCTS_QUERY_KEY, businessId],
-    queryFn: () => getProductsServerFn(),
-    enabled: !!businessId,
-  })
-}
-
 export function useGetProduct(businessId: string, productId: string) {
   return useQuery({
-    queryKey: [PRODUCTS_QUERY_KEY, businessId, productId],
+    queryKey: platformQueryKeys.productById(productId),
     queryFn: () => getProductServerFn({ data: { productId } }),
     enabled: !!businessId && !!productId,
   })
@@ -39,10 +28,9 @@ export function useCreateProduct() {
     mutationFn: ({ businessId, payload }: { businessId: string; payload: CreateProductRequest }) =>
       createProductServerFn({ data: { businessId, payload } }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId] })
-      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
-      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products-paged'] })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
       queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
     },
   })
 }
@@ -61,11 +49,9 @@ export function useUpdateProduct() {
       payload: UpdateProductRequest
     }) => updateProductServerFn({ data: { businessId, productId, payload } }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId] })
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId, data.id] })
-      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
-      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products-paged'] })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
       queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
     },
   })
 }
@@ -77,10 +63,9 @@ export function useDeleteProduct() {
     mutationFn: ({ businessId, productId }: { businessId: string; productId: string }) =>
       deleteProductServerFn({ data: { businessId, productId } }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, variables.businessId] })
-      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
-      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products-paged'] })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
       queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      queryClient.invalidateQueries({ queryKey: ['customer-menu', variables.businessId] })
     },
   })
 }
@@ -104,11 +89,9 @@ export function useReorderProductImages() {
       imageUrls: string[]
     }) => reorderProductImagesApi(productId, imageUrls),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId] })
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, data.businessId, data.id] })
-      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products'] })
-      queryClient.invalidateQueries({ queryKey: [...platformQueryKeys.root, 'products-paged'] })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
       queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
     },
   })
 }

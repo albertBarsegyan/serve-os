@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { useOrderNotifications } from '#/features/notification'
 import type { OrderStatus } from '#/features/platform/api/platform.types.ts'
 import { ordersQueryOptions } from '#/features/platform/lib/query-options.ts'
 import {
@@ -22,10 +23,6 @@ import {
 import { cn } from '#/lib/utils'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
-import {
-  type OrderStatusChangedPayload,
-  useKitchenSocket,
-} from '#/shared/libs/hooks/use-kitchen-socket.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
@@ -35,10 +32,13 @@ export const Route = createFileRoute('/_admin/staff/')({
   errorComponent: ({ error }) => <ErrorBoundary error={error} />,
 })
 
-function statusVariant(status: OrderStatus): 'success' | 'info' | 'warning' | 'outline' {
+function statusVariant(
+  status: OrderStatus,
+): 'success' | 'info' | 'warning' | 'outline' | 'destructive' {
   if (status === 'CLOSED') return 'success'
   if (status === 'READY' || status === 'DELIVERED') return 'info'
   if (status === 'IN_KITCHEN' || status === 'CONFIRMED') return 'warning'
+  if (status === 'PAYMENT_FAILED' || status === 'REFUNDED') return 'destructive'
   return 'outline'
 }
 
@@ -71,14 +71,11 @@ function WaiterWorkspace() {
   const currency = activeBusiness?.currency ?? 'USD'
   const businessId = activeBusiness?.id ?? ''
 
-  useKitchenSocket(businessId, undefined, (payload: OrderStatusChangedPayload) => {
-    if (payload.status === 'READY') {
-      const label = payload.tableName ? `Table ${payload.tableName}` : 'An order'
-      showSuccess(`${label} is ready to serve!`)
-    }
-  })
-
   const { data: orders = [], isPending, isError, error, refetch } = useQuery(ordersQueryOptions())
+
+  // Same shared socket/room every other admin screen uses — the base hook already
+  // toasts + invalidates on order:ready, so the waiter list refreshes in real time.
+  useOrderNotifications({ room: 'business', id: businessId })
 
   const confirmMutation = useConfirmOrderMutation()
   const updateMutation = useUpdateOrderStatusMutation()

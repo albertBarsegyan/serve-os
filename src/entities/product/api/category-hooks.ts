@@ -1,21 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type {
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
-} from '#/features/product/api/category.types'
-import {
-  createCategoryServerFn,
-  deleteCategoryServerFn,
-  getCategoriesServerFn,
-  getCategoryServerFn,
-  updateCategoryServerFn,
-} from '#/shared/api/product/category.fns'
-
-export const CATEGORIES_QUERY_KEY = 'categories'
+import { useQuery } from '@tanstack/react-query'
+import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys.ts'
+import { getCategoriesServerFn, getCategoryServerFn } from '#/shared/api/product/category.fns'
 
 export function useGetCategories(businessId: string) {
   return useQuery({
-    queryKey: [CATEGORIES_QUERY_KEY, businessId],
+    queryKey: platformQueryKeys.menuCategories(false),
     queryFn: () => getCategoriesServerFn(),
     enabled: !!businessId,
   })
@@ -23,57 +12,8 @@ export function useGetCategories(businessId: string) {
 
 export function useGetCategory(businessId: string, categoryId: string) {
   return useQuery({
-    queryKey: [CATEGORIES_QUERY_KEY, businessId, categoryId],
+    queryKey: platformQueryKeys.categoryById(categoryId),
     queryFn: () => getCategoryServerFn({ data: { categoryId } }),
     enabled: !!businessId && !!categoryId,
-  })
-}
-
-export function useCreateCategory() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ businessId, payload }: { businessId: string; payload: CreateCategoryRequest }) =>
-      createCategoryServerFn({ data: { businessId, payload } }),
-    onSuccess: (data) => {
-      void queryClient.invalidateQueries({
-        queryKey: [CATEGORIES_QUERY_KEY, data.businessId],
-      })
-    },
-  })
-}
-
-export function useUpdateCategory() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({
-      businessId,
-      categoryId,
-      payload,
-    }: {
-      businessId: string
-      categoryId: string
-      payload: UpdateCategoryRequest
-    }) => updateCategoryServerFn({ data: { businessId, categoryId, payload } }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: [CATEGORIES_QUERY_KEY, data.businessId],
-      })
-    },
-  })
-}
-
-export function useDeleteCategory() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ businessId, categoryId }: { businessId: string; categoryId: string }) =>
-      deleteCategoryServerFn({ data: { businessId, categoryId } }),
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: [CATEGORIES_QUERY_KEY, variables.businessId],
-      })
-    },
   })
 }

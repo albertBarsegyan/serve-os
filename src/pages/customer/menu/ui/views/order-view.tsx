@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { useOrderNotifications } from '#/features/notification'
 import { cancelCustomerOrder } from '#/shared/api/customer/customer-api'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
-import { CLIENT_EVENTS } from '#/shared/realtime/events'
+import { CLIENT_EVENTS, type OrderStatusChangedPayload } from '#/shared/realtime/events'
 import { getSocket } from '#/shared/realtime/socket'
 import { C } from '../customer-theme'
 
@@ -17,6 +17,29 @@ export type CustomerOrderStatus =
   | 'payment'
   | 'paid'
   | 'cancelled'
+  | 'payment_failed'
+  | 'refunded'
+
+/** Terminal statuses that short-circuit the stepper and render their own screen. */
+const TERMINAL_STATUSES = new Set<CustomerOrderStatus>(['cancelled', 'payment_failed', 'refunded'])
+
+/**
+ * The resync payload's customerStatus collapses DELIVERED and CLOSED into a single
+ * 'served' value (that's all the backend's shared CustomerOrderStatus type has room for),
+ * which would otherwise regress a reloading customer from 'payment' or 'paid' back to
+ * 'served'. Refine using the raw order status + paymentStatus, which the resync payload
+ * carries precisely for this purpose.
+ */
+export function resolveResyncStatus(p: OrderStatusChangedPayload): CustomerOrderStatus | null {
+  const mapped = p.customerStatus as CustomerOrderStatus
+  if (mapped === 'served') {
+    if (p.status === 'CLOSED' || p.paymentStatus === 'PAID') return 'paid'
+    if (p.paymentStatus === 'PENDING' || p.paymentStatus === 'PARTIALLY_PAID') return 'payment'
+    return 'served'
+  }
+  if (TERMINAL_STATUSES.has(mapped) || STATUS_ORDER.includes(mapped)) return mapped
+  return null
+}
 
 export interface OrderRecord {
   orderId: string
@@ -56,12 +79,89 @@ const STATUS_HINT: Record<CustomerOrderStatus, string> = {
   payment: 'Payment is being processed…',
   paid: 'Payment confirmed. Thank you!',
   cancelled: 'Your order was cancelled.',
+  payment_failed: 'Payment failed — please try again.',
+  refunded: 'This order has been refunded.',
 }
 
 interface OrderViewProps {
   order: OrderRecord
   sessionToken: string
   onBackToMenu: () => void
+}
+
+interface TerminalScreenProps {
+  icon: string
+  iconBg: string
+  title: string
+  orderId: string
+  tableNumber: string
+  onBackToMenu: () => void
+}
+
+function TerminalScreen({
+  icon,
+  iconBg,
+  title,
+  orderId,
+  tableNumber,
+  onBackToMenu,
+}: Readonly<TerminalScreenProps>) {
+  return (
+    <div
+      className='c-page'
+      style={{
+        background: C.bg,
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 20px',
+        textAlign: 'center',
+        gap: 16,
+      }}
+    >
+      <div
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: '50%',
+          background: iconBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 32,
+          margin: '0 auto',
+        }}
+      >
+        {icon}
+      </div>
+      <h1 style={{ color: C.white, fontSize: 20, fontWeight: 800, margin: 0 }}>{title}</h1>
+      <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>
+        #{orderId.slice(0, 8).toUpperCase()} · Table {tableNumber}
+      </p>
+      <button
+        type='button'
+        onClick={onBackToMenu}
+        style={{
+          marginTop: 8,
+          width: '100%',
+          maxWidth: 320,
+          padding: '16px',
+          background: C.amberGrad,
+          borderRadius: C.r16,
+          border: 'none',
+          color: '#fff',
+          fontWeight: 800,
+          fontSize: 16,
+          cursor: 'pointer',
+          boxShadow: C.shadowAmber,
+        }}
+      >
+        Back to Menu
+      </button>
+    </div>
+  )
 }
 
 export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderViewProps>) {
@@ -73,6 +173,14 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
     room: 'session',
     id: sessionToken,
     handlers: {
+      // Fired right after join (including reconnect/page-reload) with the session's
+      // current active order — without this, a reload would keep showing 'placed'
+      // until the next live transition, even if the order had already progressed.
+      'order:status-changed': (p) => {
+        if (p.orderId !== order.orderId) return
+        const resolved = resolveResyncStatus(p)
+        if (resolved) setCurrentStatus(resolved)
+      },
       'order:confirmed': (p) => {
         if (p.orderId === order.orderId) setCurrentStatus('confirmed')
       },
@@ -93,6 +201,12 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       },
       'order:cancelled': (p) => {
         if (p.orderId === order.orderId) setCurrentStatus('cancelled')
+      },
+      'order:payment-failed': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('payment_failed')
+      },
+      'order:refunded': (p) => {
+        if (p.orderId === order.orderId) setCurrentStatus('refunded')
       },
     },
   })
@@ -130,73 +244,52 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
   }
 
   const isCancelled = currentStatus === 'cancelled'
+  const isPaymentFailed = currentStatus === 'payment_failed'
+  const isRefunded = currentStatus === 'refunded'
   const isServed = currentStatus === 'served'
   const isPayment = currentStatus === 'payment'
   const isPaid = currentStatus === 'paid'
   const currentIdx = STATUS_ORDER.indexOf(currentStatus)
-
   const elapsedMin = Math.floor(elapsed / 60000)
   const elapsedSec = Math.floor((elapsed % 60000) / 1000)
   const elapsedLabel = elapsedMin > 0 ? `${elapsedMin}m ${elapsedSec}s` : `${elapsedSec}s`
 
   if (isCancelled) {
     return (
-      <div
-        className='c-page'
-        style={{
-          background: C.bg,
-          minHeight: '100dvh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px 20px',
-          textAlign: 'center',
-          gap: 16,
-        }}
-      >
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: 'rgba(239,68,68,0.12)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 32,
-            margin: '0 auto',
-          }}
-        >
-          ❌
-        </div>
-        <h1 style={{ color: C.white, fontSize: 20, fontWeight: 800, margin: 0 }}>
-          Order Cancelled
-        </h1>
-        <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>
-          #{order.orderId.slice(0, 8).toUpperCase()} · Table {order.tableNumber}
-        </p>
-        <button
-          type='button'
-          onClick={onBackToMenu}
-          style={{
-            marginTop: 8,
-            width: '100%',
-            maxWidth: 320,
-            padding: '16px',
-            background: C.amberGrad,
-            borderRadius: C.r16,
-            border: 'none',
-            color: '#fff',
-            fontWeight: 800,
-            fontSize: 16,
-            cursor: 'pointer',
-            boxShadow: C.shadowAmber,
-          }}
-        >
-          Back to Menu
-        </button>
-      </div>
+      <TerminalScreen
+        icon='❌'
+        iconBg='rgba(239,68,68,0.12)'
+        title='Order Cancelled'
+        orderId={order.orderId}
+        tableNumber={order.tableNumber}
+        onBackToMenu={onBackToMenu}
+      />
+    )
+  }
+
+  if (isPaymentFailed) {
+    return (
+      <TerminalScreen
+        icon='⚠️'
+        iconBg='rgba(239,68,68,0.12)'
+        title='Payment Failed — Please Try Again'
+        orderId={order.orderId}
+        tableNumber={order.tableNumber}
+        onBackToMenu={onBackToMenu}
+      />
+    )
+  }
+
+  if (isRefunded) {
+    return (
+      <TerminalScreen
+        icon='💸'
+        iconBg='rgba(99,102,241,0.12)'
+        title='Order Refunded'
+        orderId={order.orderId}
+        tableNumber={order.tableNumber}
+        onBackToMenu={onBackToMenu}
+      />
     )
   }
 
@@ -261,8 +354,8 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       {/* Progress stepper */}
       <div style={{ padding: '24px 20px 0' }}>
         {STEPS.map((step, i) => {
-          const done = i < currentIdx
-          const active = i === currentIdx
+          const done = i < currentIdx || (isPaid && i === currentIdx)
+          const active = i === currentIdx && !isPaid
           const pending = i > currentIdx
 
           const circleStyle: React.CSSProperties = {

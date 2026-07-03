@@ -165,6 +165,7 @@ export function CustomerMenuContent({
     sessionStorage.removeItem(ssKey)
     setOrderRecord(null)
     setView('menu')
+    globalThis.window.location.reload()
   }
 
   const theme = isDark ? 'dark' : 'light'

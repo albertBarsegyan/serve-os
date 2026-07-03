@@ -145,7 +145,7 @@ const STATUS_CONFIG: Record<TableStatus, StatusConfig> = {
 const TONE_BADGE: Record<TableStatus, string> = {
   free: 'bg-slate-500 text-slate-300 border border-slate-500/30',
   new: 'bg-sky-500 text-sky-100 border border-sky-500/30',
-  confirmed: 'bg-indigo-500 text-indigo-300 border border-indigo-500/30',
+  confirmed: 'bg-indigo-500 text-indigo-100 border border-indigo-500/30',
   preparing: 'bg-amber-500 text-amber-200 border border-amber-500/30',
   ready: 'bg-emerald-500 text-emerald-100 border border-emerald-500/30',
   served: 'bg-teal-500 text-teal-100 border border-teal-500/30',
@@ -156,7 +156,7 @@ const TONE_BADGE: Record<TableStatus, string> = {
 const TONE_DOT: Record<TableStatus, string> = {
   free: 'bg-slate-300',
   new: 'bg-sky-100',
-  confirmed: 'bg-indigo-400',
+  confirmed: 'bg-indigo-100',
   preparing: 'bg-amber-200',
   ready: 'bg-emerald-100',
   served: 'bg-teal-100',
