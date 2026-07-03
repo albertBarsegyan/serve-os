@@ -1,13 +1,14 @@
-import type { CSSProperties, ElementType, ReactNode } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import type {CSSProperties, ElementType, ReactNode} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
 import './serve-os.css'
-import { useNavigate } from '@tanstack/react-router'
-import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
-import { cn } from '#/lib/utils.ts'
-import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
-import { Icons } from './icons'
-import { DashboardMock, FloatBadge, PhoneMock, QrCode } from './mockups'
+import {useNavigate} from '@tanstack/react-router'
+import Footer from '#/components/footer.tsx'
+import {PaletteSwitcher} from '#/features/palette/ui/PaletteSwitcher.tsx'
+import {cn} from '#/lib/utils.ts'
+import {LogoSvg} from '#/shared/ui/logo-svg.tsx'
+import {Icons} from './icons'
+import {DashboardMock, FloatBadge, PhoneMock, QrCode} from './mockups'
 
 interface RevealProps {
   as?: ElementType
@@ -588,38 +589,8 @@ export function SiteFooter() {
       ],
     ],
   ]
-  return (
-    <footer className='site'>
-      <div className='wrap'>
-        <div className='foot-grid'>
-          <div>
-            <a className='logo' href='/'>
-              <LogoSvg aria-hidden='true' />
-              serve<span className='g'>-os</span>
-            </a>
-            <p className='blurb'>
-              All-in-one hospitality management for modern restaurants and cafes. Manage better,
-              serve better.
-            </p>
-          </div>
-          {cols.map(([h, links]) => (
-            <div className='foot-col' key={h}>
-              <h4>{h}</h4>
-              {links.map(([t, u]) => (
-                <a href={u} key={t}>
-                  {t}
-                </a>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className='foot-bottom'>
-          <span>© {new Date().getFullYear()} serve-os. All rights reserved.</span>
-          <span>Manage Better. Serve Better.</span>
-        </div>
-      </div>
-    </footer>
-  )
+
+  return <Footer />
 }
 
 export function LandingPage() {
