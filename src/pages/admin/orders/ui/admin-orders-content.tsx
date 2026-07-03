@@ -1,15 +1,25 @@
-import {useQuery} from '@tanstack/react-query'
-import {getRouteApi} from '@tanstack/react-router'
-import {ClipboardList, Eye, Loader2, Plus, Search} from 'lucide-react'
-import {useId, useMemo, useState} from 'react'
-import {Badge} from '#/components/ui/badge'
-import {Button} from '#/components/ui/button'
-import {Card, CardContent, CardHeader} from '#/components/ui/card'
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '#/components/ui/table'
-import {useOrderNotifications} from '#/features/notification'
-import {CreateStaffOrderDialog} from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
-import type {Order, OrderStatus} from '#/features/platform/api/platform.types.ts'
-import {orderByIdQueryOptions, pagedOrdersQueryOptions,} from '#/features/platform/lib/query-options.ts'
+import { useQuery } from '@tanstack/react-query'
+import { getRouteApi } from '@tanstack/react-router'
+import { ClipboardList, Eye, Loader2, Plus, Search } from 'lucide-react'
+import { useId, useMemo, useState } from 'react'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
+import { useOrderNotifications } from '#/features/notification'
+import { CreateStaffOrderDialog } from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
+import type { Order, OrderStatus } from '#/features/platform/api/platform.types.ts'
+import {
+  orderByIdQueryOptions,
+  pagedOrdersQueryOptions,
+} from '#/features/platform/lib/query-options.ts'
 import {
   useConfirmOrderMutation,
   useProcessCashPaymentMutation,
@@ -17,17 +27,17 @@ import {
   useRefundOrderMutation,
   useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import {cn} from '#/lib/utils'
-import {listOrders} from '#/shared/api/platform/platform-api.ts'
-import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
-import {useActiveBusiness} from '#/shared/libs/hooks/use-active-business.ts'
-import {StaffPermission} from '#/shared/libs/permissions/index.ts'
-import {usePermissions} from '#/shared/libs/permissions/use-permissions.ts'
-import {downloadCsv, toCsv} from '#/shared/libs/utils/csv.utils.ts'
-import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
-import {formatPrice} from '#/shared/libs/utils/price.utils'
-import {Modal} from '#/shared/ui/modal'
-import {PaginationControls} from '#/shared/ui/pagination-controls'
+import { cn } from '#/lib/utils'
+import { listOrders } from '#/shared/api/platform/platform-api.ts'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
+import { StaffPermission } from '#/shared/libs/permissions/index.ts'
+import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
+import { downloadCsv, toCsv } from '#/shared/libs/utils/csv.utils.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
+import { Modal } from '#/shared/ui/modal'
+import { PaginationControls } from '#/shared/ui/pagination-controls'
 
 const routeApi = getRouteApi('/_admin/orders')
 
