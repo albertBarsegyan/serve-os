@@ -1,14 +1,14 @@
-import type {CSSProperties, ElementType, ReactNode} from 'react'
-import {useEffect, useRef, useState} from 'react'
+import type { CSSProperties, ElementType, ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
 import './serve-os.css'
-import {useNavigate} from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import Footer from '#/components/footer.tsx'
-import {PaletteSwitcher} from '#/features/palette/ui/PaletteSwitcher.tsx'
-import {cn} from '#/lib/utils.ts'
-import {LogoSvg} from '#/shared/ui/logo-svg.tsx'
-import {Icons} from './icons'
-import {DashboardMock, FloatBadge, PhoneMock, QrCode} from './mockups'
+import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
+import { cn } from '#/lib/utils.ts'
+import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
+import { Icons } from './icons'
+import { DashboardMock, FloatBadge, PhoneMock, QrCode } from './mockups'
 
 interface RevealProps {
   as?: ElementType
