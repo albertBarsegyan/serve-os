@@ -32,8 +32,3 @@ export function connectSocket(): void {
   const s = getSocket()
   if (!s.connected) s.connect()
 }
-
-/** Disconnects the singleton. Use on session-closed (F6). */
-export function disconnectSocket(): void {
-  _socket?.disconnect()
-}

@@ -85,6 +85,19 @@ export function subscribeOrderNotifications(
     if (room !== 'session') invalidateOrders()
   }
 
+  // Runs on unmount and whenever `room`/`id` changes (e.g. an owner switching their active
+  // business) — without this the socket stays a member of the old room forever, since it's a
+  // page-lifetime singleton, and keeps receiving another tenant's live order/payment feed.
+  function leave() {
+    if (room === 'kitchen') {
+      socket.emit(CLIENT_EVENTS.LEAVE_KITCHEN, id)
+    } else if (room === 'business') {
+      socket.emit(CLIENT_EVENTS.LEAVE_BUSINESS, id)
+    } else {
+      socket.emit(CLIENT_EVENTS.LEAVE_SESSION, id)
+    }
+  }
+
   function handleLifecycleEvent(eventName: string, payload: OrderEventPayload) {
     if (payload.playSound) playNotificationSound()
     toast.info(TOAST_MESSAGES[eventName] ?? eventName, { position: 'top-right' })
@@ -134,6 +147,11 @@ export function subscribeOrderNotifications(
     toast.success(TOAST_MESSAGES[SERVER_EVENTS.ORDER_PAID], { position: 'top-right' })
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() })
+    // Payment settlement synchronously auto-closes the table session server-side
+    // (TableSessionsService.refreshLifecycle), so the table's currentSessionId is now
+    // stale — without this, admin-table.tsx keeps showing "Close table" for a session
+    // the backend already closed, and clicking it 404s with "Active session not found".
+    void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
     getHandlers()?.['order:paid']?.(p)
   }
   const onPaymentFailed = (p: PaymentFailedPayload) => {
@@ -174,6 +192,7 @@ export function subscribeOrderNotifications(
   }
 
   return () => {
+    leave()
     socket.off('connect', join)
     socket.off(SERVER_EVENTS.ORDER_CREATED, onCreated)
     socket.off(SERVER_EVENTS.ORDER_CONFIRMED, onConfirmed)

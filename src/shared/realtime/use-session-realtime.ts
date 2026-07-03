@@ -27,6 +27,10 @@ export function useSessionRealtime(token: string): void {
       socket.emit(CLIENT_EVENTS.JOIN_SESSION, token)
     }
 
+    function leave() {
+      socket.emit(CLIENT_EVENTS.LEAVE_SESSION, token)
+    }
+
     function onStatusChanged(payload: OrderStatusChangedPayload) {
       void queryClient.invalidateQueries({ queryKey: ['order', payload.orderId] })
       void queryClient.invalidateQueries({ queryKey: ['session', token] })
@@ -57,6 +61,7 @@ export function useSessionRealtime(token: string): void {
     }
 
     return () => {
+      leave()
       socket.off('connect', join)
       socket.off(SERVER_EVENTS.ORDER_STATUS_CHANGED, onStatusChanged)
       socket.off(SERVER_EVENTS.PAYMENT_RECORDED, onPaymentRecorded)

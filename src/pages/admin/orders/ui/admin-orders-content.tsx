@@ -1,24 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
-import { ClipboardList, Eye, Filter, Plus, Search } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader } from '#/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/components/ui/table'
-import { useOrderNotifications } from '#/features/notification'
-import { CreateStaffOrderDialog } from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
-import type { OrderStatus } from '#/features/platform/api/platform.types.ts'
-import {
-  orderByIdQueryOptions,
-  pagedOrdersQueryOptions,
-} from '#/features/platform/lib/query-options.ts'
+import {useQuery} from '@tanstack/react-query'
+import {getRouteApi} from '@tanstack/react-router'
+import {ClipboardList, Eye, Loader2, Plus, Search} from 'lucide-react'
+import {useId, useMemo, useState} from 'react'
+import {Badge} from '#/components/ui/badge'
+import {Button} from '#/components/ui/button'
+import {Card, CardContent, CardHeader} from '#/components/ui/card'
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '#/components/ui/table'
+import {useOrderNotifications} from '#/features/notification'
+import {CreateStaffOrderDialog} from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
+import type {Order, OrderStatus} from '#/features/platform/api/platform.types.ts'
+import {orderByIdQueryOptions, pagedOrdersQueryOptions,} from '#/features/platform/lib/query-options.ts'
 import {
   useConfirmOrderMutation,
   useProcessCashPaymentMutation,
@@ -26,17 +17,21 @@ import {
   useRefundOrderMutation,
   useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import { cn } from '#/lib/utils'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
-import { StaffPermission } from '#/shared/libs/permissions/index.ts'
-import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
-import { Modal } from '#/shared/ui/modal'
-import { type PageLimit, PaginationControls } from '#/shared/ui/pagination-controls'
+import {cn} from '#/lib/utils'
+import {listOrders} from '#/shared/api/platform/platform-api.ts'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {useActiveBusiness} from '#/shared/libs/hooks/use-active-business.ts'
+import {StaffPermission} from '#/shared/libs/permissions/index.ts'
+import {usePermissions} from '#/shared/libs/permissions/use-permissions.ts'
+import {downloadCsv, toCsv} from '#/shared/libs/utils/csv.utils.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import {formatPrice} from '#/shared/libs/utils/price.utils'
+import {Modal} from '#/shared/ui/modal'
+import {PaginationControls} from '#/shared/ui/pagination-controls'
 
-const ALL_STATUSES: OrderStatus[] = [
+const routeApi = getRouteApi('/_admin/orders')
+
+export const ALL_STATUSES: OrderStatus[] = [
   'CREATED',
   'CONFIRMED',
   'IN_KITCHEN',
@@ -70,6 +65,11 @@ function statusBadgeVariant(
 
 function formatStatus(s: string) {
   return s.replaceAll('_', ' ').toLowerCase()
+}
+
+function matchesSearch(order: Order, needle: string) {
+  const tableLabel = order.tableId ? `table ${order.tableId}` : 'table -'
+  return [order.id, order.status, tableLabel].join(' ').toLowerCase().includes(needle)
 }
 
 // ── Order detail modal ────────────────────────────────────────────────────────
@@ -329,13 +329,14 @@ function OrderDetailModal({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function AdminOrdersContent() {
-  const [activeFilter, setActiveFilter] = useState<OrderStatus | 'all'>('all')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState<PageLimit>(20)
+  const search = routeApi.useSearch()
+  const navigate = routeApi.useNavigate()
+  const { status: activeFilter, q: searchText, page, limit } = search
+
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
   const [addOrderOpen, setAddOrderOpen] = useState(false)
   const [pendingOrderIds, setPendingOrderIds] = useState<Set<string>>(new Set())
+  const [isExporting, setIsExporting] = useState(false)
   const activeBusiness = useActiveBusiness()
   const currency = activeBusiness?.currency ?? 'USD'
   const businessId = activeBusiness?.id ?? ''
@@ -343,6 +344,13 @@ export function AdminOrdersContent() {
   const canAddOrder = isOwner() || hasPermission(StaffPermission.ORDER_CREATE)
 
   useOrderNotifications({ room: 'business', id: businessId })
+
+  const updateSearch = (patch: Partial<typeof search>) => {
+    void navigate({
+      search: (prev) => ({ ...prev, ...patch }),
+      replace: true,
+    })
+  }
 
   const statusFilter = activeFilter === 'all' ? undefined : activeFilter
   const {
@@ -358,22 +366,57 @@ export function AdminOrdersContent() {
   const orders = pagedOrders?.data ?? []
 
   const filteredOrders = useMemo(() => {
-    const needle = search.trim().toLowerCase()
+    const needle = searchText.trim().toLowerCase()
     if (!needle) return orders
-    return orders.filter((order) => {
-      const tableLabel = order.tableId ? `table ${order.tableId}` : 'table -'
-      return [order.id, order.status, tableLabel].join(' ').toLowerCase().includes(needle)
-    })
-  }, [orders, search])
+    return orders.filter((order) => matchesSearch(order, needle))
+  }, [orders, searchText])
 
   const handleFilterChange = (status: OrderStatus | 'all') => {
-    setActiveFilter(status)
-    setPage(1)
+    updateSearch({ status, page: 1 })
   }
 
   const handleSearch = (value: string) => {
-    setSearch(value)
-    setPage(1)
+    updateSearch({ q: value, page: 1 })
+  }
+
+  const handleExportCsv = async () => {
+    setIsExporting(true)
+    try {
+      const allOrders = await listOrders(statusFilter ? { status: statusFilter } : undefined)
+      const needle = searchText.trim().toLowerCase()
+      const rows = (
+        needle ? allOrders.filter((order) => matchesSearch(order, needle)) : allOrders
+      ).map((order) => [
+        order.id,
+        order.table ? `Table ${order.table.number}` : (order.tableId ?? ''),
+        formatStatus(order.status),
+        order.paymentStatus,
+        order.type,
+        order.items.length,
+        Number(order.totalAmount).toFixed(2),
+        order.createdAt,
+      ])
+
+      const csv = toCsv(
+        [
+          'Order ID',
+          'Table',
+          'Status',
+          'Payment Status',
+          'Type',
+          'Items',
+          `Total (${currency})`,
+          'Created At',
+        ],
+        rows,
+      )
+      downloadCsv(`orders-${new Date().toISOString().slice(0, 10)}.csv`, csv)
+      showSuccess(`Exported ${rows.length} orders`)
+    } catch (err) {
+      showError(getResponseErrorMessage(err))
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const nextStatus: Partial<
@@ -433,11 +476,15 @@ export function AdminOrdersContent() {
           </p>
         </div>
         <div className='flex items-center gap-3'>
-          <Button variant='outline' size='sm' className='rounded-full' type='button'>
-            <Filter className='mr-2 h-4 w-4' /> Filter
-          </Button>
-          <Button disabled={!pagedOrders?.total} size='sm' className='rounded-full' type='button'>
-            Export CSV
+          <Button
+            disabled={!pagedOrders?.total || isExporting}
+            size='sm'
+            className='rounded-full'
+            type='button'
+            onClick={() => void handleExportCsv()}
+          >
+            {isExporting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+            {isExporting ? 'Exporting…' : 'Export CSV'}
           </Button>
           {canAddOrder && (
             <Button
@@ -491,7 +538,7 @@ export function AdminOrdersContent() {
                 type='text'
                 placeholder='Search this page…'
                 className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
-                value={search}
+                value={searchText}
                 onChange={(event) => handleSearch(event.target.value)}
               />
             </div>
@@ -613,11 +660,8 @@ export function AdminOrdersContent() {
               limit={limit}
               total={pagedOrders.total}
               totalPages={pagedOrders.totalPages}
-              onPageChange={setPage}
-              onLimitChange={(l) => {
-                setLimit(l)
-                setPage(1)
-              }}
+              onPageChange={(p) => updateSearch({ page: p })}
+              onLimitChange={(l) => updateSearch({ limit: l, page: 1 })}
             />
           )}
         </CardContent>
