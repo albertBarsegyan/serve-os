@@ -10,6 +10,9 @@ export const CLIENT_EVENTS = {
   JOIN_SESSION: 'join-session',
   JOIN_BUSINESS: 'join-business',
   JOIN_KITCHEN: 'join-kitchen',
+  LEAVE_SESSION: 'leave-session',
+  LEAVE_BUSINESS: 'leave-business',
+  LEAVE_KITCHEN: 'leave-kitchen',
   CALL_WAITER: 'call-waiter',
 } as const
 
