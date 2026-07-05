@@ -1,14 +1,17 @@
-import type { CSSProperties, ElementType, ReactNode } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import type {CSSProperties, ElementType, ReactNode} from 'react'
+import {useEffect, useRef, useState} from 'react'
+import {createPortal} from 'react-dom'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
 import './serve-os.css'
-import { useNavigate } from '@tanstack/react-router'
+import {useNavigate} from '@tanstack/react-router'
 import Footer from '#/components/footer.tsx'
-import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
-import { cn } from '#/lib/utils.ts'
-import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
-import { Icons } from './icons'
-import { DashboardMock, FloatBadge, PhoneMock, QrCode } from './mockups'
+import {PaletteSwitcher} from '#/features/palette/ui/PaletteSwitcher.tsx'
+import {cn} from '#/lib/utils.ts'
+import {useBodyScrollLock} from '#/shared/libs/hooks/scroll-lock.ts'
+import {LogoSvg} from '#/shared/ui/logo-svg.tsx'
+import menuDemoVideo from '#/shared/assets/video/menu-demo.mp4'
+import {Icons} from './icons'
+import {DashboardMock, FloatBadge, PhoneMock, QrCode} from './mockups'
 
 interface RevealProps {
   as?: ElementType
@@ -267,7 +270,41 @@ export function Nav() {
   )
 }
 
+function DemoVideoModal({ onClose }: Readonly<{ onClose: () => void }>) {
+  useBodyScrollLock(true)
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
+    <div className='demo-modal' role='dialog' aria-modal='true' aria-label='Product demo video'>
+      <button
+        type='button'
+        aria-label='Close demo video'
+        className='demo-modal-backdrop'
+        onClick={onClose}
+      />
+      <button type='button' className='demo-modal-close' aria-label='Close demo video' onClick={onClose}>
+        <Icons.X />
+      </button>
+      <video className='demo-modal-video' src={menuDemoVideo} autoPlay controls playsInline>
+        <track kind='captions' />
+      </video>
+    </div>,
+    document.body,
+  )
+}
+
 function Hero() {
+  const [demoOpen, setDemoOpen] = useState(false)
+
   return (
     <section className='hero'>
       <div className='wrap hero-grid'>
@@ -284,20 +321,17 @@ function Hero() {
             <a className='btn primary lg' href='/#pricing'>
               Start free trial <Icons.ArrowRight />
             </a>
-            <a className='btn ghost lg' href='/#ordering'>
+            <button
+              type='button'
+              id='demoButton'
+              className='btn ghost lg'
+              onClick={() => setDemoOpen(true)}
+            >
               <Icons.Play />
               Watch the demo
-            </a>
+            </button>
           </div>
           <div className='hero-meta'>
-            <div className='avatars'>
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-            <span>Trusted by 400+ cafes</span>
-            <span className='dot' />
             <span>No card required</span>
           </div>
         </div>
@@ -307,6 +341,7 @@ function Hero() {
           <FloatBadge pos='b2' icon={<Icons.Bell />} title='7 new' sub='Orders in kitchen' />
         </Reveal>
       </div>
+      {demoOpen && <DemoVideoModal onClose={() => setDemoOpen(false)} />}
     </section>
   )
 }

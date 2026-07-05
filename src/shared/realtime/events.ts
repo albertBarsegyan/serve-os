@@ -10,9 +10,11 @@ export const CLIENT_EVENTS = {
   JOIN_SESSION: 'join-session',
   JOIN_BUSINESS: 'join-business',
   JOIN_KITCHEN: 'join-kitchen',
+  JOIN_DISPLAY: 'join-display',
   LEAVE_SESSION: 'leave-session',
   LEAVE_BUSINESS: 'leave-business',
   LEAVE_KITCHEN: 'leave-kitchen',
+  LEAVE_DISPLAY: 'leave-display',
   CALL_WAITER: 'call-waiter',
 } as const
 
@@ -37,6 +39,9 @@ export const SERVER_EVENTS = {
   ORDER_PAID: 'order:paid',
   ORDER_PAYMENT_FAILED: 'order:payment-failed',
   ORDER_REFUNDED: 'order:refunded',
+  // Venue TV display feed (sanitized — no PII/payment fields, see DisplayOrderPayload)
+  DISPLAY_ORDER_UPDATED: 'display:order-updated',
+  DISPLAY_ORDER_REMOVED: 'display:order-removed',
 } as const
 
 // ── Payload types ─────────────────────────────────────────────────────────────
@@ -134,4 +139,33 @@ export interface PaymentFailedPayload extends OrderEventPayload {
 /** Emitted for order:refunded */
 export interface OrderRefundedPayload extends OrderEventPayload {
   refundId: string
+}
+
+// ── Venue TV display payload types ────────────────────────────────────────────
+// Deliberately narrow — a display token is unauthenticated, so the backend never
+// includes customer name, totals, payment info, or staff identities in these.
+
+export type DisplayOrderBucket = 'PREPARING' | 'READY'
+
+export interface DisplayOrderItemPayload {
+  name: string
+  quantity: number
+}
+
+export interface DisplayOrderPayload {
+  orderId: string
+  tableNumber: number | null
+  status: DisplayOrderBucket
+  items: DisplayOrderItemPayload[]
+  updatedAt: string
+}
+
+export interface DisplayOrderRemovedPayload {
+  orderId: string
+}
+
+/** Ack shape returned by the join-display/join-session/join-kitchen/join-business handlers. */
+export interface JoinAck {
+  event: 'joined' | 'error'
+  data: string
 }

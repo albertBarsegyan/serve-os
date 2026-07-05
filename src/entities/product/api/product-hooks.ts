@@ -8,7 +8,6 @@ import type {
 import { clientApiInstance } from '#/shared/api/client-instance'
 import {
   createProductServerFn,
-  deleteProductServerFn,
   getProductServerFn,
   updateProductServerFn,
 } from '#/shared/api/product/product.fns'
@@ -52,20 +51,6 @@ export function useUpdateProduct() {
       queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
       queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
       queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
-    },
-  })
-}
-
-export function useDeleteProduct() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ businessId, productId }: { businessId: string; productId: string }) =>
-      deleteProductServerFn({ data: { businessId, productId } }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
-      queryClient.invalidateQueries({ queryKey: ['customer-menu', variables.businessId] })
     },
   })
 }
