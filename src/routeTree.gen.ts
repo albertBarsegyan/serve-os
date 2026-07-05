@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as SiteRouteImport } from './routes/_site'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
+import { Route as DisplayTokenRouteImport } from './routes/display/$token'
 import { Route as CustomerMenuRouteImport } from './routes/customer/menu'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
@@ -31,6 +32,7 @@ import { Route as AdminOrdersRouteImport } from './routes/_admin/orders'
 import { Route as AdminModifiersRouteImport } from './routes/_admin/modifiers'
 import { Route as AdminMenuRouteImport } from './routes/_admin/menu'
 import { Route as AdminKitchenRouteImport } from './routes/_admin/kitchen'
+import { Route as AdminDisplaysRouteImport } from './routes/_admin/displays'
 import { Route as AdminDashboardRouteImport } from './routes/_admin/dashboard'
 import { Route as AdminBusinessesRouteImport } from './routes/_admin/businesses'
 import { Route as AdminStaffIndexRouteImport } from './routes/_admin/staff/index'
@@ -74,6 +76,11 @@ const SiteIndexRoute = SiteIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SiteRoute,
+} as any)
+const DisplayTokenRoute = DisplayTokenRouteImport.update({
+  id: '/display/$token',
+  path: '/display/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CustomerMenuRoute = CustomerMenuRouteImport.update({
   id: '/customer/menu',
@@ -145,6 +152,11 @@ const AdminKitchenRoute = AdminKitchenRouteImport.update({
   path: '/kitchen',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDisplaysRoute = AdminDisplaysRouteImport.update({
+  id: '/displays',
+  path: '/displays',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -180,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/staff-change-password': typeof StaffChangePasswordRoute
   '/businesses': typeof AdminBusinessesRoute
   '/dashboard': typeof AdminDashboardRoute
+  '/displays': typeof AdminDisplaysRoute
   '/kitchen': typeof AdminKitchenRoute
   '/menu': typeof AdminMenuRoute
   '/modifiers': typeof AdminModifiersRoute
@@ -194,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
+  '/display/$token': typeof DisplayTokenRoute
   '/staff/kitchen': typeof AdminStaffKitchenRoute
   '/b/$slug/staff-login': typeof BSlugStaffLoginRoute
   '/staff/': typeof AdminStaffIndexRoute
@@ -207,6 +221,7 @@ export interface FileRoutesByTo {
   '/staff-change-password': typeof StaffChangePasswordRoute
   '/businesses': typeof AdminBusinessesRoute
   '/dashboard': typeof AdminDashboardRoute
+  '/displays': typeof AdminDisplaysRoute
   '/kitchen': typeof AdminKitchenRoute
   '/menu': typeof AdminMenuRoute
   '/modifiers': typeof AdminModifiersRoute
@@ -220,6 +235,7 @@ export interface FileRoutesByTo {
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
+  '/display/$token': typeof DisplayTokenRoute
   '/staff/kitchen': typeof AdminStaffKitchenRoute
   '/b/$slug/staff-login': typeof BSlugStaffLoginRoute
   '/staff': typeof AdminStaffIndexRoute
@@ -235,6 +251,7 @@ export interface FileRoutesById {
   '/staff-change-password': typeof StaffChangePasswordRoute
   '/_admin/businesses': typeof AdminBusinessesRoute
   '/_admin/dashboard': typeof AdminDashboardRoute
+  '/_admin/displays': typeof AdminDisplaysRoute
   '/_admin/kitchen': typeof AdminKitchenRoute
   '/_admin/menu': typeof AdminMenuRoute
   '/_admin/modifiers': typeof AdminModifiersRoute
@@ -249,6 +266,7 @@ export interface FileRoutesById {
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/customer/menu': typeof CustomerMenuRoute
+  '/display/$token': typeof DisplayTokenRoute
   '/_site/': typeof SiteIndexRoute
   '/_admin/staff/kitchen': typeof AdminStaffKitchenRoute
   '/b/$slug/staff-login': typeof BSlugStaffLoginRoute
@@ -265,6 +283,7 @@ export interface FileRouteTypes {
     | '/staff-change-password'
     | '/businesses'
     | '/dashboard'
+    | '/displays'
     | '/kitchen'
     | '/menu'
     | '/modifiers'
@@ -279,6 +298,7 @@ export interface FileRouteTypes {
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
+    | '/display/$token'
     | '/staff/kitchen'
     | '/b/$slug/staff-login'
     | '/staff/'
@@ -292,6 +312,7 @@ export interface FileRouteTypes {
     | '/staff-change-password'
     | '/businesses'
     | '/dashboard'
+    | '/displays'
     | '/kitchen'
     | '/menu'
     | '/modifiers'
@@ -305,6 +326,7 @@ export interface FileRouteTypes {
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
+    | '/display/$token'
     | '/staff/kitchen'
     | '/b/$slug/staff-login'
     | '/staff'
@@ -319,6 +341,7 @@ export interface FileRouteTypes {
     | '/staff-change-password'
     | '/_admin/businesses'
     | '/_admin/dashboard'
+    | '/_admin/displays'
     | '/_admin/kitchen'
     | '/_admin/menu'
     | '/_admin/modifiers'
@@ -333,6 +356,7 @@ export interface FileRouteTypes {
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/customer/menu'
+    | '/display/$token'
     | '/_site/'
     | '/_admin/staff/kitchen'
     | '/b/$slug/staff-login'
@@ -348,6 +372,7 @@ export interface RootRouteChildren {
   StaffAcceptInviteRoute: typeof StaffAcceptInviteRoute
   StaffChangePasswordRoute: typeof StaffChangePasswordRoute
   CustomerMenuRoute: typeof CustomerMenuRoute
+  DisplayTokenRoute: typeof DisplayTokenRoute
   BSlugStaffLoginRoute: typeof BSlugStaffLoginRoute
 }
 
@@ -408,6 +433,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof SiteIndexRouteImport
       parentRoute: typeof SiteRoute
+    }
+    '/display/$token': {
+      id: '/display/$token'
+      path: '/display/$token'
+      fullPath: '/display/$token'
+      preLoaderRoute: typeof DisplayTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/customer/menu': {
       id: '/customer/menu'
@@ -507,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminKitchenRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/displays': {
+      id: '/_admin/displays'
+      path: '/displays'
+      fullPath: '/displays'
+      preLoaderRoute: typeof AdminDisplaysRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/dashboard': {
       id: '/_admin/dashboard'
       path: '/dashboard'
@@ -562,6 +601,7 @@ const AdminStaffRouteWithChildren = AdminStaffRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminBusinessesRoute: typeof AdminBusinessesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminDisplaysRoute: typeof AdminDisplaysRoute
   AdminKitchenRoute: typeof AdminKitchenRoute
   AdminMenuRoute: typeof AdminMenuRoute
   AdminModifiersRoute: typeof AdminModifiersRoute
@@ -577,6 +617,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminBusinessesRoute: AdminBusinessesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminDisplaysRoute: AdminDisplaysRoute,
   AdminKitchenRoute: AdminKitchenRoute,
   AdminMenuRoute: AdminMenuRoute,
   AdminModifiersRoute: AdminModifiersRoute,
@@ -624,6 +665,7 @@ const rootRouteChildren: RootRouteChildren = {
   StaffAcceptInviteRoute: StaffAcceptInviteRoute,
   StaffChangePasswordRoute: StaffChangePasswordRoute,
   CustomerMenuRoute: CustomerMenuRoute,
+  DisplayTokenRoute: DisplayTokenRoute,
   BSlugStaffLoginRoute: BSlugStaffLoginRoute,
 }
 export const routeTree = rootRouteImport

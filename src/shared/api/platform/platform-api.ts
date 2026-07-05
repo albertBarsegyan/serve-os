@@ -190,8 +190,8 @@ export function setProductAvailability(productId: string, isAvailable: boolean):
     .json<Product>()
 }
 
-export function deleteProduct(productId: string): Promise<{ message: string }> {
-  return clientApiInstance.delete(`menu/products/${productId}`).json<{ message: string }>()
+export function deleteProduct(productId: string): Promise<unknown> {
+  return clientApiInstance.delete(`menu/products/${productId}`)
 }
 
 export function syncProductModifierGroups(productId: string, groupIds: string[]): Promise<Product> {

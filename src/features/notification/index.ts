@@ -4,3 +4,4 @@ export {
   type UseOrderNotificationsOptions,
   useOrderNotifications,
 } from './model/use-order-notifications'
+export { useSelfMutationSuppression } from './model/use-self-mutation-suppression'

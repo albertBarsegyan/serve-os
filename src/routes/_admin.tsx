@@ -19,6 +19,7 @@ import {
   LogOut,
   type LucideIcon,
   Menu,
+  Monitor,
   Puzzle,
   Settings,
   ShoppingBag,
@@ -48,7 +49,7 @@ import {
   useActiveBusiness,
   useSelectedBusinessId,
 } from '#/shared/libs/hooks/use-active-business.ts'
-import { BusinessFeature, StaffPermission } from '#/shared/libs/permissions/index.ts'
+import { BusinessFeature, StaffPermission, StaffRole } from '#/shared/libs/permissions/index.ts'
 import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { noIndexMeta } from '#/shared/libs/seo/meta.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -256,7 +257,7 @@ function AdminLayout() {
   const navigation = useNavigate()
 
   const { authUser } = useRouteContext({ from: '/_admin' })
-  const { isOwner, canSee, hasPermission } = usePermissions()
+  const { isOwner, canSee, hasPermission, staffRole } = usePermissions()
   const activeBusiness = useActiveBusiness()
   const { isLoading: isBusinessLoading } = useBusinessesQuery({
     enabled: authUser?.type === 'owner',
@@ -307,6 +308,9 @@ function AdminLayout() {
       ? [{ label: 'Payments', icon: CreditCard, href: '/payments' }]
       : []),
     ...(isOwner() ? [{ label: 'Payment Methods', icon: Wallet, href: '/payment-methods' }] : []),
+    ...(isOwner() || staffRole() === StaffRole.MANAGER
+      ? [{ label: 'TV Displays', icon: Monitor, href: '/displays' }]
+      : []),
     ...(isOwner() || hasPermission(StaffPermission.BUSINESS_SETTINGS)
       ? [{ label: 'Settings', icon: Settings, href: '/settings' }]
       : []),

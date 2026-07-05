@@ -38,6 +38,14 @@ export interface UseOrderNotificationsOptions {
   room: 'kitchen' | 'business' | 'session'
   id: string
   handlers?: OrderNotificationHandlers
+  /**
+   * Predicate for "did this client itself just mutate this order via REST?" — the
+   * backend broadcasts lifecycle events to the whole room including the actor's own
+   * socket, so without this the actor sees their own action's toast/sound a second
+   * time when the broadcast echoes back. Cache invalidation and custom `handlers`
+   * still run regardless; only the default toast/sound is suppressed.
+   */
+  isSelfMutated?: (orderId: string) => boolean
 }
 
 const TOAST_MESSAGES: Record<string, string> = {
@@ -65,7 +73,12 @@ export function subscribeOrderNotifications(
   room: UseOrderNotificationsOptions['room'],
   id: string,
   getHandlers: () => OrderNotificationHandlers | undefined,
+  getIsSelfMutated?: () => ((orderId: string) => boolean) | undefined,
 ): () => void {
+  function isSelfMutated(orderId: string): boolean {
+    return getIsSelfMutated?.()?.(orderId) ?? false
+  }
+
   function invalidateOrders() {
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.kitchenOrders() })
@@ -99,8 +112,10 @@ export function subscribeOrderNotifications(
   }
 
   function handleLifecycleEvent(eventName: string, payload: OrderEventPayload) {
-    if (payload.playSound) playNotificationSound()
-    toast.info(TOAST_MESSAGES[eventName] ?? eventName, { position: 'top-right' })
+    if (!isSelfMutated(payload.orderId)) {
+      if (payload.playSound) playNotificationSound()
+      toast.info(TOAST_MESSAGES[eventName] ?? eventName, { position: 'top-right' })
+    }
     invalidateOrders()
   }
 
@@ -137,14 +152,18 @@ export function subscribeOrderNotifications(
     getHandlers()?.['order:call-waiter']?.(p)
   }
   const onPaymentOpen = (p: PaymentOpenPayload) => {
-    playNotificationSound()
-    toast.info(TOAST_MESSAGES[SERVER_EVENTS.ORDER_PAYMENT_OPEN], { position: 'top-right' })
+    if (!isSelfMutated(p.orderId)) {
+      playNotificationSound()
+      toast.info(TOAST_MESSAGES[SERVER_EVENTS.ORDER_PAYMENT_OPEN], { position: 'top-right' })
+    }
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() })
     getHandlers()?.['order:payment-open']?.(p)
   }
   const onPaid = (p: OrderPaidPayload) => {
-    toast.success(TOAST_MESSAGES[SERVER_EVENTS.ORDER_PAID], { position: 'top-right' })
+    if (!isSelfMutated(p.orderId)) {
+      toast.success(TOAST_MESSAGES[SERVER_EVENTS.ORDER_PAID], { position: 'top-right' })
+    }
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() })
     // Payment settlement synchronously auto-closes the table session server-side
@@ -155,14 +174,18 @@ export function subscribeOrderNotifications(
     getHandlers()?.['order:paid']?.(p)
   }
   const onPaymentFailed = (p: PaymentFailedPayload) => {
-    if (p.playSound) playNotificationSound()
-    toast.error(TOAST_MESSAGES[SERVER_EVENTS.ORDER_PAYMENT_FAILED], { position: 'top-right' })
+    if (!isSelfMutated(p.orderId)) {
+      if (p.playSound) playNotificationSound()
+      toast.error(TOAST_MESSAGES[SERVER_EVENTS.ORDER_PAYMENT_FAILED], { position: 'top-right' })
+    }
     invalidateOrders()
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() })
     getHandlers()?.['order:payment-failed']?.(p)
   }
   const onRefunded = (p: OrderRefundedPayload) => {
-    toast.info(TOAST_MESSAGES[SERVER_EVENTS.ORDER_REFUNDED], { position: 'top-right' })
+    if (!isSelfMutated(p.orderId)) {
+      toast.info(TOAST_MESSAGES[SERVER_EVENTS.ORDER_REFUNDED], { position: 'top-right' })
+    }
     invalidateOrders()
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() })
     getHandlers()?.['order:refunded']?.(p)
@@ -209,17 +232,31 @@ export function subscribeOrderNotifications(
   }
 }
 
-export function useOrderNotifications({ room, id, handlers }: UseOrderNotificationsOptions): void {
+export function useOrderNotifications({
+  room,
+  id,
+  handlers,
+  isSelfMutated,
+}: UseOrderNotificationsOptions): void {
   const queryClient = useQueryClient()
 
-  // Keep handlers in a ref so the effect never needs to re-run when they change
+  // Keep handlers/isSelfMutated in refs so the effect never needs to re-run when they change
   const handlersRef = useRef(handlers)
   handlersRef.current = handlers
+  const isSelfMutatedRef = useRef(isSelfMutated)
+  isSelfMutatedRef.current = isSelfMutated
 
   useEffect(() => {
     if (typeof window === 'undefined' || !id) return
 
     const socket = getSocket()
-    return subscribeOrderNotifications(socket, queryClient, room, id, () => handlersRef.current)
+    return subscribeOrderNotifications(
+      socket,
+      queryClient,
+      room,
+      id,
+      () => handlersRef.current,
+      () => isSelfMutatedRef.current,
+    )
   }, [room, id, queryClient])
 }

@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import { useOrderNotifications } from '#/features/notification'
+import { useOrderNotifications, useSelfMutationSuppression } from '#/features/notification'
 import { CreateStaffOrderDialog } from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
 import type { Order, OrderStatus } from '#/features/platform/api/platform.types.ts'
 import {
@@ -88,10 +88,12 @@ function OrderDetailModal({
   orderId,
   onClose,
   currency,
+  markSelfMutated,
 }: Readonly<{
   orderId: string
   onClose: () => void
   currency: string
+  markSelfMutated: (orderId: string) => void
 }>) {
   const tipId = useId()
   const [tipAmount, setTipAmount] = useState('')
@@ -123,6 +125,7 @@ function OrderDetailModal({
   const refund = async () => {
     try {
       await refundMutation.mutateAsync({ orderId, data: {} })
+      markSelfMutated(orderId)
       showSuccess('Order refunded')
       onClose()
     } catch (err) {
@@ -139,6 +142,7 @@ function OrderDetailModal({
       } else {
         await posMutation.mutateAsync({ orderId, data: { tipAmount: parsedTip || undefined } })
       }
+      markSelfMutated(orderId)
       showSuccess(`Payment processed via ${method === 'cash' ? 'Cash' : 'POS'}`)
       onClose()
     } catch (err) {
@@ -303,6 +307,7 @@ function OrderDetailModal({
                 onClick={async () => {
                   try {
                     await cancelMutation.mutateAsync({ orderId, data: { status: 'CANCELLED' } })
+                    markSelfMutated(orderId)
                     showSuccess('Order cancelled')
                     onClose()
                   } catch (err) {
@@ -352,8 +357,9 @@ export function AdminOrdersContent() {
   const businessId = activeBusiness?.id ?? ''
   const { isOwner, hasPermission } = usePermissions()
   const canAddOrder = isOwner() || hasPermission(StaffPermission.ORDER_CREATE)
+  const { markSelfMutated, isSelfMutated } = useSelfMutationSuppression()
 
-  useOrderNotifications({ room: 'business', id: businessId })
+  useOrderNotifications({ room: 'business', id: businessId, isSelfMutated })
 
   const updateSearch = (patch: Partial<typeof search>) => {
     void navigate({
@@ -453,6 +459,7 @@ export function AdminOrdersContent() {
     markPending(orderId)
     try {
       await confirmMutation.mutateAsync(orderId)
+      markSelfMutated(orderId)
       showSuccess('Order confirmed')
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
@@ -468,6 +475,7 @@ export function AdminOrdersContent() {
     markPending(orderId)
     try {
       await updateMutation.mutateAsync({ orderId, data: { status } })
+      markSelfMutated(orderId)
       showSuccess('Order status updated')
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
@@ -682,6 +690,7 @@ export function AdminOrdersContent() {
           orderId={detailOrderId}
           onClose={() => setDetailOrderId(null)}
           currency={currency}
+          markSelfMutated={markSelfMutated}
         />
       )}
 
