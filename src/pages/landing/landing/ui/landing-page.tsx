@@ -1,17 +1,17 @@
-import type {CSSProperties, ElementType, ReactNode} from 'react'
-import {useEffect, useRef, useState} from 'react'
-import {createPortal} from 'react-dom'
+import type { CSSProperties, ElementType, ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
 import './serve-os.css'
-import {useNavigate} from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import Footer from '#/components/footer.tsx'
-import {PaletteSwitcher} from '#/features/palette/ui/PaletteSwitcher.tsx'
-import {cn} from '#/lib/utils.ts'
-import {useBodyScrollLock} from '#/shared/libs/hooks/scroll-lock.ts'
-import {LogoSvg} from '#/shared/ui/logo-svg.tsx'
+import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
+import { cn } from '#/lib/utils.ts'
 import menuDemoVideo from '#/shared/assets/video/menu-demo.mp4'
-import {Icons} from './icons'
-import {DashboardMock, FloatBadge, PhoneMock, QrCode} from './mockups'
+import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
+import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
+import { Icons } from './icons'
+import { DashboardMock, FloatBadge, PhoneMock, QrCode } from './mockups'
 
 interface RevealProps {
   as?: ElementType
@@ -291,7 +291,12 @@ function DemoVideoModal({ onClose }: Readonly<{ onClose: () => void }>) {
         className='demo-modal-backdrop'
         onClick={onClose}
       />
-      <button type='button' className='demo-modal-close' aria-label='Close demo video' onClick={onClose}>
+      <button
+        type='button'
+        className='demo-modal-close'
+        aria-label='Close demo video'
+        onClick={onClose}
+      >
         <Icons.X />
       </button>
       <video className='demo-modal-video' src={menuDemoVideo} autoPlay controls playsInline>

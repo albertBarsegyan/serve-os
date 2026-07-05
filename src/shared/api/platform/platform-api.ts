@@ -1,5 +1,5 @@
-import type {ResponsePromise} from 'ky'
-import type {StaffAuthUser} from '#/features/auth/api/auth.types.ts'
+import type { ResponsePromise } from 'ky'
+import type { StaffAuthUser } from '#/features/auth/api/auth.types.ts'
 import type {
   AcceptInviteRequest,
   AddModifierRequest,
@@ -43,7 +43,7 @@ import type {
   UpdateStaffRoleRequest,
   UpdateTableRequest,
 } from '#/features/platform/api/platform.types.ts'
-import {clientApiInstance} from '#/shared/api/client-instance.ts'
+import { clientApiInstance } from '#/shared/api/client-instance.ts'
 
 type ListResponse<T> =
   | T[]
