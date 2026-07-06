@@ -29,6 +29,7 @@ import {
   useCreateBusinessMutation,
   useUpdateBusinessMutation,
 } from '#/features/business/model/business-hooks'
+import { m } from '#/paraglide/messages'
 import { selectBusinessServerFn } from '#/shared/api/business/business.fns'
 import { ImageEntityType, uploadImage } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
@@ -151,7 +152,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
         }
 
         await queryClient.invalidateQueries({ queryKey: ['businesses'] })
-        showSuccess('Business created successfully')
+        showSuccess(m.admin_businesses_create_success())
       } else if (mode === 'edit' && businessId) {
         let logoUrl: string | null | undefined
 
@@ -174,7 +175,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
         }
 
         await updateMutation.mutateAsync({ id: businessId, payload })
-        showSuccess('Business updated successfully')
+        showSuccess(m.admin_businesses_update_success())
       }
 
       onClose()
@@ -190,21 +191,21 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
     <Modal
       isOpen={true}
       onClose={onClose}
-      title={mode === 'add' ? 'Add Business' : 'Edit Business'}
+      title={mode === 'add' ? m.admin_businesses_add_title() : m.admin_businesses_edit_title()}
       footer={
         <>
           <Button variant='ghost' onClick={onClose} disabled={isLoading}>
-            Cancel
+            {m.admin_businesses_cancel()}
           </Button>
           <Button onClick={handleSubmit(onSubmit)} disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save'}
+            {isLoading ? m.admin_businesses_saving() : m.admin_businesses_save()}
           </Button>
         </>
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className='space-y-4 px-4'>
         <LogoUploadField
-          label='Business Logo'
+          label={m.admin_businesses_logo_label()}
           currentUrl={currentBusiness?.logoUrl}
           onFileChange={handleLogoFileChange}
           shape='square'
@@ -212,13 +213,13 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
 
         <div className='space-y-2'>
           <Label htmlFor={nameId} className='text-sm font-medium'>
-            Business Name
+            {m.admin_businesses_name_label()}
           </Label>
           <div className='relative'>
             <Building2 className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
             <Input
               id={nameId}
-              placeholder='e.g. Sunset Bistro'
+              placeholder={m.admin_businesses_name_placeholder()}
               className='pl-10'
               {...register('name')}
             />
@@ -228,7 +229,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
 
         <div className='space-y-2'>
           <Label htmlFor={typeId} className='text-sm font-medium'>
-            Business Type
+            {m.admin_businesses_type_label()}
           </Label>
           <Controller
             name='type'
@@ -242,7 +243,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
                   value,
                   label,
                 }))}
-                placeholder='Select type'
+                placeholder={m.admin_businesses_select_type_placeholder()}
               />
             )}
           />
@@ -252,7 +253,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
         <div className='grid gap-4 sm:grid-cols-2'>
           <div className='space-y-2'>
             <Label htmlFor={countryId} className='text-sm font-medium'>
-              Country
+              {m.admin_businesses_country_label()}
             </Label>
             <Controller
               name='locationCountry'
@@ -263,7 +264,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
                   value={field.value}
                   onChange={field.onChange}
                   options={countryOptions}
-                  placeholder='Select country'
+                  placeholder={m.admin_businesses_select_country_placeholder()}
                   startIcon={<MapPin className='h-4 w-4' />}
                 />
               )}
@@ -275,7 +276,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
 
           <div className='space-y-2'>
             <Label htmlFor={cityId} className='text-sm font-medium'>
-              City
+              {m.admin_businesses_city_label()}
             </Label>
             <Controller
               name='locationCity'
@@ -286,7 +287,11 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
                   value={field.value}
                   onChange={field.onChange}
                   options={cityOptions}
-                  placeholder={selectedCountry ? 'Select city' : 'Select country first'}
+                  placeholder={
+                    selectedCountry
+                      ? m.admin_businesses_select_city_placeholder()
+                      : m.admin_businesses_select_country_first_placeholder()
+                  }
                   disabled={!selectedCountry}
                 />
               )}
@@ -299,7 +304,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
 
         <div className='space-y-2'>
           <Label htmlFor={currencyId} className='text-sm font-medium'>
-            Currency
+            {m.admin_businesses_currency_label()}
           </Label>
           <Controller
             name='currency'
@@ -310,7 +315,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
                 value={field.value}
                 onChange={(v) => field.onChange(v.toUpperCase())}
                 options={currencyOptions}
-                placeholder='Select currency'
+                placeholder={m.admin_businesses_select_currency_placeholder()}
               />
             )}
           />

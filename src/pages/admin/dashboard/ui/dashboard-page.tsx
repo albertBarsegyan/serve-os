@@ -8,6 +8,7 @@ import {
   paymentsQueryOptions,
   staffQueryOptions,
 } from '#/features/platform/lib/query-options.ts'
+import { m } from '#/paraglide/messages'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { StaffPermission } from '#/shared/libs/permissions/index.ts'
 import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
@@ -84,9 +85,11 @@ export function AdminDashboardPage() {
     <div className='space-y-8'>
       <div>
         <h1 className='text-3xl font-extrabold'>
-          Welcome back{businessName ? `, ${businessName}` : ''}
+          {businessName
+            ? m.admin_dashboard_welcome_back_named({ businessName })
+            : m.admin_dashboard_welcome_back()}
         </h1>
-        <p className='text-muted-foreground'>Here's what's happening at your venue today.</p>
+        <p className='text-muted-foreground'>{m.admin_dashboard_subtitle()}</p>
       </div>
 
       {/* Stats grid */}
@@ -94,13 +97,15 @@ export function AdminDashboardPage() {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
             <CardTitle className='text-sm font-medium text-muted-foreground'>
-              Today's Orders
+              {m.admin_dashboard_todays_orders()}
             </CardTitle>
             <ShoppingBag className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
             <div className='text-3xl font-black'>{isLoading ? '—' : stats.todayOrders}</div>
-            <p className='mt-1 text-xs text-muted-foreground'>{stats.totalOrders} total all-time</p>
+            <p className='mt-1 text-xs text-muted-foreground'>
+              {m.admin_dashboard_total_all_time({ total: stats.totalOrders })}
+            </p>
           </CardContent>
         </Card>
 
@@ -108,7 +113,7 @@ export function AdminDashboardPage() {
           <Card>
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
               <CardTitle className='text-sm font-medium text-muted-foreground'>
-                Today's Revenue
+                {m.admin_dashboard_todays_revenue()}
               </CardTitle>
               <TrendingUp className='h-4 w-4 text-muted-foreground' />
             </CardHeader>
@@ -117,7 +122,9 @@ export function AdminDashboardPage() {
                 {isLoading ? '—' : formatPrice(stats.todayRevenue, currency)}
               </div>
               <p className='mt-1 text-xs text-muted-foreground'>
-                {formatPrice(stats.totalRevenue, currency)} total confirmed
+                {m.admin_dashboard_total_confirmed({
+                  total: formatPrice(stats.totalRevenue, currency),
+                })}
               </p>
             </CardContent>
           </Card>
@@ -126,13 +133,13 @@ export function AdminDashboardPage() {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
             <CardTitle className='text-sm font-medium text-muted-foreground'>
-              Active Orders
+              {m.admin_dashboard_active_orders()}
             </CardTitle>
             <ShoppingBag className='h-4 w-4 text-amber-500' />
           </CardHeader>
           <CardContent>
             <div className='text-3xl font-black'>{isLoading ? '—' : stats.activeOrders}</div>
-            <p className='mt-1 text-xs text-muted-foreground'>in progress right now</p>
+            <p className='mt-1 text-xs text-muted-foreground'>{m.admin_dashboard_in_progress()}</p>
           </CardContent>
         </Card>
 
@@ -140,7 +147,7 @@ export function AdminDashboardPage() {
           <Card>
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
               <CardTitle className='text-sm font-medium text-muted-foreground'>
-                Pending Payments
+                {m.admin_dashboard_pending_payments()}
               </CardTitle>
               <CreditCard className='h-4 w-4 text-amber-500' />
             </CardHeader>
@@ -148,7 +155,9 @@ export function AdminDashboardPage() {
               <div className='text-3xl font-black'>
                 {isLoading ? '—' : formatPrice(stats.pendingRevenue, currency)}
               </div>
-              <p className='mt-1 text-xs text-muted-foreground'>awaiting confirmation</p>
+              <p className='mt-1 text-xs text-muted-foreground'>
+                {m.admin_dashboard_awaiting_confirmation()}
+              </p>
             </CardContent>
           </Card>
         )}
@@ -158,19 +167,19 @@ export function AdminDashboardPage() {
         {/* Recent orders */}
         <Card className={canViewStaff ? 'lg:col-span-2' : ''}>
           <CardHeader className='flex flex-row items-center justify-between'>
-            <CardTitle className='text-base'>Recent Orders</CardTitle>
+            <CardTitle className='text-base'>{m.admin_dashboard_recent_orders()}</CardTitle>
             <Badge variant='outline' className='text-xs'>
-              {stats.totalOrders} total
+              {m.admin_dashboard_orders_total({ count: stats.totalOrders })}
             </Badge>
           </CardHeader>
           <CardContent className='p-0'>
             {isLoading ? (
               <div className='flex h-32 items-center justify-center text-sm text-muted-foreground'>
-                Loading…
+                {m.admin_dashboard_loading()}
               </div>
             ) : recentOrders.length === 0 ? (
               <div className='flex h-32 items-center justify-center text-sm text-muted-foreground'>
-                No orders yet.
+                {m.admin_dashboard_no_orders()}
               </div>
             ) : (
               <div className='divide-y divide-border'>
@@ -183,13 +192,15 @@ export function AdminDashboardPage() {
                       <div>
                         <p className='text-sm font-medium'>
                           {order.table
-                            ? `Table ${order.table.number}`
+                            ? m.admin_dashboard_table_number({ number: order.table.number })
                             : order.tableId
-                              ? `Table #${order.tableId.slice(0, 6)}`
+                              ? m.admin_dashboard_table_hash({ id: order.tableId.slice(0, 6) })
                               : order.type}
                         </p>
                         <p className='text-xs text-muted-foreground'>
-                          {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                          {order.items.length !== 1
+                            ? m.admin_dashboard_item_count_other({ count: order.items.length })
+                            : m.admin_dashboard_item_count_one({ count: order.items.length })}
                           {' · '}
                           {new Date(order.createdAt).toLocaleTimeString(undefined, {
                             hour: '2-digit',
@@ -228,12 +239,12 @@ export function AdminDashboardPage() {
         {canViewStaff && (
           <Card>
             <CardHeader className='flex flex-row items-center justify-between'>
-              <CardTitle className='text-base'>Staff</CardTitle>
+              <CardTitle className='text-base'>{m.admin_dashboard_staff()}</CardTitle>
               <Users className='h-4 w-4 text-muted-foreground' />
             </CardHeader>
             <CardContent className='space-y-3'>
               {staff.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No staff yet.</p>
+                <p className='text-sm text-muted-foreground'>{m.admin_dashboard_no_staff()}</p>
               ) : (
                 staff.slice(0, 6).map((member) => (
                   <div key={member.id} className='flex items-center justify-between'>
@@ -242,13 +253,17 @@ export function AdminDashboardPage() {
                       <p className='text-xs text-muted-foreground'>{member.role}</p>
                     </div>
                     <Badge variant={member.isActive ? 'success' : 'outline'} className='text-xs'>
-                      {member.isActive ? 'active' : 'inactive'}
+                      {member.isActive
+                        ? m.admin_dashboard_status_active()
+                        : m.admin_dashboard_status_inactive()}
                     </Badge>
                   </div>
                 ))
               )}
               {staff.length > 6 && (
-                <p className='text-xs text-muted-foreground'>+{staff.length - 6} more</p>
+                <p className='text-xs text-muted-foreground'>
+                  {m.admin_dashboard_more_count({ count: staff.length - 6 })}
+                </p>
               )}
             </CardContent>
           </Card>

@@ -10,6 +10,7 @@ import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
 import { type SignUpFormValues, signUpSchema } from '#/features/auth/lib/schemas/sign-up.schema.ts'
 import { signUpAdapter } from '#/features/auth/lib/utils/auth-forms-adapter.ts'
 import { useSignUpMutation } from '#/features/auth/model/auth-hooks.ts'
+import { m } from '#/paraglide/messages'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -63,14 +64,14 @@ export function SignUpForm() {
           htmlFor={firstNameId}
           className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
         >
-          First Name
+          {m.auth_first_name_label()}
         </Label>
         <div className='relative'>
           <User className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
           <Input
             id={firstNameId}
             type='text'
-            placeholder='John'
+            placeholder={m.auth_first_name_placeholder()}
             className={`h-14 rounded-xl pl-12 pr-4 ${errors.firstName ? inputErrorClass : ''}`}
             {...register('firstName')}
           />
@@ -86,14 +87,14 @@ export function SignUpForm() {
           htmlFor={lastNameId}
           className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
         >
-          Last Name
+          {m.auth_last_name_label()}
         </Label>
         <div className='relative'>
           <User className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
           <Input
             id={lastNameId}
             type='text'
-            placeholder='Doe'
+            placeholder={m.auth_last_name_placeholder()}
             className={`h-14 rounded-xl pl-12 pr-4 ${errors.lastName ? inputErrorClass : ''}`}
             {...register('lastName')}
           />
@@ -107,14 +108,14 @@ export function SignUpForm() {
           htmlFor={mailId}
           className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
         >
-          Email Address
+          {m.auth_email_label()}
         </Label>
         <div className='relative'>
           <Mail className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
           <Input
             id={mailId}
             type='email'
-            placeholder='name@company.com'
+            placeholder={m.auth_email_placeholder()}
             className={`h-14 rounded-xl pl-12 pr-4 ${errors.email ? inputErrorClass : ''}`}
             {...register('email')}
           />
@@ -128,7 +129,7 @@ export function SignUpForm() {
           htmlFor={passwordId}
           className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
         >
-          Password
+          {m.auth_password_label()}
         </Label>
         <div className='relative'>
           <LucideLock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -156,7 +157,7 @@ export function SignUpForm() {
           htmlFor={confirmPasswordId}
           className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
         >
-          Confirm Password
+          {m.auth_confirm_password_label()}
         </Label>
         <div className='relative'>
           <LucideLock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -184,14 +185,14 @@ export function SignUpForm() {
 
       <div className='pt-2'>
         <Button type='submit' className='h-14 w-full rounded-xl'>
-          Create Account
+          {m.auth_create_account_submit()}
         </Button>
       </div>
 
       <p className='mt-8 text-center text-sm font-medium text-muted-foreground'>
-        Do You have an account?{' '}
+        {m.auth_have_account()}{' '}
         <Link to='/auth/sign-in' className='font-semibold text-primary hover:underline'>
-          Sign in
+          {m.auth_sign_in_link()}
         </Link>
       </p>
     </form>

@@ -28,6 +28,7 @@ import {
   useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { listOrders } from '#/shared/api/platform/platform-api.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
@@ -126,7 +127,7 @@ function OrderDetailModal({
     try {
       await refundMutation.mutateAsync({ orderId, data: {} })
       markSelfMutated(orderId)
-      showSuccess('Order refunded')
+      showSuccess(m.admin_orders_refund_success())
       onClose()
     } catch (err) {
       showError(getResponseErrorMessage(err))
@@ -143,7 +144,14 @@ function OrderDetailModal({
         await posMutation.mutateAsync({ orderId, data: { tipAmount: parsedTip || undefined } })
       }
       markSelfMutated(orderId)
-      showSuccess(`Payment processed via ${method === 'cash' ? 'Cash' : 'POS'}`)
+      showSuccess(
+        m.admin_orders_payment_processed({
+          method:
+            method === 'cash'
+              ? m.admin_orders_payment_method_cash()
+              : m.admin_orders_payment_method_pos(),
+        }),
+      )
       onClose()
     } catch (err) {
       showError(getResponseErrorMessage(err))
@@ -159,30 +167,34 @@ function OrderDetailModal({
     <Modal
       isOpen
       onClose={onClose}
-      title={`Order #${orderId.slice(0, 8).toUpperCase()}`}
+      title={m.admin_orders_order_number({ id: orderId.slice(0, 8).toUpperCase() })}
       footer={
         <Button variant='ghost' onClick={onClose}>
-          Close
+          {m.admin_orders_close()}
         </Button>
       }
     >
       {isPending && (
-        <p className='py-8 text-center text-sm text-muted-foreground'>Loading order…</p>
+        <p className='py-8 text-center text-sm text-muted-foreground'>
+          {m.admin_orders_loading_order()}
+        </p>
       )}
       {isError && (
-        <p className='py-8 text-center text-sm text-destructive'>Failed to load order.</p>
+        <p className='py-8 text-center text-sm text-destructive'>
+          {m.admin_orders_failed_load_order()}
+        </p>
       )}
       {order && (
         <div className='space-y-6'>
           <div className='flex flex-wrap gap-3 text-sm items-center'>
             <span className='flex items-center gap-1.5'>
-              <span className='text-muted-foreground'>Status:</span>
+              <span className='text-muted-foreground'>{m.admin_orders_status_label()}</span>
               <Badge variant={statusBadgeVariant(order.status)} className='capitalize'>
                 {formatStatus(order.status)}
               </Badge>
             </span>
             <span className='flex items-center gap-1.5'>
-              <span className='text-muted-foreground'>Payment:</span>
+              <span className='text-muted-foreground'>{m.admin_orders_payment_label()}</span>
               <Badge
                 variant={order.paymentStatus === 'PAID' ? 'success' : 'outline'}
                 className='capitalize'
@@ -191,17 +203,17 @@ function OrderDetailModal({
               </Badge>
             </span>
             <span className='text-muted-foreground'>
-              Table:{' '}
+              {m.admin_orders_table_label()}{' '}
               <span className='font-medium text-foreground'>
                 {order.table
-                  ? `Table ${order.table.number}`
+                  ? m.admin_orders_table_number({ number: order.table.number })
                   : order.tableId
                     ? order.tableId.slice(0, 8)
                     : '—'}
               </span>
             </span>
             <span className='text-muted-foreground'>
-              Type:{' '}
+              {m.admin_orders_type_label()}{' '}
               <span className='font-medium text-foreground capitalize'>
                 {order.type.toLowerCase()}
               </span>
@@ -210,11 +222,13 @@ function OrderDetailModal({
 
           <div>
             <p className='mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-              Items
+              {m.admin_orders_items_heading()}
             </p>
             <div className='divide-y divide-border rounded-xl border border-border'>
               {order.items.length === 0 && (
-                <p className='px-4 py-3 text-sm text-muted-foreground'>No items.</p>
+                <p className='px-4 py-3 text-sm text-muted-foreground'>
+                  {m.admin_orders_no_items()}
+                </p>
               )}
               {order.items.map((item) => (
                 <div key={item.id} className='flex items-center justify-between px-4 py-3'>
@@ -223,18 +237,22 @@ function OrderDetailModal({
                       {item.product?.name ?? item.productId.slice(0, 8)}
                     </p>
                     {item.notes && (
-                      <p className='text-xs text-muted-foreground'>Note: {item.notes}</p>
+                      <p className='text-xs text-muted-foreground'>
+                        {m.admin_orders_note({ notes: item.notes })}
+                      </p>
                     )}
                     {item.selectedModifiers?.length > 0 && (
                       <p className='text-xs text-muted-foreground'>
-                        +{item.selectedModifiers.map((m) => m.name).join(', ')}
+                        +{item.selectedModifiers.map((mod) => mod.name).join(', ')}
                       </p>
                     )}
                   </div>
                   <div className='text-right'>
                     <p className='text-sm font-mono'>×{item.quantity}</p>
                     <p className='text-xs text-muted-foreground font-mono'>
-                      {formatPrice(Number(item.unitPrice), currency)} ea
+                      {m.admin_orders_unit_price({
+                        price: formatPrice(Number(item.unitPrice), currency),
+                      })}
                     </p>
                   </div>
                 </div>
@@ -243,7 +261,7 @@ function OrderDetailModal({
           </div>
 
           <div className='flex items-center justify-between rounded-xl bg-muted px-4 py-3'>
-            <span className='text-sm font-semibold'>Total</span>
+            <span className='text-sm font-semibold'>{m.admin_orders_total_label()}</span>
             <span className='font-mono font-bold'>
               {formatPrice(Number(order.totalAmount), currency)}
             </span>
@@ -252,11 +270,11 @@ function OrderDetailModal({
           {canPay && (
             <div className='space-y-3 rounded-xl border border-border p-4'>
               <p className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-                Process Payment
+                {m.admin_orders_process_payment()}
               </p>
               <div className='space-y-2'>
                 <label htmlFor={tipId} className='text-sm text-muted-foreground'>
-                  Tip amount (optional)
+                  {m.admin_orders_tip_amount_label()}
                 </label>
                 <input
                   id={tipId}
@@ -276,14 +294,18 @@ function OrderDetailModal({
                   disabled={isBusy}
                   onClick={() => void pay('cash')}
                 >
-                  {cashMutation.isPending ? 'Processing…' : 'Pay with Cash'}
+                  {cashMutation.isPending
+                    ? m.admin_orders_processing()
+                    : m.admin_orders_pay_with_cash()}
                 </Button>
                 <Button
                   className='flex-1 rounded-xl'
                   disabled={isBusy}
                   onClick={() => void pay('pos')}
                 >
-                  {posMutation.isPending ? 'Processing…' : 'Pay with POS'}
+                  {posMutation.isPending
+                    ? m.admin_orders_processing()
+                    : m.admin_orders_pay_with_pos()}
                 </Button>
               </div>
             </div>
@@ -291,14 +313,14 @@ function OrderDetailModal({
 
           {order.paymentStatus === 'PAID' && (
             <p className='rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700'>
-              This order has already been paid.
+              {m.admin_orders_already_paid()}
             </p>
           )}
 
           {canCancel && (
             <div className='rounded-xl border border-destructive/20 p-4'>
               <p className='mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-                Cancel Order
+                {m.admin_orders_cancel_order()}
               </p>
               <Button
                 variant='outline'
@@ -308,14 +330,16 @@ function OrderDetailModal({
                   try {
                     await cancelMutation.mutateAsync({ orderId, data: { status: 'CANCELLED' } })
                     markSelfMutated(orderId)
-                    showSuccess('Order cancelled')
+                    showSuccess(m.admin_orders_order_cancelled())
                     onClose()
                   } catch (err) {
                     showError(getResponseErrorMessage(err))
                   }
                 }}
               >
-                {cancelMutation.isPending ? 'Cancelling…' : 'Cancel Order'}
+                {cancelMutation.isPending
+                  ? m.admin_orders_cancelling()
+                  : m.admin_orders_cancel_order()}
               </Button>
             </div>
           )}
@@ -323,7 +347,7 @@ function OrderDetailModal({
           {canRefund && (
             <div className='rounded-xl border border-destructive/20 p-4'>
               <p className='mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-                Refund Order
+                {m.admin_orders_refund_order()}
               </p>
               <Button
                 variant='outline'
@@ -331,7 +355,9 @@ function OrderDetailModal({
                 disabled={isBusy}
                 onClick={() => void refund()}
               >
-                {refundMutation.isPending ? 'Refunding…' : 'Refund Order'}
+                {refundMutation.isPending
+                  ? m.admin_orders_refunding()
+                  : m.admin_orders_refund_order()}
               </Button>
             </div>
           )}
@@ -404,7 +430,9 @@ export function AdminOrdersContent() {
         needle ? allOrders.filter((order) => matchesSearch(order, needle)) : allOrders
       ).map((order) => [
         order.id,
-        order.table ? `Table ${order.table.number}` : (order.tableId ?? ''),
+        order.table
+          ? m.admin_orders_table_number({ number: order.table.number })
+          : (order.tableId ?? ''),
         formatStatus(order.status),
         order.paymentStatus,
         order.type,
@@ -415,19 +443,19 @@ export function AdminOrdersContent() {
 
       const csv = toCsv(
         [
-          'Order ID',
-          'Table',
-          'Status',
-          'Payment Status',
-          'Type',
-          'Items',
-          `Total (${currency})`,
-          'Created At',
+          m.admin_orders_table_head_order_id(),
+          m.admin_orders_table_head_table(),
+          m.admin_orders_table_head_status(),
+          m.admin_orders_csv_payment_status(),
+          m.admin_orders_csv_type(),
+          m.admin_orders_table_head_items(),
+          m.admin_orders_csv_total_currency({ currency }),
+          m.admin_orders_csv_created_at(),
         ],
         rows,
       )
       downloadCsv(`orders-${new Date().toISOString().slice(0, 10)}.csv`, csv)
-      showSuccess(`Exported ${rows.length} orders`)
+      showSuccess(m.admin_orders_export_success({ count: rows.length }))
     } catch (err) {
       showError(getResponseErrorMessage(err))
     } finally {
@@ -460,7 +488,7 @@ export function AdminOrdersContent() {
     try {
       await confirmMutation.mutateAsync(orderId)
       markSelfMutated(orderId)
-      showSuccess('Order confirmed')
+      showSuccess(m.admin_orders_order_confirmed())
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
     } finally {
@@ -476,7 +504,7 @@ export function AdminOrdersContent() {
     try {
       await updateMutation.mutateAsync({ orderId, data: { status } })
       markSelfMutated(orderId)
-      showSuccess('Order status updated')
+      showSuccess(m.admin_orders_status_updated())
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
     } finally {
@@ -488,10 +516,8 @@ export function AdminOrdersContent() {
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Orders</h1>
-          <p className='text-muted-foreground'>
-            Manage and track all restaurant orders in real-time.
-          </p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_orders_heading()}</h1>
+          <p className='text-muted-foreground'>{m.admin_orders_subtitle()}</p>
         </div>
         <div className='flex items-center gap-3'>
           <Button
@@ -502,7 +528,7 @@ export function AdminOrdersContent() {
             onClick={() => void handleExportCsv()}
           >
             {isExporting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            {isExporting ? 'Exporting…' : 'Export CSV'}
+            {isExporting ? m.admin_orders_exporting() : m.admin_orders_export_csv()}
           </Button>
           {canAddOrder && (
             <Button
@@ -511,7 +537,7 @@ export function AdminOrdersContent() {
               type='button'
               onClick={() => setAddOrderOpen(true)}
             >
-              <Plus className='mr-2 h-4 w-4' /> Add Order
+              <Plus className='mr-2 h-4 w-4' /> {m.admin_orders_add_order()}
             </Button>
           )}
         </div>
@@ -525,7 +551,7 @@ export function AdminOrdersContent() {
             className='ml-2 font-semibold underline'
             onClick={() => void refetch()}
           >
-            Retry
+            {m.admin_orders_retry()}
           </button>
         </div>
       )}
@@ -546,7 +572,7 @@ export function AdminOrdersContent() {
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
-                  {status === 'all' ? 'All' : formatStatus(status)}
+                  {status === 'all' ? m.admin_orders_filter_all() : formatStatus(status)}
                 </button>
               ))}
             </div>
@@ -554,7 +580,7 @@ export function AdminOrdersContent() {
               <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
               <input
                 type='text'
-                placeholder='Search this page…'
+                placeholder={m.admin_orders_search_placeholder()}
                 className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                 value={searchText}
                 onChange={(event) => handleSearch(event.target.value)}
@@ -566,19 +592,21 @@ export function AdminOrdersContent() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className='pl-8'>Order ID</TableHead>
-                <TableHead>Table</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead className='pr-8 text-right'>Actions</TableHead>
+                <TableHead className='pl-8'>{m.admin_orders_table_head_order_id()}</TableHead>
+                <TableHead>{m.admin_orders_table_head_table()}</TableHead>
+                <TableHead>{m.admin_orders_table_head_status()}</TableHead>
+                <TableHead>{m.admin_orders_table_head_items()}</TableHead>
+                <TableHead>{m.admin_orders_table_head_total()}</TableHead>
+                <TableHead className='pr-8 text-right'>
+                  {m.admin_orders_table_head_actions()}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isPending && (
                 <TableRow>
                   <TableCell colSpan={6} className='h-32 text-center text-muted-foreground'>
-                    Loading orders...
+                    {m.admin_orders_loading_orders()}
                   </TableCell>
                 </TableRow>
               )}
@@ -589,9 +617,11 @@ export function AdminOrdersContent() {
                       <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted'>
                         <ClipboardList className='h-6 w-6 text-muted-foreground' />
                       </div>
-                      <h3 className='mb-1 text-base font-semibold'>No orders yet</h3>
+                      <h3 className='mb-1 text-base font-semibold'>
+                        {m.admin_orders_empty_heading()}
+                      </h3>
                       <p className='max-w-xs text-sm text-muted-foreground'>
-                        Orders will appear here once customers start placing them.
+                        {m.admin_orders_empty_description()}
                       </p>
                     </div>
                   </TableCell>
@@ -600,7 +630,7 @@ export function AdminOrdersContent() {
               {!isPending && orders.length > 0 && filteredOrders.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className='h-32 text-center text-muted-foreground'>
-                    No orders match your search.
+                    {m.admin_orders_no_search_results()}
                   </TableCell>
                 </TableRow>
               )}
@@ -611,7 +641,7 @@ export function AdminOrdersContent() {
                   </TableCell>
                   <TableCell>
                     {order.table
-                      ? `Table ${order.table.number}`
+                      ? m.admin_orders_table_number({ number: order.table.number })
                       : order.tableId
                         ? `#${order.tableId.slice(0, 6)}`
                         : '-'}
@@ -621,7 +651,7 @@ export function AdminOrdersContent() {
                       {formatStatus(order.status)}
                     </Badge>
                   </TableCell>
-                  <TableCell>{order.items.length} items</TableCell>
+                  <TableCell>{m.admin_orders_items_count({ count: order.items.length })}</TableCell>
                   <TableCell className='font-bold'>
                     {formatPrice(Number(order.totalAmount), currency)}
                   </TableCell>
@@ -632,7 +662,7 @@ export function AdminOrdersContent() {
                         size='icon'
                         className='rounded-full'
                         type='button'
-                        title='View order details'
+                        title={m.admin_orders_view_details_title()}
                         onClick={() => setDetailOrderId(order.id)}
                       >
                         <Eye className='h-4 w-4' />
@@ -646,7 +676,9 @@ export function AdminOrdersContent() {
                           disabled={pendingOrderIds.has(order.id)}
                           onClick={() => void confirmOrderAction(order.id)}
                         >
-                          {pendingOrderIds.has(order.id) ? 'Confirming…' : 'Confirm'}
+                          {pendingOrderIds.has(order.id)
+                            ? m.admin_orders_confirming()
+                            : m.admin_orders_confirm()}
                         </Button>
                       )}
                       {order.status !== 'CREATED' && nextStatus[order.status] && (
@@ -663,7 +695,11 @@ export function AdminOrdersContent() {
                         >
                           {pendingOrderIds.has(order.id)
                             ? '…'
-                            : `To ${String(nextStatus[order.status]).toLowerCase().replaceAll('_', ' ')}`}
+                            : m.admin_orders_to_status({
+                                status: String(nextStatus[order.status])
+                                  .toLowerCase()
+                                  .replaceAll('_', ' '),
+                              })}
                         </Button>
                       )}
                     </div>

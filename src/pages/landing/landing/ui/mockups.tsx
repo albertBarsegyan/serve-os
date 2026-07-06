@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react'
+import { m } from '#/paraglide/messages'
+import qrCode from '#/shared/assets/illustrations/qrcode.png'
+import { LazyImage } from '#/shared/ui/lazy-image.tsx'
 import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
 import { Icons } from './icons'
 
@@ -11,24 +14,24 @@ interface FloatBadgeProps {
 
 export function DashboardMock() {
   const nav = [
-    { icon: <Icons.Home />, label: 'Dashboard', active: true },
-    { icon: <Icons.List />, label: 'Orders' },
-    { icon: <Icons.Tray />, label: 'Menu' },
-    { icon: <Icons.Grid />, label: 'Tables' },
-    { icon: <Icons.Staff />, label: 'Staff' },
-    { icon: <Icons.Monitor />, label: 'Kitchen' },
+    { icon: <Icons.Home />, label: m.landing_mockup_nav_dashboard(), active: true },
+    { icon: <Icons.List />, label: m.landing_mockup_nav_orders() },
+    { icon: <Icons.Tray />, label: m.landing_mockup_nav_menu() },
+    { icon: <Icons.Grid />, label: m.landing_mockup_nav_tables() },
+    { icon: <Icons.Staff />, label: m.landing_mockup_nav_staff() },
+    { icon: <Icons.Monitor />, label: m.landing_mockup_nav_kitchen() },
   ]
   const kpis = [
-    { lbl: 'Total Orders', val: '256', delta: '+12%' },
-    { lbl: 'Revenue', val: '$4,325', delta: '+13%' },
-    { lbl: 'Active Tables', val: '18', delta: '/40' },
-    { lbl: 'Pending', val: '7' },
+    { lbl: m.landing_mockup_kpi_total_orders(), val: '256', delta: '+12%' },
+    { lbl: m.landing_mockup_kpi_revenue(), val: '$4,325', delta: '+13%' },
+    { lbl: m.landing_mockup_kpi_active_tables(), val: '18', delta: '/40' },
+    { lbl: m.landing_mockup_kpi_pending(), val: '7' },
   ]
   const top: [string, number][] = [
-    ['Burger', 120],
-    ['Pizza', 98],
-    ['Pasta', 72],
-    ['Coffee', 64],
+    [m.landing_mockup_top_item_burger(), 120],
+    [m.landing_mockup_top_item_pizza(), 98],
+    [m.landing_mockup_top_item_pasta(), 72],
+    [m.landing_mockup_top_item_coffee(), 64],
   ]
   return (
     <div className='mockup'>
@@ -51,7 +54,7 @@ export function DashboardMock() {
           ))}
         </aside>
         <div className='dash-main'>
-          <div className='dtitle'>Dashboard</div>
+          <div className='dtitle'>{m.landing_mockup_dashboard_title()}</div>
           <div className='kpis'>
             {kpis.map((k) => (
               <div className='kpi' key={k.lbl}>
@@ -65,8 +68,8 @@ export function DashboardMock() {
           <div className='dash-lower'>
             <div className='chart-card'>
               <div className='ch-head'>
-                <span>Sales Overview</span>
-                <span>This Week</span>
+                <span>{m.landing_mockup_sales_overview()}</span>
+                <span>{m.landing_mockup_this_week()}</span>
               </div>
               <svg viewBox='0 0 320 92' preserveAspectRatio='none' aria-hidden='true'>
                 <defs>
@@ -92,7 +95,7 @@ export function DashboardMock() {
             </div>
             <div className='top-card'>
               <div className='ch-head'>
-                <span>Top Items</span>
+                <span>{m.landing_mockup_top_items_heading()}</span>
               </div>
               {top.map(([name, ct]) => (
                 <div className='topitem' key={name}>
@@ -123,25 +126,25 @@ export function FloatBadge({ pos, icon, title, sub }: FloatBadgeProps) {
 
 export function PhoneMock() {
   const items = [
-    { icon: <Icons.Burger />, n: 'Cheese Burger', pr: '$8.50' },
-    { icon: <Icons.Pizza />, n: 'Margherita Pizza', pr: '$10.50' },
-    { icon: <Icons.Pasta />, n: 'Pasta Alfredo', pr: '$8.50' },
-    { icon: <Icons.Coffee />, n: 'Ice Coffee', pr: '$4.50' },
+    { icon: <Icons.Burger />, n: m.landing_mockup_item_cheese_burger(), pr: '$8.50' },
+    { icon: <Icons.Pizza />, n: m.landing_mockup_item_margherita_pizza(), pr: '$10.50' },
+    { icon: <Icons.Pasta />, n: m.landing_mockup_item_pasta_alfredo(), pr: '$8.50' },
+    { icon: <Icons.Coffee />, n: m.landing_mockup_item_ice_coffee(), pr: '$4.50' },
   ]
   return (
     <div className='phone'>
       <div className='scr'>
         <div className='ph-head'>
-          <div className='tt'>Our Menu</div>
+          <div className='tt'>{m.landing_mockup_our_menu()}</div>
           <div className='cart'>
             <Icons.Cart />
           </div>
         </div>
         <div className='tabs'>
-          <span className='on'>All</span>
-          <span>Food</span>
-          <span>Drinks</span>
-          <span>Desserts</span>
+          <span className='on'>{m.landing_mockup_tab_all()}</span>
+          <span>{m.landing_mockup_tab_food()}</span>
+          <span>{m.landing_mockup_tab_drinks()}</span>
+          <span>{m.landing_mockup_tab_desserts()}</span>
         </div>
         <div className='items'>
           {items.map((it) => (
@@ -155,61 +158,16 @@ export function PhoneMock() {
             </div>
           ))}
         </div>
-        <div className='viewcart'>View Cart · $22.50</div>
+        <div className='viewcart'>{m.landing_mockup_view_cart_label()} · $22.50</div>
       </div>
     </div>
   )
 }
 
 export function QrCode() {
-  const N = 21
-  const isFinder = (x: number, y: number) => {
-    const box = (ox: number, oy: number) => x >= ox && x < ox + 7 && y >= oy && y < oy + 7
-    return box(0, 0) || box(N - 7, 0) || box(0, N - 7)
-  }
-  let seed = 7
-  const rnd = () => {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff
-    return (seed >> 8) % 100
-  }
-  const cells = []
-  for (let y = 0; y < N; y++) {
-    for (let x = 0; x < N; x++) {
-      if (isFinder(x, y)) continue
-      if (rnd() < 46)
-        cells.push(<rect key={`c${x}-${y}`} x={x} y={y} width='1' height='1' fill='#142319' />)
-    }
-  }
-  const finder = (ox: number, oy: number, k: string) => [
-    <rect
-      key={`fo${k}`}
-      x={ox}
-      y={oy}
-      width='7'
-      height='7'
-      rx='1.4'
-      fill='none'
-      stroke='#142319'
-      strokeWidth='1'
-    />,
-    <rect key={`fi${k}`} x={ox + 2} y={oy + 2} width='3' height='3' rx='0.7' fill='#142319' />,
-  ]
-  const c = N / 2
   return (
     <div className='qr' style={{ background: '#fff', padding: '8px' }}>
-      <svg viewBox={`0 0 ${N} ${N}`} width='100%' height='100%' aria-hidden='true'>
-        {cells}
-        {finder(0, 0, 'a')}
-        {finder(N - 7, 0, 'b')}
-        {finder(0, N - 7, 'c')}
-        <rect x={c - 2.5} y={c - 2.5} width='5' height='5' rx='1.2' fill='#fff' />
-        <path
-          d={`M${c} ${c - 1.6} V${c + 1.6} M${c - 1.6} ${c} H${c + 1.6}`}
-          stroke='#57ac1f'
-          strokeWidth='1.1'
-          strokeLinecap='round'
-        />
-      </svg>
+      <LazyImage src={qrCode} alt={'qr code'} />
     </div>
   )
 }

@@ -45,6 +45,7 @@ import type {
   UpdateProductFormData,
 } from '#/features/product/lib/schemas/create-product-form.schema'
 import { createProductFormSchema } from '#/features/product/lib/schemas/create-product-form.schema'
+import { m } from '#/paraglide/messages'
 import { ImageEntityType, uploadImage } from '#/shared/api/images/images.api'
 import { SearchSelect } from '#/shared/ui/search-select'
 
@@ -190,7 +191,7 @@ export function ProductForm({
         {
           onError: () => {
             setValue('imageUrls', prev, { shouldDirty: true })
-            toast.error('Failed to save image order')
+            toast.error(m.product_form_image_order_error())
           },
         },
       )
@@ -206,11 +207,11 @@ export function ProductForm({
       const validFiles: File[] = []
       for (const file of Array.from(files).slice(0, remaining)) {
         if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-          toast.error('Only SVG, PNG, JPG, JPEG, and WebP files are allowed')
+          toast.error(m.product_form_invalid_file_type())
           continue
         }
         if (file.size > MAX_IMAGE_SIZE) {
-          toast.error('File size must be under 3 MB')
+          toast.error(m.product_form_file_too_large())
           continue
         }
         validFiles.push(file)
@@ -231,7 +232,7 @@ export function ProductForm({
           shouldValidate: true,
         })
       } catch {
-        toast.error('Image upload failed')
+        toast.error(m.product_form_image_upload_failed())
       } finally {
         setIsUploadingImage(false)
         if (imageInputRef.current) imageInputRef.current.value = ''
@@ -313,7 +314,7 @@ export function ProductForm({
 
   const handleCreateAndAttach = useCallback(async () => {
     if (!newGroup.name.trim()) {
-      toast.error('Group name is required')
+      toast.error(m.product_form_group_name_required())
       return
     }
 
@@ -378,9 +379,9 @@ export function ProductForm({
 
       setNewGroup({ name: '', selectionType: 'SINGLE', isRequired: false, items: [] })
       setActivePanel('none')
-      toast.success(`"${created.name}" created and attached`)
+      toast.success(m.product_form_group_created({ name: created.name }))
     } catch {
-      toast.error('Failed to create modifier group')
+      toast.error(m.product_form_create_group_failed())
     }
   }, [addModifierMutation, businessId, createGroupMutation, newGroup])
 
@@ -391,14 +392,14 @@ export function ProductForm({
         attachedGroups.map((g) => g.id),
       )
       toast.success(
-        mode === 'create' ? 'Product created successfully' : 'Product updated successfully',
+        mode === 'create' ? m.product_form_created_success() : m.product_form_updated_success(),
       )
       if (mode === 'create') {
         reset()
         setAttachedGroups([])
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Something went wrong')
+      toast.error(error instanceof Error ? error.message : m.product_form_generic_error())
     }
   }
 
@@ -408,7 +409,7 @@ export function ProductForm({
     <form onSubmit={handleSubmit(onSubmitHandler)} className='space-y-6'>
       {/* Category Selection */}
       <div>
-        <Label htmlFor='categoryId'>Category *</Label>
+        <Label htmlFor='categoryId'>{m.product_form_category_label()}</Label>
         <Controller
           name='categoryId'
           control={control}
@@ -418,7 +419,7 @@ export function ProductForm({
               value={field.value || ''}
               onChange={field.onChange}
               options={[
-                { value: '', label: 'Select a category' },
+                { value: '', label: m.product_form_select_category() },
                 ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
               ]}
             />
@@ -431,14 +432,14 @@ export function ProductForm({
 
       {/* Product Name */}
       <div>
-        <Label htmlFor='name'>Product Name *</Label>
+        <Label htmlFor='name'>{m.product_form_name_label()}</Label>
         <Controller
           name='name'
           control={control}
           render={({ field }) => (
             <Input
               id='name'
-              placeholder='e.g., Classic Burger'
+              placeholder={m.product_form_name_placeholder()}
               {...field}
               value={field.value || ''}
             />
@@ -449,14 +450,14 @@ export function ProductForm({
 
       {/* Description */}
       <div>
-        <Label htmlFor='description'>Description</Label>
+        <Label htmlFor='description'>{m.product_form_description_label()}</Label>
         <Controller
           name='description'
           control={control}
           render={({ field }) => (
             <Textarea
               id='description'
-              placeholder='Product description...'
+              placeholder={m.product_form_description_placeholder()}
               {...field}
               value={field.value || ''}
             />
@@ -467,7 +468,7 @@ export function ProductForm({
       {/* Pricing Section */}
       <div className='grid grid-cols-2 gap-4'>
         <div>
-          <Label htmlFor='basePrice'>Base Price *</Label>
+          <Label htmlFor='basePrice'>{m.product_form_base_price_label()}</Label>
           <Controller
             name='basePrice'
             control={control}
@@ -477,7 +478,7 @@ export function ProductForm({
                 type='number'
                 step='0.01'
                 min='0.01'
-                placeholder='0.00'
+                placeholder={m.product_form_price_placeholder()}
                 {...field}
                 value={field.value || ''}
               />
@@ -489,7 +490,7 @@ export function ProductForm({
         </div>
 
         <div>
-          <Label htmlFor='compareAtPrice'>Compare at Price</Label>
+          <Label htmlFor='compareAtPrice'>{m.product_form_compare_price_label()}</Label>
           <Controller
             name='compareAtPrice'
             control={control}
@@ -499,7 +500,7 @@ export function ProductForm({
                 type='number'
                 step='0.01'
                 min='0.01'
-                placeholder='0.00'
+                placeholder={m.product_form_price_placeholder()}
                 {...rest}
                 value={value == null ? '' : String(value)}
                 onChange={(e) => onChange(e.target.value === '' ? null : e.target.valueAsNumber)}
@@ -515,25 +516,30 @@ export function ProductForm({
       {/* SKU and Slug */}
       <div className='grid grid-cols-2 gap-4'>
         <div>
-          <Label htmlFor='sku'>SKU</Label>
+          <Label htmlFor='sku'>{m.product_form_sku_label()}</Label>
           <Controller
             name='sku'
             control={control}
             render={({ field }) => (
-              <Input id='sku' placeholder='e.g., BURGER-001' {...field} value={field.value || ''} />
+              <Input
+                id='sku'
+                placeholder={m.product_form_sku_placeholder()}
+                {...field}
+                value={field.value || ''}
+              />
             )}
           />
         </div>
 
         <div>
-          <Label htmlFor='slug'>Slug</Label>
+          <Label htmlFor='slug'>{m.product_form_slug_label()}</Label>
           <Controller
             name='slug'
             control={control}
             render={({ field }) => (
               <Input
                 id='slug'
-                placeholder='auto-generated if left empty'
+                placeholder={m.product_form_slug_placeholder()}
                 {...field}
                 value={field.value || ''}
               />
@@ -546,7 +552,7 @@ export function ProductForm({
       {/* Prep Time and Service Period */}
       <div className='grid grid-cols-2 gap-4'>
         <div>
-          <Label htmlFor='prepTimeMinutes'>Prep Time (minutes)</Label>
+          <Label htmlFor='prepTimeMinutes'>{m.product_form_prep_time_label()}</Label>
           <Controller
             name='prepTimeMinutes'
             control={control}
@@ -556,7 +562,7 @@ export function ProductForm({
                 type='number'
                 min='1'
                 max='180'
-                placeholder='12'
+                placeholder={m.product_form_prep_time_placeholder()}
                 {...rest}
                 value={value == null ? '' : String(value)}
                 onChange={(e) =>
@@ -571,7 +577,7 @@ export function ProductForm({
         </div>
 
         <div>
-          <Label htmlFor='availablePeriod'>Available Period</Label>
+          <Label htmlFor='availablePeriod'>{m.product_form_available_period_label()}</Label>
           <Controller
             name='availablePeriod'
             control={control}
@@ -603,7 +609,7 @@ export function ProductForm({
                 onChange={(e) => field.onChange(e.target.checked)}
               />
               <Label htmlFor='isAvailable' className='cursor-pointer'>
-                Available
+                {m.product_form_available_label()}
               </Label>
             </div>
           )}
@@ -619,7 +625,7 @@ export function ProductForm({
                 onChange={(e) => field.onChange(e.target.checked)}
               />
               <Label htmlFor='isFeatured' className='cursor-pointer'>
-                Featured Product
+                {m.product_form_featured_label()}
               </Label>
             </div>
           )}
@@ -628,7 +634,7 @@ export function ProductForm({
 
       {/* Dietary Flags */}
       <div>
-        <div className='text-sm font-medium'>Dietary Flags</div>
+        <div className='text-sm font-medium'>{m.product_form_dietary_flags_heading()}</div>
         <div className='grid grid-cols-2 gap-3 mt-2'>
           {dietaryFlags.map((flag) => (
             <Controller
@@ -660,7 +666,7 @@ export function ProductForm({
 
       {/* Allergens */}
       <div>
-        <div className='text-sm font-medium'>Allergens</div>
+        <div className='text-sm font-medium'>{m.product_form_allergens_heading()}</div>
         <div className='grid grid-cols-2 gap-3 mt-2'>
           {allergens.map((allergen) => (
             <Controller
@@ -694,9 +700,9 @@ export function ProductForm({
       <div>
         <div className='flex items-center justify-between mb-3'>
           <div className='text-sm font-medium'>
-            Images
+            {m.product_form_images_heading()}
             <span className='ml-1.5 text-xs font-normal text-muted-foreground'>
-              ({imageUrls.length}/{MAX_IMAGES}) · drag to reorder
+              {m.product_form_images_count_hint({ current: imageUrls.length, max: MAX_IMAGES })}
             </span>
           </div>
         </div>
@@ -726,7 +732,7 @@ export function ProductForm({
                   ) : (
                     <>
                       <ImageIcon className='h-5 w-5' />
-                      <span className='text-[10px] font-medium'>Add photo</span>
+                      <span className='text-[10px] font-medium'>{m.product_form_add_photo()}</span>
                     </>
                   )}
                 </button>
@@ -747,7 +753,7 @@ export function ProductForm({
 
       {/* Modifier Groups */}
       <div>
-        <div className='text-sm font-medium mb-2'>Modifier Groups</div>
+        <div className='text-sm font-medium mb-2'>{m.product_form_modifier_groups_heading()}</div>
 
         {/* Attached groups list */}
         {attachedGroups.length > 0 && (
@@ -760,10 +766,12 @@ export function ProductForm({
                 <div className='min-w-0'>
                   <span className='text-sm font-medium'>{group.name}</span>
                   <span className='text-xs text-muted-foreground ml-2'>
-                    {group.selectionType === 'SINGLE' ? 'Single' : 'Multiple'}
+                    {group.selectionType === 'SINGLE'
+                      ? m.product_form_single()
+                      : m.product_form_multiple()}
                     {' · '}
-                    {group.modifiers.length} option{group.modifiers.length !== 1 ? 's' : ''}
-                    {group.isRequired ? ' · Required' : ''}
+                    {m.product_form_option_count({ count: group.modifiers.length })}
+                    {group.isRequired ? ` · ${m.product_form_required()}` : ''}
                   </span>
                 </div>
                 <Button
@@ -781,7 +789,7 @@ export function ProductForm({
         )}
 
         {attachedGroups.length === 0 && activePanel === 'none' && (
-          <p className='text-sm text-muted-foreground mb-2'>No modifier groups attached.</p>
+          <p className='text-sm text-muted-foreground mb-2'>{m.product_form_no_groups()}</p>
         )}
 
         {/* Action buttons */}
@@ -794,7 +802,7 @@ export function ProductForm({
               onClick={() => setActivePanel('select')}
               disabled={availableGroups.length === 0}
             >
-              Attach Existing
+              {m.product_form_attach_existing()}
             </Button>
             <Button
               type='button'
@@ -804,7 +812,7 @@ export function ProductForm({
               className='gap-1'
             >
               <Plus className='w-4 h-4' />
-              Create New
+              {m.product_form_create_new()}
             </Button>
           </div>
         )}
@@ -812,7 +820,7 @@ export function ProductForm({
         {/* Select existing panel */}
         {activePanel === 'select' && (
           <div className='border rounded-lg p-3 space-y-2'>
-            <div className='text-sm font-medium'>Select a modifier group to attach</div>
+            <div className='text-sm font-medium'>{m.product_form_select_group_title()}</div>
             <div className='space-y-1 max-h-48 overflow-y-auto'>
               {availableGroups.map((group) => (
                 <button
@@ -823,15 +831,17 @@ export function ProductForm({
                 >
                   <span className='font-medium'>{group.name}</span>
                   <span className='text-xs text-muted-foreground ml-2 shrink-0'>
-                    {group.selectionType === 'SINGLE' ? 'Single' : 'Multiple'}
+                    {group.selectionType === 'SINGLE'
+                      ? m.product_form_single()
+                      : m.product_form_multiple()}
                     {' · '}
-                    {group.modifiers.length} option{group.modifiers.length !== 1 ? 's' : ''}
+                    {m.product_form_option_count({ count: group.modifiers.length })}
                   </span>
                 </button>
               ))}
             </div>
             <Button type='button' variant='ghost' size='sm' onClick={() => setActivePanel('none')}>
-              Cancel
+              {m.product_form_cancel()}
             </Button>
           </div>
         )}
@@ -839,20 +849,20 @@ export function ProductForm({
         {/* Create new panel */}
         {activePanel === 'create' && (
           <div className='border rounded-lg p-3 space-y-3'>
-            <div className='text-sm font-medium'>Create new modifier group</div>
+            <div className='text-sm font-medium'>{m.product_form_create_group_title()}</div>
 
             <div>
-              <Label htmlFor='newGroupName'>Group name *</Label>
+              <Label htmlFor='newGroupName'>{m.product_form_group_name_label()}</Label>
               <Input
                 id='newGroupName'
-                placeholder='e.g., Toppings, Sauce, Size'
+                placeholder={m.product_form_group_name_placeholder()}
                 value={newGroup.name}
                 onChange={(e) => setNewGroup((prev) => ({ ...prev, name: e.target.value }))}
               />
             </div>
 
             <div>
-              <Label htmlFor='newGroupSelectionType'>Selection type</Label>
+              <Label htmlFor='newGroupSelectionType'>{m.product_form_selection_type_label()}</Label>
               <SearchSelect
                 id='newGroupSelectionType'
                 value={newGroup.selectionType}
@@ -860,8 +870,8 @@ export function ProductForm({
                   setNewGroup((prev) => ({ ...prev, selectionType: v as 'SINGLE' | 'MULTIPLE' }))
                 }
                 options={[
-                  { value: 'SINGLE', label: 'Single choice' },
-                  { value: 'MULTIPLE', label: 'Multiple choice' },
+                  { value: 'SINGLE', label: m.product_form_single_choice() },
+                  { value: 'MULTIPLE', label: m.product_form_multiple_choice() },
                 ]}
               />
             </div>
@@ -873,33 +883,33 @@ export function ProductForm({
                 onChange={(e) => setNewGroup((prev) => ({ ...prev, isRequired: e.target.checked }))}
               />
               <Label htmlFor='newGroupIsRequired' className='cursor-pointer'>
-                Required
+                {m.product_form_required()}
               </Label>
             </div>
 
             {/* Options */}
             <div>
               <div className='flex items-center justify-between mb-1'>
-                <div className='text-xs font-semibold uppercase text-muted-foreground'>Options</div>
+                <div className='text-xs font-semibold uppercase text-muted-foreground'>
+                  {m.product_form_options_heading()}
+                </div>
                 <button
                   type='button'
                   className='text-xs text-primary hover:underline'
                   onClick={handleAddNewGroupItem}
                 >
-                  + Add option
+                  {m.product_form_add_option()}
                 </button>
               </div>
 
               {newGroup.items.length === 0 && (
-                <p className='text-xs text-muted-foreground'>
-                  Optionally add options now, or add them later on the Modifier Groups page.
-                </p>
+                <p className='text-xs text-muted-foreground'>{m.product_form_options_hint()}</p>
               )}
 
               {newGroup.items.map((item) => (
                 <div key={item.id} className='flex gap-2 mt-1 items-center'>
                   <Input
-                    placeholder='Option name'
+                    placeholder={m.product_form_option_name_placeholder()}
                     value={item.name}
                     onChange={(e) => handleNewGroupItemChange(item.id, 'name', e.target.value)}
                   />
@@ -907,8 +917,8 @@ export function ProductForm({
                     value={item.priceType}
                     onChange={(v) => handleNewGroupItemChange(item.id, 'priceType', v)}
                     options={[
-                      { value: 'adjustment', label: '+Price' },
-                      { value: 'fixed', label: 'Fixed' },
+                      { value: 'adjustment', label: m.product_form_price_adjustment_option() },
+                      { value: 'fixed', label: m.product_form_price_fixed_option() },
                     ]}
                     className='w-28 shrink-0'
                   />
@@ -916,7 +926,11 @@ export function ProductForm({
                     type='number'
                     step='0.01'
                     min='0'
-                    placeholder={item.priceType === 'fixed' ? '0.00' : '+0.00'}
+                    placeholder={
+                      item.priceType === 'fixed'
+                        ? m.product_form_price_placeholder()
+                        : m.product_form_price_placeholder_plus()
+                    }
                     className='w-24 shrink-0'
                     value={item.priceAdjustment}
                     onChange={(e) =>
@@ -943,7 +957,7 @@ export function ProductForm({
                 onClick={handleCreateAndAttach}
                 disabled={!newGroup.name.trim() || isMutatingGroup}
               >
-                {isMutatingGroup ? 'Creating...' : 'Create & Attach'}
+                {isMutatingGroup ? m.product_form_creating() : m.product_form_create_attach()}
               </Button>
               <Button
                 type='button'
@@ -954,7 +968,7 @@ export function ProductForm({
                   setActivePanel('none')
                 }}
               >
-                Cancel
+                {m.product_form_cancel()}
               </Button>
             </div>
           </div>
@@ -963,7 +977,11 @@ export function ProductForm({
 
       {/* Submit Button */}
       <Button type='submit' disabled={isLoading} className='w-full'>
-        {isLoading ? 'Saving...' : mode === 'create' ? 'Create Product' : 'Update Product'}
+        {isLoading
+          ? m.product_form_saving()
+          : mode === 'create'
+            ? m.product_form_create_product()
+            : m.product_form_update_product()}
       </Button>
     </form>
   )
@@ -1002,13 +1020,13 @@ function SortableImageItem({
     >
       <img
         src={url}
-        alt={`Product view ${index + 1}`}
+        alt={m.product_form_image_alt({ index: index + 1 })}
         className='h-full w-full object-cover pointer-events-none select-none'
         draggable={false}
       />
       {index === 0 && (
         <div className='absolute bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-500 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-white'>
-          Cover
+          {m.product_form_cover_badge()}
         </div>
       )}
       <button
@@ -1016,7 +1034,7 @@ function SortableImageItem({
         onClick={onRemove}
         onPointerDown={(e) => e.stopPropagation()}
         className='absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors'
-        aria-label='Remove image'
+        aria-label={m.product_form_remove_image()}
       >
         <X className='h-3 w-3' />
       </button>

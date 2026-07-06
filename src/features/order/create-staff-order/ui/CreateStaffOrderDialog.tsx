@@ -6,6 +6,7 @@ import { Select } from '#/components/ui/select'
 import type { TableEntity } from '#/features/platform/api/platform.types.ts'
 import { tablesQueryOptions } from '#/features/platform/lib/query-options'
 import { useCreateStaffOrderMutation } from '#/features/platform/model/platform-hooks'
+import { m } from '#/paraglide/messages'
 import { fetchCustomerMenu } from '#/shared/api/customer/customer-api'
 import type {
   CustomerCategory,
@@ -70,11 +71,11 @@ function ModifierGroupRow({
         <span className='text-sm font-semibold'>{group.name}</span>
         {group.isRequired ? (
           <span className='rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive'>
-            Required
+            {m.staff_order_required()}
           </span>
         ) : (
           <span className='rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground'>
-            Optional
+            {m.staff_order_optional()}
           </span>
         )}
       </div>
@@ -217,7 +218,7 @@ function ProductDetailPanel({
         onClick={onBack}
         className='mb-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground'
       >
-        <ChevronLeft className='h-4 w-4' /> Back to menu
+        <ChevronLeft className='h-4 w-4' /> {m.staff_order_back_to_menu()}
       </button>
 
       <div className='flex-1 overflow-y-auto space-y-4 pr-1'>
@@ -243,13 +244,16 @@ function ProductDetailPanel({
 
         <div className='border-t border-border pt-3 px-2'>
           <label className='mb-1 block text-sm font-medium' htmlFor='staff-item-notes'>
-            Item notes <span className='font-normal text-muted-foreground'>(optional)</span>
+            {m.staff_order_item_notes_label()}{' '}
+            <span className='font-normal text-muted-foreground'>
+              {m.staff_order_optional_hint()}
+            </span>
           </label>
           <textarea
             id='staff-item-notes'
             rows={2}
             className='w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring'
-            placeholder='E.g. no onions, extra sauce…'
+            placeholder={m.customer_notes_placeholder()}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
@@ -276,7 +280,7 @@ function ProductDetailPanel({
           </button>
         </div>
         <Button className='flex-1 rounded-xl' disabled={!isValid} onClick={handleAdd}>
-          Add to order · {formatPrice(unitPrice * qty, currency)}
+          {m.customer_add_to_order()} · {formatPrice(unitPrice * qty, currency)}
         </Button>
       </div>
     </div>
@@ -310,7 +314,7 @@ function SetupStep({
   return (
     <div className='space-y-6'>
       <div>
-        <p className='mb-2 text-sm font-medium'>Order type</p>
+        <p className='mb-2 text-sm font-medium'>{m.staff_order_type_label()}</p>
         <div className='grid grid-cols-2 gap-3'>
           {(['DINE_IN', 'TAKEAWAY'] as const).map((t) => (
             <button
@@ -323,7 +327,7 @@ function SetupStep({
                   : 'border-border text-muted-foreground hover:bg-accent'
               }`}
             >
-              {t === 'DINE_IN' ? '🍽 Dine In' : '🥡 Takeaway'}
+              {t === 'DINE_IN' ? m.staff_order_dine_in() : m.staff_order_takeaway()}
             </button>
           ))}
         </div>
@@ -332,22 +336,22 @@ function SetupStep({
       {orderType === 'DINE_IN' && (
         <div>
           <label className='mb-1.5 block text-sm font-medium' htmlFor='staff-order-table'>
-            Table <span className='text-destructive'>*</span>
+            {m.staff_order_table_label()} <span className='text-destructive'>*</span>
           </label>
           {tablesLoading ? (
-            <p className='text-sm text-muted-foreground'>Loading tables…</p>
+            <p className='text-sm text-muted-foreground'>{m.staff_order_loading_tables()}</p>
           ) : activeTables.length === 0 ? (
-            <p className='text-sm text-muted-foreground'>No active tables found.</p>
+            <p className='text-sm text-muted-foreground'>{m.staff_order_no_tables()}</p>
           ) : (
             <Select
               id='staff-order-table'
               value={tableId}
               onChange={(e) => onTableIdChange(e.target.value)}
             >
-              <option value=''>Select a table…</option>
+              <option value=''>{m.staff_order_select_table()}</option>
               {activeTables.map((t) => (
                 <option key={t.id} value={t.id}>
-                  Table {t.number} (capacity: {t.capacity})
+                  {m.staff_order_table_option({ number: t.number, capacity: t.capacity })}
                 </option>
               ))}
             </Select>
@@ -357,13 +361,14 @@ function SetupStep({
 
       <div>
         <label className='mb-1.5 block text-sm font-medium' htmlFor='staff-order-customer'>
-          Customer name <span className='text-muted-foreground font-normal'>(optional)</span>
+          {m.staff_order_customer_name_label()}{' '}
+          <span className='text-muted-foreground font-normal'>{m.staff_order_optional_hint()}</span>
         </label>
         <input
           id='staff-order-customer'
           type='text'
           className='h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring'
-          placeholder='E.g. John Doe'
+          placeholder={m.staff_order_customer_name_placeholder()}
           value={customerName}
           onChange={(e) => onCustomerNameChange(e.target.value)}
         />
@@ -371,7 +376,7 @@ function SetupStep({
 
       <div className='flex justify-end pt-2'>
         <Button onClick={onNext} disabled={!canContinue} className='rounded-xl px-6'>
-          Select items →
+          {m.staff_order_select_items()}
         </Button>
       </div>
     </div>
@@ -448,7 +453,7 @@ function MenuStep({
           onClick={onBack}
           className='flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground'
         >
-          <ChevronLeft className='h-4 w-4' /> Back
+          <ChevronLeft className='h-4 w-4' /> {m.staff_order_back()}
         </button>
         {cartCount > 0 && (
           <button
@@ -457,13 +462,19 @@ function MenuStep({
             className='flex items-center gap-2 rounded-xl border border-primary bg-primary/5 px-3 py-1.5 text-sm font-semibold text-primary'
           >
             <ShoppingCart className='h-4 w-4' />
-            {cartCount} item{cartCount === 1 ? '' : 's'} · {formatPrice(cartTotal, currency)}
+            {m.customer_item_count({ count: cartCount })} · {formatPrice(cartTotal, currency)}
           </button>
         )}
       </div>
 
-      {isPending && <p className='py-8 text-center text-sm text-muted-foreground'>Loading menu…</p>}
-      {isError && <p className='py-8 text-center text-sm text-destructive'>Could not load menu.</p>}
+      {isPending && (
+        <p className='py-8 text-center text-sm text-muted-foreground'>
+          {m.staff_order_loading_menu()}
+        </p>
+      )}
+      {isError && (
+        <p className='py-8 text-center text-sm text-destructive'>{m.customer_menu_load_error()}</p>
+      )}
 
       {!(isPending || isError) && (
         <>
@@ -492,7 +503,7 @@ function MenuStep({
           <div className='flex-1 overflow-y-auto space-y-2 pr-1'>
             {products.length === 0 ? (
               <p className='py-8 text-center text-sm text-muted-foreground'>
-                No items in this category.
+                {m.staff_order_no_items_in_category()}
               </p>
             ) : (
               products.map((product: CustomerProduct) => (
@@ -525,7 +536,7 @@ function MenuStep({
                         disabled={!product.isAvailable}
                         onClick={() => setSelectedProduct(product)}
                       >
-                        {product.isAvailable ? 'Add' : 'Unavailable'}
+                        {product.isAvailable ? m.staff_order_add() : m.customer_unavailable()}
                       </Button>
                     </div>
                   </div>
@@ -538,7 +549,7 @@ function MenuStep({
 
       <div className='mt-4 flex justify-end border-t border-border pt-4'>
         <Button onClick={onNext} disabled={items.length === 0} className='rounded-xl px-6'>
-          Review order ({items.length}) →
+          {m.staff_order_review_order({ count: items.length })}
         </Button>
       </div>
     </div>
@@ -587,14 +598,23 @@ function ReviewStep({
         onClick={onBack}
         className='mb-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground'
       >
-        <ChevronLeft className='h-4 w-4' /> Back to menu
+        <ChevronLeft className='h-4 w-4' /> {m.staff_order_back_to_menu()}
       </button>
 
       <div className='flex-1 overflow-y-auto space-y-4 pr-1'>
         {/* Order summary header */}
         <div className='rounded-xl bg-muted px-4 py-3 text-sm'>
-          <span className='font-semibold'>{orderType === 'DINE_IN' ? 'Dine In' : 'Takeaway'}</span>
-          {tableNumber && <span className='text-muted-foreground'> · Table {tableNumber}</span>}
+          <span className='font-semibold'>
+            {orderType === 'DINE_IN'
+              ? m.staff_order_dine_in_label()
+              : m.staff_order_takeaway_label()}
+          </span>
+          {tableNumber && (
+            <span className='text-muted-foreground'>
+              {' '}
+              · {m.customer_table({ name: tableNumber })}
+            </span>
+          )}
           {customerName && <span className='text-muted-foreground'> · {customerName}</span>}
         </div>
 
@@ -607,7 +627,7 @@ function ReviewStep({
                   <p className='text-sm font-semibold truncate'>{item.productName}</p>
                   {item.selectedModifiers.length > 0 && (
                     <p className='mt-0.5 text-xs text-muted-foreground truncate'>
-                      {item.selectedModifiers.map((m) => m.name).join(', ')}
+                      {item.selectedModifiers.map((mod) => mod.name).join(', ')}
                     </p>
                   )}
                   {item.notes && (
@@ -617,7 +637,7 @@ function ReviewStep({
                 <div className='text-right shrink-0'>
                   <p className='text-sm font-semibold'>{formatPrice(itemTotal(item), currency)}</p>
                   <p className='text-xs text-muted-foreground'>
-                    {formatPrice(itemUnitPrice(item), currency)} ea
+                    {formatPrice(itemUnitPrice(item), currency)} {m.staff_order_price_each()}
                   </p>
                 </div>
               </div>
@@ -644,7 +664,7 @@ function ReviewStep({
                   className='flex items-center gap-1 text-xs text-destructive hover:text-destructive/80'
                   onClick={() => onRemoveItem(item.id)}
                 >
-                  <X className='h-3 w-3' /> Remove
+                  <X className='h-3 w-3' /> {m.staff_order_remove()}
                 </button>
               </div>
             </div>
@@ -653,19 +673,19 @@ function ReviewStep({
 
         {/* Total */}
         <div className='flex items-center justify-between rounded-xl bg-muted px-4 py-3'>
-          <span className='text-sm font-semibold'>Total</span>
+          <span className='text-sm font-semibold'>{m.customer_total()}</span>
           <span className='font-mono font-bold'>{formatPrice(total, currency)}</span>
         </div>
 
         {/* Payment method */}
         <div>
-          <p className='mb-2 text-sm font-medium'>Payment method</p>
+          <p className='mb-2 text-sm font-medium'>{m.staff_order_payment_method_label()}</p>
           <div className='grid grid-cols-3 gap-2'>
             {(
               [
-                { value: 'CASH', label: '💵 Cash' },
-                { value: 'POS', label: '💳 Card' },
-                { value: 'ONLINE', label: '📱 Online' },
+                { value: 'CASH', label: m.staff_order_payment_cash() },
+                { value: 'POS', label: m.staff_order_payment_card() },
+                { value: 'ONLINE', label: m.staff_order_payment_online() },
               ] as const
             ).map(({ value, label }) => (
               <button
@@ -687,13 +707,16 @@ function ReviewStep({
         {/* Order notes */}
         <div className='px-2'>
           <label className='mb-1.5 block text-sm font-medium' htmlFor='staff-order-notes'>
-            Order notes <span className='font-normal text-muted-foreground'>(optional)</span>
+            {m.staff_order_notes_label()}{' '}
+            <span className='font-normal text-muted-foreground'>
+              {m.staff_order_optional_hint()}
+            </span>
           </label>
           <textarea
             id='staff-order-notes'
             rows={2}
             className='w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring'
-            placeholder='E.g. birthday table, customer has nut allergy…'
+            placeholder={m.staff_order_order_notes_placeholder()}
             value={notes}
             onChange={(e) => onNotesChange(e.target.value)}
           />
@@ -706,7 +729,9 @@ function ReviewStep({
           disabled={items.length === 0 || isSubmitting}
           onClick={onSubmit}
         >
-          {isSubmitting ? 'Placing order…' : `Place order · ${formatPrice(total, currency)}`}
+          {isSubmitting
+            ? m.staff_order_placing_order()
+            : `${m.staff_order_place_order()} · ${formatPrice(total, currency)}`}
         </Button>
       </div>
     </div>
@@ -781,16 +806,16 @@ export function CreateStaffOrderDialog({
           productId: item.productId,
           quantity: item.quantity,
           notes: item.notes || undefined,
-          selectedModifiers: item.selectedModifiers.map((m) => ({
-            modifierId: m.modifierId,
-            name: m.name,
-            priceAdjustment: Number(m.priceAdjustment),
+          selectedModifiers: item.selectedModifiers.map((mod) => ({
+            modifierId: mod.modifierId,
+            name: mod.name,
+            priceAdjustment: Number(mod.priceAdjustment),
           })),
         })),
         customerName: customerName || undefined,
         notes: orderNotes || undefined,
       })
-      showSuccess('Order placed successfully')
+      showSuccess(m.staff_order_success())
       handleClose()
     } catch (err) {
       showError(getResponseErrorMessage(err))
@@ -798,9 +823,9 @@ export function CreateStaffOrderDialog({
   }
 
   const stepTitle: Record<Step, string> = {
-    setup: 'New Order',
-    menu: 'Select Items',
-    review: 'Review Order',
+    setup: m.staff_order_step_setup_title(),
+    menu: m.staff_order_step_menu_title(),
+    review: m.staff_order_step_review_title(),
   }
 
   return (

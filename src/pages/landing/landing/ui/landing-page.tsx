@@ -1,17 +1,19 @@
-import type { CSSProperties, ElementType, ReactNode } from 'react'
-import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import type {CSSProperties, ElementType, ReactNode} from 'react'
+import {useEffect, useRef, useState} from 'react'
+import {createPortal} from 'react-dom'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
-import './serve-os.css'
-import { useNavigate } from '@tanstack/react-router'
+import './landing.css'
+import {useNavigate} from '@tanstack/react-router'
 import Footer from '#/components/footer.tsx'
-import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
-import { cn } from '#/lib/utils.ts'
-import menuDemoVideo from '#/shared/assets/video/menu-demo.mp4'
-import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
-import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
-import { Icons } from './icons'
-import { DashboardMock, FloatBadge, PhoneMock, QrCode } from './mockups'
+import {LanguageSwitcher} from '#/components/language-switcher.tsx'
+import {PaletteSwitcher} from '#/features/palette/ui/PaletteSwitcher.tsx'
+import {cn} from '#/lib/utils.ts'
+import {m} from '#/paraglide/messages'
+import {getLocale} from '#/paraglide/runtime'
+import {useBodyScrollLock} from '#/shared/libs/hooks/scroll-lock.ts'
+import {LogoSvg} from '#/shared/ui/logo-svg.tsx'
+import {Icons} from './icons'
+import {DashboardMock, FloatBadge, PhoneMock, QrCode} from './mockups'
 
 interface RevealProps {
   as?: ElementType
@@ -52,88 +54,14 @@ export function Reveal({
   )
 }
 
-const FEATURES_LEAD = {
-  icon: <Icons.Clipboard />,
-  title: 'Smart Ordering',
-  body: 'Guests scan, browse and order at the table. Staff fire tickets from any device. Orders route to the right station automatically — zero re-keying.',
-}
-const FEATURES = [
-  {
-    icon: <Icons.KitchenDisplay />,
-    title: 'Kitchen Sync',
-    body: 'Live kitchen display, color-coded by prep time.',
-    accent: false,
-  },
-  {
-    icon: <Icons.Card />,
-    title: 'Payments',
-    body: 'Split bills, tips and refunds, settled instantly.',
-    accent: false,
-  },
-  {
-    icon: <Icons.BarChart />,
-    title: 'Real-time Analytics',
-    body: 'Revenue, covers and best-sellers, live.',
-    accent: true,
-  },
-]
-const ORDER_POINTS: [string, string][] = [
-  ['Your branded menu', '— photos, modifiers and live availability.'],
-  ['Fewer errors', '— orders go straight from guest to kitchen.'],
-  ['Faster tables', '— pay and re-order without the wait.'],
-]
-const TIMELINE: [string, string, string][] = [
-  ['07:00', 'Open & prep', "Counts, par levels and the day's specials pushed live to every menu."],
-  ['12:30', 'Lunch rush', 'QR orders flow to the kitchen, tables turn faster, nothing gets lost.'],
-  ['19:00', 'Dinner service', 'Split bills, tips and payments settle at the table in a tap.'],
-  ['23:00', 'Close & report', 'Z-report, labour and best-sellers ready before you lock the door.'],
-]
-const PLANS = [
-  {
-    name: 'Starter',
-    mo: '0',
-    yr: '0',
-    dollar: true,
-    suffix: '/mo',
-    desc: 'For a single counter or cafe getting started.',
-    feats: ['QR menu & ordering', '1 register, 5 tables', 'Basic reports'],
-    cta: 'Get started',
-    btn: 'ghost',
-  },
-  {
-    name: 'Pro',
-    tag: 'POPULAR',
-    mo: '49',
-    yr: '39',
-    dollar: true,
-    suffix: '/mo',
-    feat: true,
-    desc: 'For busy restaurants running full service.',
-    feats: [
-      'Everything in Starter',
-      'Kitchen display & payments',
-      'Unlimited tables & staff',
-      'Real-time analytics',
-    ],
-    cta: 'Start free trial',
-    btn: 'primary',
-  },
-  {
-    name: 'Scale',
-    custom: 'Custom',
-    desc: 'For groups and multi-location operators.',
-    feats: ['Everything in Pro', 'Multi-location dashboard', 'Dedicated support'],
-    cta: 'Contact sales',
-    btn: 'ghost',
-  },
-]
-
 export function Nav() {
   const theme = useThemeStore((s) => s.theme)
   const toggle = useThemeStore((s) => s.toggle)
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const locale = getLocale()
+  const isArmenian = locale === 'hy'
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -160,34 +88,74 @@ export function Nav() {
             <LogoSvg aria-hidden='true' />
             serve<span className='g'>-os</span>
           </a>
-          <nav className='nav-links'>
-            <a href='/#features'>Features</a>
-            <a href='/#ordering'>Ordering</a>
-            <a href='/#how'>How it works</a>
-            <a href='/#pricing'>Pricing</a>
-            <a href='https://story.serve-os.net/'>Story</a>
+          <nav
+            className={cn('nav-links', {
+              'small-gap': isArmenian,
+            })}
+          >
+            <a
+              className={cn('nav-links-item', {
+                'small-font': isArmenian,
+              })}
+              href='/#features'
+            >
+              {m.landing_nav_features()}
+            </a>
+            <a
+              className={cn('nav-links-item', {
+                'small-font': isArmenian,
+              })}
+              href='/#ordering'
+            >
+              {m.landing_nav_ordering()}
+            </a>
+            <a
+              className={cn('nav-links-item', {
+                'small-font': isArmenian,
+              })}
+              href='/#how'
+            >
+              {m.landing_nav_how()}
+            </a>
+            <a
+              className={cn('nav-links-item', {
+                'small-font': isArmenian,
+              })}
+              href='/#pricing'
+            >
+              {m.landing_nav_pricing()}
+            </a>
+            <a
+              className={cn('nav-links-item', {
+                'small-font': isArmenian,
+              })}
+              href='https://story.serve-os.net/'
+            >
+              {m.landing_nav_story()}
+            </a>
           </nav>
           <div className='nav-right'>
             <PaletteSwitcher triggerClassName='palette-toggle h-[40px] w-[40px] rounded-[11px]' />
+            <LanguageSwitcher triggerClassName='palette-toggle h-[40px] w-[40px] rounded-[11px]' />
             <button
               type='button'
               className='theme-toggle'
               onClick={toggle}
-              aria-label='Toggle theme'
+              aria-label={m.landing_nav_toggle_theme()}
             >
               {theme === 'dark' ? <Icons.Moon /> : <Icons.Sun />}
             </button>
             <a className='btn ghost hide-mobile' href='/auth/sign-in'>
-              Log in
+              {m.landing_nav_login()}
             </a>
             <a className='btn primary hide-mobile' href='/#pricing'>
-              Start free trial
+              {m.landing_nav_start_trial()}
             </a>
             <button
               type='button'
               className='menu-btn'
               onClick={() => setMenuOpen((o) => !o)}
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={menuOpen ? m.landing_nav_close_menu() : m.landing_nav_open_menu()}
               aria-expanded={menuOpen}
             >
               {menuOpen ? <Icons.X /> : <Icons.Menu />}
@@ -205,7 +173,7 @@ export function Nav() {
             close()
           }}
         >
-          Features
+          {m.landing_nav_features()}
         </button>
         <button
           type='button'
@@ -215,7 +183,7 @@ export function Nav() {
             close()
           }}
         >
-          Ordering
+          {m.landing_nav_ordering()}
         </button>
         <button
           type='button'
@@ -225,7 +193,7 @@ export function Nav() {
             close()
           }}
         >
-          How it works
+          {m.landing_nav_how()}
         </button>
         <button
           type='button'
@@ -235,7 +203,7 @@ export function Nav() {
             close()
           }}
         >
-          Pricing
+          {m.landing_nav_pricing()}
         </button>
         <button
           type='button'
@@ -245,7 +213,7 @@ export function Nav() {
             close()
           }}
         >
-          About
+          {m.landing_nav_about()}
         </button>
         <button
           type='button'
@@ -255,14 +223,14 @@ export function Nav() {
             close()
           }}
         >
-          Story
+          {m.landing_nav_story()}
         </button>
         <div className='mob-ctas'>
           <a className='btn ghost' href='/auth/sign-in' onClick={close}>
-            Log in
+            {m.landing_nav_login()}
           </a>
           <a className='btn primary' href='/auth/sign-up' onClick={close}>
-            Start free trial
+            {m.landing_nav_start_trial()}
           </a>
         </div>
       </div>
@@ -284,22 +252,29 @@ function DemoVideoModal({ onClose }: Readonly<{ onClose: () => void }>) {
   if (typeof document === 'undefined') return null
 
   return createPortal(
-    <div className='demo-modal' role='dialog' aria-modal='true' aria-label='Product demo video'>
+    <div className='demo-modal'>
       <button
         type='button'
-        aria-label='Close demo video'
+        aria-label={m.landing_demo_modal_close_aria_label()}
         className='demo-modal-backdrop'
         onClick={onClose}
       />
       <button
         type='button'
         className='demo-modal-close'
-        aria-label='Close demo video'
+        aria-label={m.landing_demo_modal_close_aria_label()}
         onClick={onClose}
       >
         <Icons.X />
       </button>
-      <video className='demo-modal-video' src={menuDemoVideo} autoPlay controls playsInline>
+      <video
+        className='demo-modal-video'
+        src='/media/menu-demo.mp4'
+        preload='metadata'
+        autoPlay
+        controls
+        playsInline
+      >
         <track kind='captions' />
       </video>
     </div>,
@@ -308,23 +283,24 @@ function DemoVideoModal({ onClose }: Readonly<{ onClose: () => void }>) {
 }
 
 function Hero() {
+  const locale = getLocale()
   const [demoOpen, setDemoOpen] = useState(false)
+
+  const isArmenianLocale = locale === 'hy'
 
   return (
     <section className='hero'>
       <div className='wrap hero-grid'>
         <div className='hero-copy'>
-          <span className='eyebrow'>Hospitality Management OS</span>
-          <h1>
-            Manage Better.<span className='line2 g'>Serve Better.</span>
+          <span className='eyebrow'>{m.landing_hero_eyebrow()}</span>
+          <h1 className={cn({ small: isArmenianLocale })}>
+            {m.landing_hero_title_line1()}
+            <span className='line2 g'>{m.landing_hero_title_line2()}</span>
           </h1>
-          <p className='hero-sub'>
-            The all-in-one operating system that runs the floor, the kitchen and the books — for
-            modern restaurants and cafes.
-          </p>
+          <p className='hero-sub'>{m.landing_hero_subtitle()}</p>
           <div className='hero-cta'>
             <a className='btn primary lg' href='/#pricing'>
-              Start free trial <Icons.ArrowRight />
+              {m.landing_nav_start_trial()} <Icons.ArrowRight />
             </a>
             <button
               type='button'
@@ -333,17 +309,27 @@ function Hero() {
               onClick={() => setDemoOpen(true)}
             >
               <Icons.Play />
-              Watch the demo
+              {m.landing_hero_cta_demo()}
             </button>
           </div>
           <div className='hero-meta'>
-            <span>No card required</span>
+            <span>{m.landing_hero_meta_no_card()}</span>
           </div>
         </div>
         <Reveal className='hero-mock'>
           <DashboardMock />
-          <FloatBadge pos='b1' icon={<Icons.TrendingUp />} title='+13%' sub='Revenue this week' />
-          <FloatBadge pos='b2' icon={<Icons.Bell />} title='7 new' sub='Orders in kitchen' />
+          <FloatBadge
+            pos='b1'
+            icon={<Icons.TrendingUp />}
+            title={m.landing_hero_badge1_title()}
+            sub={m.landing_hero_badge1_sub()}
+          />
+          <FloatBadge
+            pos='b2'
+            icon={<Icons.Bell />}
+            title={m.landing_hero_badge2_title()}
+            sub={m.landing_hero_badge2_sub()}
+          />
         </Reveal>
       </div>
       {demoOpen && <DemoVideoModal onClose={() => setDemoOpen(false)} />}
@@ -353,17 +339,17 @@ function Hero() {
 
 function Trust() {
   const names = [
-    'Green Dine',
-    'Maple & Co.',
-    'The Corner Bistro',
-    'Olive Lane',
-    'Roastery 9',
-    'Saffron House',
+    m.landing_trust_name_1(),
+    m.landing_trust_name_2(),
+    m.landing_trust_name_3(),
+    m.landing_trust_name_4(),
+    m.landing_trust_name_5(),
+    m.landing_trust_name_6(),
   ]
   return (
     <section className='trust'>
       <div className='wrap'>
-        <div className='lbl'>RUNNING SERVICE AT INDEPENDENT CAFES &amp; RESTAURANTS EVERYWHERE</div>
+        <div className='lbl'>{m.landing_trust_label()}</div>
         <div className='trust-row'>
           {names.map((n) => (
             <span className='name' key={n}>
@@ -377,38 +363,49 @@ function Trust() {
 }
 
 function Features() {
+  const featuresLead = {
+    icon: <Icons.Clipboard />,
+    title: m.landing_feature_lead_title(),
+    body: m.landing_feature_lead_body(),
+  }
+  const features = [
+    {
+      icon: <Icons.KitchenDisplay />,
+      title: m.landing_feature_1_title(),
+      body: m.landing_feature_1_body(),
+      accent: false,
+    },
+    {
+      icon: <Icons.Card />,
+      title: m.landing_feature_2_title(),
+      body: m.landing_feature_2_body(),
+      accent: false,
+    },
+    {
+      icon: <Icons.BarChart />,
+      title: m.landing_feature_3_title(),
+      body: m.landing_feature_3_body(),
+      accent: true,
+    },
+  ]
   return (
     <section className='sec-pad' id='features'>
       <div className='wrap'>
         <Reveal className='sec-head'>
-          <span className='eyebrow'>Everything in one place</span>
+          <span className='eyebrow'>{m.landing_features_eyebrow()}</span>
           <h2>
-            One system, <span className='g'>every station</span>
+            {m.landing_features_title_line1()}{' '}
+            <span className='g'>{m.landing_features_title_line2()}</span>
           </h2>
-          <p>
-            From the first scan at the table to the closing report — front of house, kitchen and
-            back office finally speak the same language.
-          </p>
+          <p>{m.landing_features_subtitle()}</p>
         </Reveal>
         <div className='bento'>
           <Reveal className='tile big feature-accent'>
-            <div className='ico'>{FEATURES_LEAD.icon}</div>
-            <h3>{FEATURES_LEAD.title}</h3>
-            <p>{FEATURES_LEAD.body}</p>
-            <div className='mini-chart'>
-              <svg viewBox='0 0 130 56' preserveAspectRatio='none' aria-hidden='true'>
-                <path
-                  d='M0 44 L26 38 L52 46 L78 26 L104 32 L130 12'
-                  fill='none'
-                  stroke='var(--accent)'
-                  strokeWidth='2.4'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                />
-              </svg>
-            </div>
+            <div className='ico'>{featuresLead.icon}</div>
+            <h3>{featuresLead.title}</h3>
+            <p>{featuresLead.body}</p>
           </Reveal>
-          {FEATURES.map((f) => (
+          {features.map((f) => (
             <Reveal className={`tile${f.accent ? ' feature-accent' : ''}`} key={f.title}>
               <div className='ico'>{f.icon}</div>
               <h3>{f.title}</h3>
@@ -420,11 +417,8 @@ function Features() {
               <Icons.Users />
             </div>
             <div className='txt'>
-              <h3>Staff Management</h3>
-              <p>
-                Rosters, roles and shift performance — keep the whole team in sync without the
-                spreadsheets.
-              </p>
+              <h3>{m.landing_feature_staff_title()}</h3>
+              <p>{m.landing_feature_staff_body()}</p>
             </div>
           </Reveal>
         </div>
@@ -434,20 +428,25 @@ function Features() {
 }
 
 function Ordering() {
+  const orderPoints: [string, string][] = [
+    [m.landing_ordering_point_1_title(), m.landing_ordering_point_1_body()],
+    [m.landing_ordering_point_2_title(), m.landing_ordering_point_2_body()],
+    [m.landing_ordering_point_3_title(), m.landing_ordering_point_3_body()],
+  ]
   return (
     <section className='sec-pad showcase' id='ordering'>
       <div className='wrap show-grid'>
         <Reveal className='show-copy'>
-          <span className='eyebrow'>Tableside ordering</span>
+          <span className='eyebrow'>{m.landing_ordering_eyebrow()}</span>
           <h2 style={{ fontSize: 'clamp(30px,4.2vw,46px)' }}>
-            Scan. Order. <span className='g'>Served.</span>
+            {m.landing_ordering_title_line1()}{' '}
+            <span className='g'>{m.landing_ordering_title_line2()}</span>
           </h2>
           <p style={{ color: 'var(--muted)', fontSize: '18px', lineHeight: 1.6 }}>
-            Put a QR code on every table. Guests order from their phone and tickets land in the
-            kitchen in seconds — no app to download, no waiting to flag down a server.
+            {m.landing_ordering_subtitle()}
           </p>
           <div className='show-list'>
-            {ORDER_POINTS.map(([b, s]) => (
+            {orderPoints.map(([b, s]) => (
               <div className='row' key={b}>
                 <span className='ck'>
                   <Icons.Check />
@@ -463,13 +462,13 @@ function Ordering() {
             href='/#pricing'
             style={{ alignSelf: 'flex-start', marginTop: '6px' }}
           >
-            Try tableside ordering <Icons.ArrowRight />
+            {m.landing_ordering_cta()} <Icons.ArrowRight />
           </a>
         </Reveal>
         <Reveal className='devices'>
           <PhoneMock />
           <div className='qr-tent'>
-            <div className='qh'>Scan to Order</div>
+            <div className='qh'>{m.landing_ordering_qr_heading()}</div>
             <QrCode />
             <div className='qfoot'>
               <LogoSvg aria-hidden='true' />
@@ -483,17 +482,24 @@ function Ordering() {
 }
 
 function Timeline() {
+  const timeline: [string, string, string][] = [
+    ['07:00', m.landing_timeline_1_title(), m.landing_timeline_1_body()],
+    ['12:30', m.landing_timeline_2_title(), m.landing_timeline_2_body()],
+    ['19:00', m.landing_timeline_3_title(), m.landing_timeline_3_body()],
+    ['23:00', m.landing_timeline_4_title(), m.landing_timeline_4_body()],
+  ]
   return (
     <section className='sec-pad' id='how'>
       <div className='wrap'>
         <Reveal className='sec-head'>
-          <span className='eyebrow'>A day on serve-os</span>
+          <span className='eyebrow'>{m.landing_timeline_eyebrow()}</span>
           <h2>
-            From open to close, <span className='g'>handled</span>
+            {m.landing_timeline_title_line1()}{' '}
+            <span className='g'>{m.landing_timeline_title_line2()}</span>
           </h2>
         </Reveal>
         <div className='timeline'>
-          {TIMELINE.map(([time, title, body]) => (
+          {timeline.map(([time, title, body]) => (
             <Reveal className='tl-step' key={time}>
               <div className='node'>
                 <i />
@@ -511,6 +517,53 @@ function Timeline() {
 
 function Pricing() {
   const [cycle, setCycle] = useState('mo')
+  const plans = [
+    {
+      name: m.landing_pricing_starter_name(),
+      mo: '0',
+      yr: '0',
+      dollar: true,
+      suffix: '/mo',
+      desc: m.landing_pricing_starter_desc(),
+      feats: [
+        m.landing_pricing_starter_feat_1(),
+        m.landing_pricing_starter_feat_2(),
+        m.landing_pricing_starter_feat_3(),
+      ],
+      cta: m.landing_pricing_starter_cta(),
+      btn: 'ghost',
+    },
+    {
+      name: m.landing_pricing_pro_name(),
+      tag: m.landing_pricing_tag_popular(),
+      mo: '49',
+      yr: '39',
+      dollar: true,
+      suffix: '/mo',
+      feat: true,
+      desc: m.landing_pricing_pro_desc(),
+      feats: [
+        m.landing_pricing_pro_feat_1(),
+        m.landing_pricing_pro_feat_2(),
+        m.landing_pricing_pro_feat_3(),
+        m.landing_pricing_pro_feat_4(),
+      ],
+      cta: m.landing_nav_start_trial(),
+      btn: 'primary',
+    },
+    {
+      name: m.landing_pricing_scale_name(),
+      custom: m.landing_pricing_custom(),
+      desc: m.landing_pricing_scale_desc(),
+      feats: [
+        m.landing_pricing_scale_feat_1(),
+        m.landing_pricing_scale_feat_2(),
+        m.landing_pricing_scale_feat_3(),
+      ],
+      cta: m.landing_pricing_scale_cta(),
+      btn: 'ghost',
+    },
+  ]
   return (
     <section
       className='sec-pad'
@@ -523,30 +576,31 @@ function Pricing() {
     >
       <div className='wrap'>
         <Reveal className='sec-head center'>
-          <span className='eyebrow'>Pricing</span>
+          <span className='eyebrow'>{m.landing_pricing_eyebrow()}</span>
           <h2>
-            Simple plans, <span className='g'>no surprises</span>
+            {m.landing_pricing_title_line1()}{' '}
+            <span className='g'>{m.landing_pricing_title_line2()}</span>
           </h2>
-          <p>Start free. Upgrade when you're ready. Cancel anytime.</p>
+          <p>{m.landing_pricing_subtitle()}</p>
           <div className='price-toggle'>
             <button
               type='button'
               className={cycle === 'mo' ? 'on' : ''}
               onClick={() => setCycle('mo')}
             >
-              Monthly
+              {m.landing_pricing_toggle_monthly()}
             </button>
             <button
               type='button'
               className={cycle === 'yr' ? 'on' : ''}
               onClick={() => setCycle('yr')}
             >
-              Yearly · save 20%
+              {m.landing_pricing_toggle_yearly()}
             </button>
           </div>
         </Reveal>
         <div className='price-grid'>
-          {PLANS.map((p) => (
+          {plans.map((p) => (
             <Reveal className={`plan${p.feat ? ' feat' : ''}`} key={p.name}>
               <div className='pname'>
                 {p.name}
@@ -588,10 +642,10 @@ export function SiteCta() {
     <section style={{ padding: '90px 0' }}>
       <div className='wrap'>
         <Reveal className='cta-band'>
-          <h2>Serve better, starting today.</h2>
-          <p>Set up your menu in an afternoon. Free for 14 days — no card required.</p>
+          <h2>{m.landing_cta_title()}</h2>
+          <p>{m.landing_cta_subtitle()}</p>
           <a className='btn light lg' href='/auth/sign-up'>
-            Start your free trial <Icons.ArrowRight />
+            {m.landing_cta_button()} <Icons.ArrowRight />
           </a>
         </Reveal>
       </div>

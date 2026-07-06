@@ -20,6 +20,7 @@ import type { Order } from '#/features/platform/api/platform.types.ts'
 import { kitchenActiveOrdersQueryOptions } from '#/features/platform/lib/query-options.ts'
 import { useUpdateOrderStatusMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { showError } from '#/shared/libs/hooks/toast.ts'
 import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -166,12 +167,10 @@ export function AdminKitchenContent() {
     >
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Kitchen Display (KDS)</h1>
-          <p className='text-muted-foreground'>Real-time kitchen flow.</p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_kitchen_heading()}</h1>
+          <p className='text-muted-foreground'>{m.admin_kitchen_subtitle()}</p>
           {!businessId && isConnected && (
-            <p className='mt-2 text-sm text-amber-700'>
-              No active business selected. Please select a business first.
-            </p>
+            <p className='mt-2 text-sm text-amber-700'>{m.admin_kitchen_no_business()}</p>
           )}
           {isError && (
             <p className='mt-2 text-sm text-destructive'>
@@ -181,7 +180,7 @@ export function AdminKitchenContent() {
                 className='ml-2 font-semibold underline'
                 onClick={() => refetch()}
               >
-                Retry
+                {m.admin_kitchen_retry()}
               </button>
             </p>
           )}
@@ -193,10 +192,10 @@ export function AdminKitchenContent() {
             ) : (
               <WifiOff className='h-3.5 w-3.5 text-amber-500' />
             )}
-            <span>{isConnected ? 'Live' : 'Polling'}</span>
+            <span>{isConnected ? m.admin_kitchen_live() : m.admin_kitchen_polling()}</span>
           </div>
           <Badge variant='outline' className='h-8 rounded-full bg-muted px-4 text-xs font-semibold'>
-            {activeCount} active
+            {m.admin_kitchen_active_count({ count: activeCount })}
           </Badge>
           <Button
             size='sm'
@@ -205,7 +204,7 @@ export function AdminKitchenContent() {
             className='rounded-full'
             onClick={() => refetch()}
           >
-            Refresh
+            {m.admin_kitchen_refresh()}
           </Button>
           <Button
             size='sm'

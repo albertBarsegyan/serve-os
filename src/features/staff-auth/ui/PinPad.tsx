@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '#/components/ui/button'
 import type { StaffRole } from '#/features/platform/api/platform.types.ts'
 import { cn } from '#/lib/utils.ts'
+import { m } from '#/paraglide/messages'
 
 const PIN_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'] as const
 
@@ -124,7 +125,7 @@ export function PinPad({
         </div>
       </div>
 
-      <p className='text-sm text-muted-foreground'>Enter your 4-digit PIN</p>
+      <p className='text-sm text-muted-foreground'>{m.staff_auth_pin_enter()}</p>
 
       {/* Dot indicators */}
       <div className={cn('flex gap-3', shaking && 'pin-shake')}>
@@ -140,16 +141,14 @@ export function PinPad({
 
       {/* Error / locked feedback */}
       {isLocked ? (
-        <p className='text-sm font-medium text-destructive'>
-          Account locked. Contact your manager.
-        </p>
+        <p className='text-sm font-medium text-destructive'>{m.staff_auth_pin_locked()}</p>
       ) : errorMessage ? (
         <p className='text-sm font-medium text-destructive'>{errorMessage}</p>
       ) : null}
 
       {attemptsRemaining !== null && !isLocked && (
         <p className='text-xs text-muted-foreground'>
-          {attemptsRemaining} attempt{attemptsRemaining === 1 ? '' : 's'} remaining
+          {m.staff_auth_pin_attempts_remaining({ count: attemptsRemaining })}
         </p>
       )}
 
@@ -189,10 +188,10 @@ export function PinPad({
         })}
       </div>
 
-      {isPending && <p className='text-sm text-muted-foreground'>Signing in…</p>}
+      {isPending && <p className='text-sm text-muted-foreground'>{m.staff_auth_signing_in()}</p>}
 
       <Button variant='ghost' size='sm' onClick={onBack} disabled={isPending}>
-        ← Wrong ID? Go back
+        ← {m.staff_auth_wrong_id_back()}
       </Button>
     </div>
   )

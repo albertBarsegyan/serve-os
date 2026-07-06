@@ -30,6 +30,7 @@ import {
   useUpdateTableMutation,
   useUploadTableImageMutation,
 } from '#/features/platform/model/platform-hooks.ts'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
 import { useTablePermissions } from '#/shared/libs/hooks/use-table-permissions.ts'
@@ -60,11 +61,17 @@ function ImageUploadField({ value, previewFile, onChange }: ImageUploadFieldProp
 
   return (
     <div className='space-y-2'>
-      <p className='text-xs font-semibold uppercase text-muted-foreground'>Table Image</p>
+      <p className='text-xs font-semibold uppercase text-muted-foreground'>
+        {m.admin_tables_image_label()}
+      </p>
       <div className='relative h-50 w-full overflow-hidden rounded-xl border border-dashed border-border bg-muted'>
         {previewUrl ? (
           <>
-            <img src={previewUrl} alt='Table preview' className='h-full w-full object-cover' />
+            <img
+              src={previewUrl}
+              alt={m.admin_tables_preview_alt()}
+              className='h-full w-full object-cover'
+            />
             <button
               type='button'
               onClick={() => onChange(null)}
@@ -80,7 +87,7 @@ function ImageUploadField({ value, previewFile, onChange }: ImageUploadFieldProp
             className='flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground transition-colors hover:text-foreground'
           >
             <Upload className='h-6 w-6' />
-            <span className='text-xs'>Click to upload image</span>
+            <span className='text-xs'>{m.admin_tables_click_to_upload()}</span>
           </button>
         )}
       </div>
@@ -92,7 +99,7 @@ function ImageUploadField({ value, previewFile, onChange }: ImageUploadFieldProp
           className='w-full rounded-xl'
           onClick={() => inputRef.current?.click()}
         >
-          <Upload className='mr-2 h-3.5 w-3.5' /> Change image
+          <Upload className='mr-2 h-3.5 w-3.5' /> {m.admin_tables_change_image()}
         </Button>
       )}
       <input
@@ -122,15 +129,18 @@ function filterTables(tables: TableEntity[], tab: FilterTab, search: string): Ta
   })
 }
 
-const FILTER_TABS: { value: FilterTab; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'reserved', label: 'Reserved' },
-  { value: 'available', label: 'Available' },
-]
+function getFilterTabs(): { value: FilterTab; label: string }[] {
+  return [
+    { value: 'all', label: m.admin_tables_filter_all() },
+    { value: 'active', label: m.admin_tables_filter_active() },
+    { value: 'inactive', label: m.admin_tables_filter_inactive() },
+    { value: 'reserved', label: m.admin_tables_filter_reserved() },
+    { value: 'available', label: m.admin_tables_filter_available() },
+  ]
+}
 
 export function AdminTablesContent() {
+  const FILTER_TABS = useMemo(() => getFilterTabs(), [])
   const skeletonCards = useMemo(() => ['sk-a', 'sk-b', 'sk-c', 'sk-d', 'sk-e', 'sk-f'], [])
 
   const perms = useTablePermissions()
@@ -188,7 +198,7 @@ export function AdminTablesContent() {
       if (createImageFile) {
         await uploadImageMutation.mutateAsync({ tableId: created.id, file: createImageFile })
       }
-      showSuccess('Table created')
+      showSuccess(m.admin_tables_created())
       setCreateImageFile(null)
       reset({ number: values.number + 1, capacity: 2, isActive: true })
       setIsCreateOpen(false)
@@ -210,7 +220,7 @@ export function AdminTablesContent() {
       if (editImageFile) {
         await uploadImageMutation.mutateAsync({ tableId: editingTable.id, file: editImageFile })
       }
-      showSuccess('Table updated')
+      showSuccess(m.admin_tables_updated())
       setEditingTable(null)
       setEditImageFile(null)
     } catch (mutationError) {
@@ -222,7 +232,7 @@ export function AdminTablesContent() {
     if (!deletingTable) return
     try {
       await deleteTableMutation.mutateAsync(deletingTable.id)
-      showSuccess('Table removed')
+      showSuccess(m.admin_tables_removed())
       setDeletingTable(null)
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
@@ -235,7 +245,7 @@ export function AdminTablesContent() {
         tableId: table.id,
         data: { isActive: !table.isActive },
       })
-      showSuccess(table.isActive ? 'Table deactivated' : 'Table activated')
+      showSuccess(table.isActive ? m.admin_tables_deactivated() : m.admin_tables_activated())
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
     }
@@ -247,7 +257,7 @@ export function AdminTablesContent() {
         tableId: table.id,
         data: { isReserved: !table.isReserved },
       })
-      showSuccess(table.isReserved ? 'Table unreserved' : 'Table reserved')
+      showSuccess(table.isReserved ? m.admin_tables_unreserved() : m.admin_tables_reserved_toast())
     } catch (mutationError) {
       showError(getResponseErrorMessage(mutationError))
     }
@@ -257,7 +267,7 @@ export function AdminTablesContent() {
 
   const copyToClipboard = () => {
     globalThis.navigator.clipboard.writeText(qrUrl)
-    showSuccess('QR code URL copied to clipboard')
+    showSuccess(m.admin_tables_qr_url_copied())
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -317,12 +327,12 @@ export function AdminTablesContent() {
       {/* Header */}
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Tables</h1>
-          <p className='text-muted-foreground'>Monitor table status and manage QR codes.</p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_tables_heading()}</h1>
+          <p className='text-muted-foreground'>{m.admin_tables_subheading()}</p>
         </div>
         {perms.canCreate && (
           <Button size='sm' className='rounded-full' onClick={() => setIsCreateOpen(true)}>
-            <Plus className='mr-2 h-4 w-4' /> Add Table
+            <Plus className='mr-2 h-4 w-4' /> {m.admin_tables_add_table()}
           </Button>
         )}
       </div>
@@ -347,7 +357,7 @@ export function AdminTablesContent() {
         </div>
         <input
           type='search'
-          placeholder='Search by table number…'
+          placeholder={m.admin_tables_search_placeholder()}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className='h-9 flex-1 rounded-xl border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring'
@@ -363,7 +373,7 @@ export function AdminTablesContent() {
             className='ml-2 font-semibold underline'
             onClick={() => void refetch()}
           >
-            Retry
+            {m.admin_tables_retry()}
           </button>
         </div>
       )}
@@ -383,13 +393,13 @@ export function AdminTablesContent() {
           <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted'>
             <LayoutGrid className='h-6 w-6 text-muted-foreground' />
           </div>
-          <h3 className='mb-1 text-base font-semibold'>No tables yet</h3>
+          <h3 className='mb-1 text-base font-semibold'>{m.admin_tables_empty_title()}</h3>
           <p className='mb-6 max-w-xs text-sm text-muted-foreground'>
-            You don't have any tables yet. Start by adding your first table.
+            {m.admin_tables_empty_description()}
           </p>
           {perms.canCreate && (
             <Button size='sm' className='rounded-full' onClick={() => setIsCreateOpen(true)}>
-              <Plus className='mr-2 h-4 w-4' /> Add your first table
+              <Plus className='mr-2 h-4 w-4' /> {m.admin_tables_add_first()}
             </Button>
           )}
         </div>
@@ -398,7 +408,7 @@ export function AdminTablesContent() {
       {/* No results for filter */}
       {!isPending && tables.length > 0 && visibleTables.length === 0 && (
         <div className='py-12 text-center text-sm text-muted-foreground'>
-          No tables match this filter.
+          {m.admin_tables_no_match_filter()}
         </div>
       )}
 
@@ -407,7 +417,9 @@ export function AdminTablesContent() {
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
           {visibleTables.map((table) => {
             const isSessionReserved = Boolean(table.currentSessionId)
-            const reservedLabel = isSessionReserved ? 'Guest Session' : 'Reserved by Staff'
+            const reservedLabel = isSessionReserved
+              ? m.admin_tables_guest_session()
+              : m.admin_tables_reserved_by_staff()
             const activeOrder = activeOrderByTableId.get(table.id) ?? null
             const pendingPayment = activeOrder
               ? (pendingPaymentByOrderId.get(activeOrder.id) ?? null)
@@ -448,8 +460,8 @@ export function AdminTablesContent() {
         isOpen={Boolean(deletingTable)}
         onClose={() => setDeletingTable(null)}
         onConfirm={() => void handleDelete()}
-        name={deletingTable ? `Table ${deletingTable.number}` : ''}
-        entityLabel='table'
+        name={deletingTable ? m.admin_tables_table_label({ number: deletingTable.number }) : ''}
+        entityLabel={m.admin_tables_entity_label()}
         isPending={deleteTableMutation.isPending}
       />
 
@@ -460,7 +472,7 @@ export function AdminTablesContent() {
           setIsCreateOpen(false)
           setCreateImageFile(null)
         }}
-        title='Create table'
+        title={m.admin_tables_create_modal_title()}
         footer={
           <>
             <Button
@@ -470,15 +482,15 @@ export function AdminTablesContent() {
                 setCreateImageFile(null)
               }}
             >
-              Cancel
+              {m.admin_tables_cancel()}
             </Button>
             <Button
               onClick={() => void handleSubmit(onCreateSubmit)()}
               disabled={createTableMutation.isPending || uploadImageMutation.isPending}
             >
               {createTableMutation.isPending || uploadImageMutation.isPending
-                ? 'Creating…'
-                : 'Create'}
+                ? m.admin_tables_creating()
+                : m.admin_tables_create_btn()}
             </Button>
           </>
         }
@@ -495,7 +507,7 @@ export function AdminTablesContent() {
               htmlFor={numberId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Number
+              {m.admin_tables_number_label()}
             </label>
             <input
               id={numberId}
@@ -512,7 +524,7 @@ export function AdminTablesContent() {
               htmlFor={capacityId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Capacity
+              {m.admin_tables_capacity_label()}
             </label>
             <input
               id={capacityId}
@@ -530,7 +542,7 @@ export function AdminTablesContent() {
               className='h-4 w-4 rounded border border-input accent-primary'
               {...register('isActive')}
             />
-            <span>Active</span>
+            <span>{m.admin_tables_active()}</span>
           </label>
         </form>
       </Modal>
@@ -542,7 +554,7 @@ export function AdminTablesContent() {
           setEditingTable(null)
           setEditImageFile(null)
         }}
-        title={`Edit Table ${editingTable?.number ?? ''}`}
+        title={m.admin_tables_edit_modal_title({ number: editingTable?.number ?? 0 })}
         footer={
           <>
             <Button
@@ -552,13 +564,15 @@ export function AdminTablesContent() {
                 setEditImageFile(null)
               }}
             >
-              Cancel
+              {m.admin_tables_cancel()}
             </Button>
             <Button
               onClick={() => void handleEditSubmit(onEditSubmit)()}
               disabled={updateTableMutation.isPending || uploadImageMutation.isPending}
             >
-              {updateTableMutation.isPending || uploadImageMutation.isPending ? 'Saving…' : 'Save'}
+              {updateTableMutation.isPending || uploadImageMutation.isPending
+                ? m.admin_tables_saving()
+                : m.admin_tables_save()}
             </Button>
           </>
         }
@@ -615,7 +629,7 @@ export function AdminTablesContent() {
               className='h-4 w-4 rounded border border-input accent-primary'
               {...registerEdit('isActive')}
             />
-            <span>Active</span>
+            <span>{m.admin_tables_active()}</span>
           </label>
         </form>
       </Modal>
@@ -627,7 +641,7 @@ export function AdminTablesContent() {
           setIsQrModalOpen(false)
           setCopied(false)
         }}
-        title={`QR Code — ${selectedTable?.label ?? ''}`}
+        title={m.admin_tables_qr_modal_title({ label: selectedTable?.label ?? '' })}
         footer={
           <Button
             variant='ghost'
@@ -637,7 +651,7 @@ export function AdminTablesContent() {
             }}
             className='rounded-full'
           >
-            Close
+            {m.admin_tables_close()}
           </Button>
         }
       >
@@ -649,13 +663,13 @@ export function AdminTablesContent() {
           <div className='text-center'>
             <p className='text-base font-semibold'>{selectedTable?.label}</p>
             <p className='mt-0.5 text-xs text-muted-foreground'>
-              Scan to open the menu for this table
+              {m.admin_tables_scan_instruction()}
             </p>
           </div>
 
           <div className='w-full space-y-2'>
             <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-              Table URL
+              {m.admin_tables_table_url_label()}
             </p>
             <div className='flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2'>
               <span className='min-w-0 flex-1 truncate text-xs text-foreground/70'>{qrUrl}</span>
@@ -664,7 +678,7 @@ export function AdminTablesContent() {
                 variant='ghost'
                 className='h-7 w-7 shrink-0 rounded-lg hover:bg-background'
                 onClick={copyToClipboard}
-                title='Copy URL'
+                title={m.admin_tables_copy_url_title()}
               >
                 {copied ? (
                   <Check className='h-3.5 w-3.5 text-green-500' />
@@ -677,12 +691,12 @@ export function AdminTablesContent() {
               {copied ? (
                 <>
                   <Check className='mr-2 h-4 w-4 text-green-500' />
-                  Copied!
+                  {m.admin_tables_copied()}
                 </>
               ) : (
                 <>
                   <Copy className='mr-2 h-4 w-4' />
-                  Copy QR code URL
+                  {m.admin_tables_copy_qr_url()}
                 </>
               )}
             </Button>

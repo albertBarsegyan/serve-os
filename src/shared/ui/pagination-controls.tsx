@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 
 const LIMIT_OPTIONS = [10, 20, 50] as const
 export type PageLimit = (typeof LIMIT_OPTIONS)[number]
@@ -39,11 +40,9 @@ export function PaginationControls({
     >
       {/* Count + per-page */}
       <div className='flex items-center gap-3 text-sm text-muted-foreground'>
-        <span>
-          {from}–{to} of {total}
-        </span>
+        <span>{m.shared_pagination_range({ from, to, total })}</span>
         <div className='flex items-center gap-1.5'>
-          <span className='text-xs'>Per page:</span>
+          <span className='text-xs'>{m.shared_pagination_per_page()}</span>
           <div className='flex rounded-lg border border-border bg-background'>
             {LIMIT_OPTIONS.map((opt) => (
               <button
@@ -75,7 +74,7 @@ export function PaginationControls({
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
             className='flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40'
-            aria-label='Previous page'
+            aria-label={m.shared_pagination_previous_aria()}
           >
             <ChevronLeft className='h-4 w-4' />
           </button>
@@ -108,7 +107,7 @@ export function PaginationControls({
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
             className='flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40'
-            aria-label='Next page'
+            aria-label={m.shared_pagination_next_aria()}
           >
             <ChevronRight className='h-4 w-4' />
           </button>

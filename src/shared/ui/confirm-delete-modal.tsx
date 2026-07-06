@@ -1,5 +1,6 @@
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { m } from '#/paraglide/messages'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
 
 interface ConfirmDeleteModalProps {
@@ -27,7 +28,7 @@ export function ConfirmDeleteModal({
     <div className='fixed inset-0 z-100 flex items-center justify-center p-4'>
       <button
         type='button'
-        aria-label='Close'
+        aria-label={m.shared_confirm_delete_close_aria()}
         className='fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity'
         onClick={onClose}
       />
@@ -35,18 +36,20 @@ export function ConfirmDeleteModal({
         <div className='mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-destructive/10'>
           <AlertTriangle className='h-5 w-5 text-destructive' />
         </div>
-        <h2 className='mb-1.5 text-lg font-bold'>Delete {entityLabel}?</h2>
+        <h2 className='mb-1.5 text-lg font-bold'>
+          {m.shared_confirm_delete_title({ entityLabel })}
+        </h2>
         <p className='mb-6 text-sm text-muted-foreground'>
-          Are you sure you want to delete{' '}
-          <span className='font-semibold text-foreground'>{name}</span>? This action cannot be
-          undone.
+          {m.shared_confirm_delete_message_prefix()}{' '}
+          <span className='font-semibold text-foreground'>{name}</span>
+          {m.shared_confirm_delete_message_suffix()}
         </p>
         <div className='flex justify-end gap-3'>
           <Button variant='ghost' onClick={onClose} disabled={isPending}>
-            Cancel
+            {m.shared_confirm_delete_cancel()}
           </Button>
           <Button variant='destructive' onClick={onConfirm} disabled={isPending}>
-            {isPending ? 'Deleting...' : 'Delete'}
+            {isPending ? m.shared_confirm_delete_deleting() : m.shared_confirm_delete_delete()}
           </Button>
         </div>
       </div>

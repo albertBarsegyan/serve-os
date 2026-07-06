@@ -12,6 +12,7 @@ import type {
   UpdateProductFormData,
 } from '#/features/product/lib/schemas/create-product-form.schema'
 import { ProductForm } from '#/features/product/ui/product-form'
+import { m } from '#/paraglide/messages'
 import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
 import { Modal } from '#/shared/ui/modal'
 
@@ -85,18 +86,18 @@ export function ProductModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={mode === 'create' ? 'Create Product' : 'Edit Product'}
+      title={mode === 'create' ? m.product_form_create_product() : m.product_form_edit_product()}
       footer={
         <div className='flex gap-2 justify-end'>
           <Button variant='ghost' onClick={onClose}>
-            Cancel
+            {m.product_form_cancel()}
           </Button>
         </div>
       }
     >
       {isLoadingEditData ? (
         <div className='flex h-40 items-center justify-center text-sm text-muted-foreground'>
-          Loading product…
+          {m.product_form_loading_product()}
         </div>
       ) : (
         <ProductForm

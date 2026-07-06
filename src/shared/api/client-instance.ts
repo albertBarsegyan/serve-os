@@ -1,5 +1,6 @@
 import ky, { type AfterResponseState, type BeforeErrorState, isHTTPError } from 'ky'
 import { getQueryContext } from '#/integrations/tanstack-query/root-provider'
+import { localizeHref } from '#/paraglide/runtime'
 
 function extractBackendError({ error }: BeforeErrorState) {
   if (isHTTPError(error)) {
@@ -46,7 +47,9 @@ async function handleUnauthorized({ request, response }: AfterResponseState) {
       const { queryClient } = getQueryContext()
       await queryClient.cancelQueries()
       queryClient.clear()
-      window.location.href = '/auth/sign-in'
+      // Raw path is unprefixed; localizeHref re-adds the current locale segment
+      // (e.g. /hy) before this hard navigation bypasses the router's rewrite.
+      window.location.href = localizeHref('/auth/sign-in')
     }
   }
 }

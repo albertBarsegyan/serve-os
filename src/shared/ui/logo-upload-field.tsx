@@ -1,6 +1,7 @@
 import { ImageIcon, Trash2, UploadCloud } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { ImageEditorDialog } from '#/shared/ui/image-editor-dialog'
 
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp']
@@ -43,12 +44,12 @@ export function LogoUploadField({
     if (!file) return
 
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      setError('Only PNG, JPG, and WebP files are allowed')
+      setError(m.shared_logo_upload_invalid_type())
       e.target.value = ''
       return
     }
     if (file.size > MAX_FILE_SIZE) {
-      setError('File size must be under 3 MB')
+      setError(m.shared_image_upload_too_large())
       e.target.value = ''
       return
     }
@@ -101,7 +102,11 @@ export function LogoUploadField({
           )}
         >
           {previewUrl ? (
-            <img src={previewUrl} alt='preview' className='h-full w-full object-cover' />
+            <img
+              src={previewUrl}
+              alt={m.shared_image_upload_preview_alt()}
+              className='h-full w-full object-cover'
+            />
           ) : (
             <ImageIcon className='h-8 w-8 text-muted-foreground/40' />
           )}
@@ -114,7 +119,7 @@ export function LogoUploadField({
             className='flex items-center gap-2 rounded-xl border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors cursor-pointer'
           >
             <UploadCloud className='h-4 w-4' />
-            Upload image
+            {m.shared_image_upload_button()}
           </button>
 
           {previewUrl && (
@@ -124,7 +129,7 @@ export function LogoUploadField({
               className='flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer'
             >
               <Trash2 className='h-4 w-4' />
-              Remove
+              {m.shared_image_upload_remove()}
             </button>
           )}
         </div>

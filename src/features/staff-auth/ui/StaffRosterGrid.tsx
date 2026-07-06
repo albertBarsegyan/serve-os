@@ -1,4 +1,5 @@
 import type { RosterStaffMember } from '#/features/staff-auth/api/staff-auth.types.ts'
+import { m } from '#/paraglide/messages'
 
 interface StaffRosterGridProps {
   staff: RosterStaffMember[]
@@ -9,7 +10,7 @@ export function StaffRosterGrid({ staff, onSelect }: StaffRosterGridProps) {
   if (staff.length === 0) {
     return (
       <p className='py-8 text-center text-sm text-muted-foreground'>
-        No active staff members found.
+        {m.staff_auth_no_staff_members()}
       </p>
     )
   }

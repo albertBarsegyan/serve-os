@@ -11,15 +11,24 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CartModifier } from '#/features/cart/model/cart.store'
+import { m } from '#/paraglide/messages'
 import type { CustomerModifierGroup, CustomerProduct } from '#/shared/api/customer/menu.types'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { C } from '../customer-theme'
 
-const DIETARY_LABELS: Record<string, string> = {
-  vegan: 'Vegan 🌱',
-  vegetarian: 'Vegetarian',
-  gluten_free: 'Gluten-Free',
-  dairy_free: 'Dairy-Free',
+function dietaryLabel(flag: string): string {
+  switch (flag) {
+    case 'vegan':
+      return m.customer_dietary_vegan()
+    case 'vegetarian':
+      return m.customer_dietary_vegetarian()
+    case 'gluten_free':
+      return m.customer_dietary_gluten_free()
+    case 'dairy_free':
+      return m.customer_dietary_dairy_free()
+    default:
+      return flag
+  }
 }
 
 interface ProductViewProps {
@@ -115,7 +124,7 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
       {/* ── Background image + scrim ── */}
       <button
         type='button'
-        aria-label={images.length > 1 ? 'Open image gallery' : undefined}
+        aria-label={images.length > 1 ? m.customer_open_gallery() : undefined}
         onClick={images.length > 1 ? openLightbox : undefined}
         style={{
           position: 'absolute',
@@ -159,14 +168,14 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
           zIndex: 10,
         }}
       >
-        <GlassBtn onClick={onBack} label='Back'>
+        <GlassBtn onClick={onBack} label={m.customer_back()}>
           <ChevronLeft size={22} color='#fff' />
         </GlassBtn>
         <div style={{ display: 'flex', gap: 8 }}>
-          <GlassBtn onClick={handleShare} label='Share'>
+          <GlassBtn onClick={handleShare} label={m.customer_share()}>
             <Share2 size={18} color='#fff' />
           </GlassBtn>
-          <GlassBtn onClick={() => setFaved((f) => !f)} label='Favourite'>
+          <GlassBtn onClick={() => setFaved((f) => !f)} label={m.customer_favourite()}>
             <Heart size={18} color='#fff' fill={faved ? '#fff' : 'none'} />
           </GlassBtn>
         </div>
@@ -217,7 +226,7 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Clock size={13} color={C.faint} />
                   <span style={{ color: C.faint, fontSize: 12 }}>
-                    {product.prepTimeMinutes} min
+                    {m.customer_prep_time_minutes({ minutes: product.prepTimeMinutes })}
                   </span>
                 </div>
               )}
@@ -243,7 +252,7 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
                     fontWeight: 500,
                   }}
                 >
-                  {product.isAvailable ? 'Available' : 'Unavailable'}
+                  {product.isAvailable ? m.customer_available() : m.customer_unavailable()}
                 </span>
               </div>
             </div>
@@ -264,7 +273,7 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
                       border: '1px solid rgba(34,197,94,0.2)',
                     }}
                   >
-                    {DIETARY_LABELS[f] ?? f}
+                    {dietaryLabel(f)}
                   </span>
                 ))}
               </div>
@@ -327,7 +336,7 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
                   <button
                     key={imgUrl + String(i)}
                     type='button'
-                    aria-label={`View image ${i + 1}`}
+                    aria-label={m.customer_view_image({ index: i + 1 })}
                     onClick={() => setActiveIdx(i)}
                     style={{
                       flexShrink: 0,
@@ -347,7 +356,7 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
                   >
                     <img
                       src={imgUrl}
-                      alt={`Thumbnail ${i + 1}`}
+                      alt={m.customer_thumbnail_index({ index: i + 1 })}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -390,9 +399,10 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
                     fontWeight: 700,
                     margin: '0 0 4px',
                     letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
                   }}
                 >
-                  ALLERGENS
+                  {m.customer_allergens()}
                 </p>
                 <p style={{ color: '#fca5a5', fontSize: 13, margin: 0 }}>
                   {product.allergens.join(', ')}
@@ -412,14 +422,14 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
                   marginBottom: 8,
                 }}
               >
-                Notes for the kitchen
+                {m.customer_notes_label()}
               </label>
               <textarea
                 id='product-notes'
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder='e.g. no onions, extra sauce…'
+                placeholder={m.customer_notes_placeholder()}
                 style={{
                   width: '100%',
                   background: C.surface2,
@@ -502,7 +512,7 @@ export function ProductView({ product, onBack, onAdd }: Readonly<ProductViewProp
                 transition: 'all 0.18s ease',
               }}
             >
-              <span>Add to order</span>
+              <span>{m.customer_add_to_order()}</span>
               <span>{formatPrice(totalPrice)}</span>
             </button>
           </div>
@@ -612,12 +622,13 @@ function ModifierGroup({
             fontWeight: 600,
           }}
         >
-          {group.isRequired ? 'Required' : 'Optional'}
+          {group.isRequired ? m.customer_required() : m.customer_optional()}
         </span>
         {group.minSelections > 0 && (
           <span style={{ color: C.faint, fontSize: 10, marginLeft: 'auto' }}>
-            Choose {group.minSelections}
-            {group.maxSelections == null ? '+' : `–${group.maxSelections}`}
+            {group.maxSelections == null
+              ? m.customer_choose_min({ min: group.minSelections })
+              : m.customer_choose_range({ min: group.minSelections, max: group.maxSelections })}
           </span>
         )}
       </div>
@@ -740,7 +751,7 @@ function ProductGalleryLightbox({
     <div
       role='dialog'
       aria-modal='true'
-      aria-label='Image gallery'
+      aria-label={m.customer_image_gallery()}
       style={{
         position: 'fixed',
         inset: 0,
@@ -757,7 +768,7 @@ function ProductGalleryLightbox({
       {/* Close */}
       <button
         type='button'
-        aria-label='Close gallery'
+        aria-label={m.customer_close_gallery()}
         onClick={() => onClose(idx)}
         style={{
           position: 'absolute',
@@ -782,7 +793,7 @@ function ProductGalleryLightbox({
       {/* Main image */}
       <img
         src={images[idx]}
-        alt={`${idx + 1} of ${images.length}`}
+        alt={m.customer_image_of_total({ current: idx + 1, total: images.length })}
         style={{
           maxWidth: '100%',
           maxHeight: 'calc(100dvh - 120px)',
@@ -798,7 +809,7 @@ function ProductGalleryLightbox({
       {idx > 0 && (
         <button
           type='button'
-          aria-label='Previous image'
+          aria-label={m.customer_previous_image()}
           onClick={() => setIdx((i) => i - 1)}
           style={{
             position: 'absolute',
@@ -824,7 +835,7 @@ function ProductGalleryLightbox({
       {idx < images.length - 1 && (
         <button
           type='button'
-          aria-label='Next image'
+          aria-label={m.customer_next_image()}
           onClick={() => setIdx((i) => i + 1)}
           style={{
             position: 'absolute',
@@ -863,7 +874,7 @@ function ProductGalleryLightbox({
             <button
               key={String(i)}
               type='button'
-              aria-label={`Go to image ${i + 1}`}
+              aria-label={m.customer_go_to_image({ index: i + 1 })}
               onClick={() => setIdx(i)}
               style={{
                 width: i === idx ? 20 : 8,
@@ -883,7 +894,7 @@ function ProductGalleryLightbox({
       {/* Backdrop tap to close */}
       <button
         type='button'
-        aria-label='Close gallery'
+        aria-label={m.customer_close_gallery()}
         style={{
           position: 'absolute',
           inset: 0,

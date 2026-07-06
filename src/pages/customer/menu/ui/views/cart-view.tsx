@@ -2,6 +2,7 @@ import { ChevronLeft, MapPin, Minus, Plus, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 import type { CartItem } from '#/features/cart/model/cart.store'
 import { cartItemTotal, cartItemUnitPrice } from '#/features/cart/model/cart.store'
+import { m } from '#/paraglide/messages'
 import type { CustomerProduct } from '#/shared/api/customer/menu.types'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { C } from '../customer-theme'
@@ -66,10 +67,10 @@ export function CartView({
           <ChevronLeft size={20} color={C.w80} />
         </button>
         <h1 style={{ color: C.white, fontSize: 18, fontWeight: 700, margin: 0, flex: 1 }}>
-          My Order
+          {m.customer_my_order()}
         </h1>
         <span style={{ color: C.w40, fontSize: 13 }}>
-          {items.length} item{items.length !== 1 ? 's' : ''}
+          {m.customer_item_count({ count: items.length })}
         </span>
       </div>
 
@@ -88,9 +89,11 @@ export function CartView({
           >
             <span style={{ fontSize: 56 }}>🛒</span>
             <p style={{ color: C.w60, fontSize: 15, fontWeight: 600, margin: 0 }}>
-              Your cart is empty
+              {m.customer_cart_empty()}
             </p>
-            <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>Add some delicious dishes!</p>
+            <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>
+              {m.customer_cart_empty_subtitle()}
+            </p>
             <button
               type='button'
               onClick={onBack}
@@ -106,7 +109,7 @@ export function CartView({
                 cursor: 'pointer',
               }}
             >
-              Browse Menu
+              {m.customer_browse_menu()}
             </button>
           </div>
         )}
@@ -290,7 +293,7 @@ export function CartView({
                           {formatPrice(cartItemTotal(item))}
                         </p>
                         <p style={{ color: C.w40, fontSize: 10, margin: 0 }}>
-                          {formatPrice(cartItemUnitPrice(item))} each
+                          {formatPrice(cartItemUnitPrice(item))} {m.customer_each()}
                         </p>
                       </div>
                     </div>
@@ -331,7 +334,7 @@ export function CartView({
             </div>
             <div>
               <p style={{ color: C.w40, fontSize: 11, margin: '0 0 2px', fontWeight: 500 }}>
-                Dine-in · Table
+                {m.customer_dinein_table_label()}
               </p>
               <p style={{ color: C.white, fontSize: 15, fontWeight: 700, margin: 0 }}>
                 {tableName}
@@ -352,11 +355,11 @@ export function CartView({
             }}
           >
             <h3 style={{ color: C.white, fontSize: 14, fontWeight: 700, margin: '0 0 14px' }}>
-              Price Details
+              {m.customer_price_details()}
             </h3>
-            <PriceRow label='Subtotal' value={formatPrice(subtotal)} />
+            <PriceRow label={m.customer_subtotal()} value={formatPrice(subtotal)} />
             <PriceRow
-              label={`GST (${(GST_RATE * 100).toFixed(0)}%)`}
+              label={m.customer_gst_percent({ percent: (GST_RATE * 100).toFixed(0) })}
               value={formatPrice(gst)}
               muted
             />
@@ -367,7 +370,7 @@ export function CartView({
                 margin: '12px 0',
               }}
             />
-            <PriceRow label='Grand Total' value={formatPrice(grandTotal)} bold />
+            <PriceRow label={m.customer_grand_total()} value={formatPrice(grandTotal)} bold />
           </div>
         )}
       </div>
@@ -402,7 +405,7 @@ export function CartView({
               boxShadow: C.shadowAmber,
             }}
           >
-            ORDER NOW · {formatPrice(grandTotal)}
+            {m.customer_order_now()} · {formatPrice(grandTotal)}
           </button>
         </div>
       )}

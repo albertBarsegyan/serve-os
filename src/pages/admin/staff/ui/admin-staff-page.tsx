@@ -31,6 +31,7 @@ import {
   useUnlockStaffMutation,
   useUpdateStaffMutation,
 } from '#/features/platform/model/platform-hooks.ts'
+import { m } from '#/paraglide/messages'
 import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
@@ -161,7 +162,7 @@ export function AdminStaffPage() {
   const onInviteSubmit = async (values: InviteFormValues) => {
     try {
       await createWithInviteMutation.mutateAsync({ businessId: activeBusinessId, data: values })
-      showSuccess('Invite sent')
+      showSuccess(m.admin_staff_invite_sent())
       closeModal()
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -172,7 +173,7 @@ export function AdminStaffPage() {
     try {
       const payload = { ...values, email: values.email || undefined }
       await createWithPasswordMutation.mutateAsync({ businessId: activeBusinessId, data: payload })
-      showSuccess('Staff member created')
+      showSuccess(m.admin_staff_member_created())
       closeModal()
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -182,7 +183,7 @@ export function AdminStaffPage() {
   const onPinSubmit = async (values: PinFormValues) => {
     try {
       await createWithPinMutation.mutateAsync({ businessId: activeBusinessId, data: values })
-      showSuccess('Staff member created')
+      showSuccess(m.admin_staff_member_created())
       closeModal()
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -197,7 +198,7 @@ export function AdminStaffPage() {
         staffId: editingMember.id,
         data: { ...values, avatarUrl: editingAvatarUrl },
       })
-      showSuccess('Staff member updated')
+      showSuccess(m.admin_staff_member_updated())
       setEditingMember(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -211,7 +212,7 @@ export function AdminStaffPage() {
         businessId: activeBusinessId,
         staffId: deletingMember.id,
       })
-      showSuccess('Staff member removed')
+      showSuccess(m.admin_staff_member_removed())
       setDeletingMember(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -224,7 +225,7 @@ export function AdminStaffPage() {
         businessId: activeBusinessId,
         staffId: member.id,
       })
-      showSuccess(`${member.displayName} unlocked`)
+      showSuccess(m.admin_staff_unlocked({ name: member.displayName }))
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
@@ -232,20 +233,22 @@ export function AdminStaffPage() {
 
   const copyLink = () => {
     navigator.clipboard.writeText(staffSignInLink)
-    showSuccess('Sign-in link copied to clipboard')
+    showSuccess(m.admin_staff_link_copied())
   }
 
   return (
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Staff Management</h1>
-          <p className='text-muted-foreground'>Manage your team roles, permissions, and status.</p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_staff_heading()}</h1>
+          <p className='text-muted-foreground'>{m.admin_staff_subheading()}</p>
           <p className='flex items-center gap-2'>
-            <span className='text-sm text-muted-foreground'>Staff sign-in link</span>
+            <span className='text-sm text-muted-foreground'>
+              {m.admin_staff_signin_link_label()}
+            </span>
             <Button onClick={copyLink} variant='ghost' size='sm'>
               <Copy className='h-4 w-4 mr-1.5' />
-              Copy link
+              {m.admin_staff_copy_link()}
             </Button>
           </p>
         </div>
@@ -256,7 +259,7 @@ export function AdminStaffPage() {
             className='rounded-full'
             onClick={() => setCreateMode('pin')}
           >
-            Add by PIN
+            {m.admin_staff_add_by_pin()}
           </Button>
           <Button
             variant='outline'
@@ -264,10 +267,10 @@ export function AdminStaffPage() {
             className='rounded-full'
             onClick={() => setCreateMode('password')}
           >
-            Add by Password
+            {m.admin_staff_add_by_password()}
           </Button>
           <Button size='sm' className='rounded-full' onClick={() => setCreateMode('invite')}>
-            <UserPlus className='mr-2 h-4 w-4' /> Invite by Email
+            <UserPlus className='mr-2 h-4 w-4' /> {m.admin_staff_invite_by_email()}
           </Button>
         </div>
       </div>
@@ -275,12 +278,12 @@ export function AdminStaffPage() {
       <Card className='overflow-hidden'>
         <CardHeader className='border-b border-border'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-            <CardTitle>Staff Members</CardTitle>
+            <CardTitle>{m.admin_staff_members_title()}</CardTitle>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
               <input
                 type='text'
-                placeholder='Search staff...'
+                placeholder={m.admin_staff_search_placeholder()}
                 className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                 value={search}
                 onChange={(event) => {
@@ -295,19 +298,19 @@ export function AdminStaffPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className='pl-8'>Name</TableHead>
-                <TableHead>Employee ID</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className='pr-8 text-right'>Actions</TableHead>
+                <TableHead className='pl-8'>{m.admin_staff_col_name()}</TableHead>
+                <TableHead>{m.admin_staff_col_employee_id()}</TableHead>
+                <TableHead>{m.admin_staff_col_email()}</TableHead>
+                <TableHead>{m.admin_staff_col_role()}</TableHead>
+                <TableHead>{m.admin_staff_col_status()}</TableHead>
+                <TableHead className='pr-8 text-right'>{m.admin_staff_col_actions()}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isPending && (
                 <TableRow>
                   <TableCell colSpan={6} className='h-24 text-center text-muted-foreground'>
-                    Loading staff...
+                    {m.admin_staff_loading()}
                   </TableCell>
                 </TableRow>
               )}
@@ -315,7 +318,7 @@ export function AdminStaffPage() {
               {!isPending && filteredStaff.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className='h-24 text-center text-muted-foreground'>
-                    No staff members found.
+                    {m.admin_staff_none_found()}
                   </TableCell>
                 </TableRow>
               )}
@@ -343,10 +346,10 @@ export function AdminStaffPage() {
                   <TableCell>
                     <button
                       type='button'
-                      title='Copy full Staff ID'
+                      title={m.admin_staff_copy_id_title()}
                       onClick={() => {
                         navigator.clipboard.writeText(member.employeeId)
-                        showSuccess('Staff ID copied')
+                        showSuccess(m.admin_staff_id_copied())
                       }}
                       className='flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
                     >
@@ -363,11 +366,13 @@ export function AdminStaffPage() {
                         variant={member.isActive ? 'success' : 'outline'}
                         className='capitalize'
                       >
-                        {member.isActive ? 'active' : 'inactive'}
+                        {member.isActive
+                          ? m.admin_staff_status_active()
+                          : m.admin_staff_status_inactive()}
                       </Badge>
                       {isStaffLocked(member) && (
                         <Badge variant='destructive' className='capitalize'>
-                          PIN locked
+                          {m.admin_staff_pin_locked()}
                         </Badge>
                       )}
                     </div>
@@ -379,7 +384,7 @@ export function AdminStaffPage() {
                           variant='ghost'
                           size='icon'
                           className='rounded-full text-amber-500 hover:bg-amber-500/10 hover:text-amber-600'
-                          title='Unlock PIN'
+                          title={m.admin_staff_unlock_pin_title()}
                           disabled={unlockStaffMutation.isPending}
                           onClick={() => void handleUnlockStaff(member)}
                         >
@@ -390,7 +395,7 @@ export function AdminStaffPage() {
                         variant='ghost'
                         size='icon'
                         className='rounded-full'
-                        title='Edit'
+                        title={m.admin_staff_edit_title()}
                         onClick={() => openEditMember(member)}
                       >
                         <Edit2 className='h-4 w-4' />
@@ -399,7 +404,7 @@ export function AdminStaffPage() {
                         variant='ghost'
                         size='icon'
                         className='rounded-full text-red-500 hover:bg-red-500/10 hover:text-red-600'
-                        title='Remove'
+                        title={m.admin_staff_remove_title()}
                         onClick={() => setDeletingMember(member)}
                       >
                         <Trash2 className='h-4 w-4' />
@@ -430,17 +435,17 @@ export function AdminStaffPage() {
       <Modal
         isOpen={Boolean(editingMember)}
         onClose={() => setEditingMember(null)}
-        title='Edit staff member'
+        title={m.admin_staff_edit_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setEditingMember(null)}>
-              Cancel
+              {m.admin_staff_cancel()}
             </Button>
             <Button
               disabled={updateStaffMutation.isPending}
               onClick={() => void editForm.handleSubmit(onEditSubmit)()}
             >
-              {updateStaffMutation.isPending ? 'Saving...' : 'Save'}
+              {updateStaffMutation.isPending ? m.admin_staff_saving() : m.admin_staff_save()}
             </Button>
           </>
         }
@@ -451,7 +456,7 @@ export function AdminStaffPage() {
             onChange={setEditingAvatarUrl}
             entityType={ImageEntityType.STAFF_AVATAR}
             entityId={editingMember?.id}
-            label='Profile photo'
+            label={m.admin_staff_profile_photo()}
             previewShape='circle'
           />
           <div className='space-y-1'>
@@ -459,7 +464,7 @@ export function AdminStaffPage() {
               htmlFor={editNameId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Display name
+              {m.admin_staff_display_name_label()}
             </label>
             <input
               id={editNameId}
@@ -479,7 +484,7 @@ export function AdminStaffPage() {
               htmlFor={editRoleId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Role
+              {m.admin_staff_role_form_label()}
             </label>
             <Controller
               name='role'
@@ -503,7 +508,7 @@ export function AdminStaffPage() {
               className='h-4 w-4 rounded border border-input accent-primary'
               {...editForm.register('isActive')}
             />
-            <span>Active</span>
+            <span>{m.admin_staff_active_label()}</span>
           </label>
         </form>
       </Modal>
@@ -512,17 +517,19 @@ export function AdminStaffPage() {
       <Modal
         isOpen={createMode === 'invite'}
         onClose={closeModal}
-        title='Invite staff by email'
+        title={m.admin_staff_invite_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={closeModal}>
-              Cancel
+              {m.admin_staff_cancel()}
             </Button>
             <Button
               disabled={createWithInviteMutation.isPending}
               onClick={() => void inviteForm.handleSubmit(onInviteSubmit)()}
             >
-              {createWithInviteMutation.isPending ? 'Sending...' : 'Send invite'}
+              {createWithInviteMutation.isPending
+                ? m.admin_staff_sending()
+                : m.admin_staff_send_invite()}
             </Button>
           </>
         }
@@ -533,7 +540,7 @@ export function AdminStaffPage() {
               htmlFor={displayNameId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Display name
+              {m.admin_staff_display_name_label()}
             </label>
             <input
               id={displayNameId}
@@ -552,7 +559,7 @@ export function AdminStaffPage() {
               htmlFor={emailId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Email
+              {m.admin_staff_email_label()}
             </label>
             <input
               id={emailId}
@@ -570,7 +577,7 @@ export function AdminStaffPage() {
               htmlFor={roleId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Role
+              {m.admin_staff_role_form_label()}
             </label>
             <Controller
               name='role'
@@ -593,17 +600,19 @@ export function AdminStaffPage() {
       <Modal
         isOpen={createMode === 'password'}
         onClose={closeModal}
-        title='Add staff with password'
+        title={m.admin_staff_password_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={closeModal}>
-              Cancel
+              {m.admin_staff_cancel()}
             </Button>
             <Button
               disabled={createWithPasswordMutation.isPending}
               onClick={() => void passwordForm.handleSubmit(onPasswordSubmit)()}
             >
-              {createWithPasswordMutation.isPending ? 'Creating...' : 'Create'}
+              {createWithPasswordMutation.isPending
+                ? m.admin_staff_creating()
+                : m.admin_staff_create()}
             </Button>
           </>
         }
@@ -614,7 +623,7 @@ export function AdminStaffPage() {
               htmlFor={displayNameId2}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Display name
+              {m.admin_staff_display_name_label()}
             </label>
             <input
               id={displayNameId2}
@@ -633,7 +642,7 @@ export function AdminStaffPage() {
               htmlFor={emailId2}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Email (optional)
+              {m.admin_staff_email_optional_label()}
             </label>
             <input
               id={emailId2}
@@ -647,7 +656,7 @@ export function AdminStaffPage() {
               htmlFor={roleId2}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Role
+              {m.admin_staff_role_form_label()}
             </label>
             <Controller
               name='role'
@@ -668,7 +677,7 @@ export function AdminStaffPage() {
               htmlFor={passwordId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Temporary password
+              {m.admin_staff_temp_password_label()}
             </label>
             <input
               id={passwordId}
@@ -691,7 +700,7 @@ export function AdminStaffPage() {
         onClose={() => setDeletingMember(null)}
         onConfirm={() => void handleRemoveStaff()}
         name={deletingMember?.displayName ?? ''}
-        entityLabel='staff member'
+        entityLabel={m.admin_staff_entity_label()}
         isPending={removeStaffMutation.isPending}
       />
 
@@ -699,17 +708,17 @@ export function AdminStaffPage() {
       <Modal
         isOpen={createMode === 'pin'}
         onClose={closeModal}
-        title='Add staff with PIN'
+        title={m.admin_staff_pin_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={closeModal}>
-              Cancel
+              {m.admin_staff_cancel()}
             </Button>
             <Button
               disabled={createWithPinMutation.isPending}
               onClick={() => void pinForm.handleSubmit(onPinSubmit)()}
             >
-              {createWithPinMutation.isPending ? 'Creating...' : 'Create'}
+              {createWithPinMutation.isPending ? m.admin_staff_creating() : m.admin_staff_create()}
             </Button>
           </>
         }
@@ -720,7 +729,7 @@ export function AdminStaffPage() {
               htmlFor={displayNameId3}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Display name
+              {m.admin_staff_display_name_label()}
             </label>
             <input
               id={displayNameId3}
@@ -737,7 +746,7 @@ export function AdminStaffPage() {
               htmlFor={roleId3}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Role
+              {m.admin_staff_role_form_label()}
             </label>
             <Controller
               name='role'
@@ -758,7 +767,7 @@ export function AdminStaffPage() {
               htmlFor={pinId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              PIN (exactly 4 digits)
+              {m.admin_staff_pin_label()}
             </label>
             <input
               id={pinId}

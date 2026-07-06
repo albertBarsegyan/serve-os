@@ -31,6 +31,7 @@ import {
   Warehouse,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { LanguageSwitcher } from '#/components/language-switcher.tsx'
 import { ThemeSwitcher } from '#/components/theme-switcher.tsx'
 import { Button } from '#/components/ui/button'
 import { authUiMessage } from '#/features/auth/lib/constants/ui-messages.ts'
@@ -42,6 +43,7 @@ import {
 import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
 import { useLogoutStaffMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils.ts'
+import { m } from '#/paraglide/messages'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
@@ -191,7 +193,9 @@ function BusinessSwitcher() {
           <Building2 className='h-4 w-4 shrink-0 text-muted-foreground' />
         )}
         <span className='hidden sm:block max-w-35 truncate text-foreground'>
-          {isLoading ? 'Loading…' : (selectedBusiness?.name ?? 'Select business')}
+          {isLoading
+            ? m.admin_business_switcher_loading()
+            : (selectedBusiness?.name ?? m.admin_business_switcher_select())}
         </span>
         <ChevronDown
           className={cn(
@@ -205,7 +209,7 @@ function BusinessSwitcher() {
         <div className='absolute right-0 top-full mt-2 w-60 rounded-2xl border border-border bg-card shadow-xl z-50 overflow-hidden'>
           <div className='px-3 pt-3 pb-1'>
             <p className='text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
-              Switch business
+              {m.admin_business_switcher_switch()}
             </p>
           </div>
           <div className='p-2 space-y-0.5'>
@@ -275,46 +279,52 @@ function AdminLayout() {
   const menuItems: NavItem[] = useMemo(
     () => [
       ...(isOwner() || hasPermission(StaffPermission.ORDER_VIEW)
-        ? [{ label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' }]
+        ? [{ label: m.admin_nav_dashboard(), icon: LayoutDashboard, href: '/dashboard' }]
         : []),
       ...(isOwner() ||
       (hasPermission(StaffPermission.ORDER_VIEW) && !hasPermission(StaffPermission.KITCHEN_VIEW))
-        ? [{ label: 'Orders', icon: ShoppingBag, href: '/orders' }]
+        ? [{ label: m.admin_nav_orders(), icon: ShoppingBag, href: '/orders' }]
         : []),
       ...(canSee(BusinessFeature.TABLES) && (isOwner() || hasPermission(StaffPermission.TABLE_VIEW))
-        ? [{ label: 'Tables', icon: TableIcon, href: '/tables' }]
+        ? [{ label: m.admin_nav_tables(), icon: TableIcon, href: '/tables' }]
         : []),
       ...(isOwner() || hasPermission(StaffPermission.MENU_VIEW)
-        ? [{ label: 'Menu', icon: UtensilsCrossed, href: '/menu' }]
+        ? [{ label: m.admin_nav_menu(), icon: UtensilsCrossed, href: '/menu' }]
         : []),
       ...(isOwner() || hasPermission(StaffPermission.MENU_EDIT)
-        ? [{ label: 'Modifiers', icon: Puzzle, href: '/modifiers' }]
+        ? [{ label: m.admin_nav_modifiers(), icon: Puzzle, href: '/modifiers' }]
         : []),
       ...(canSee(BusinessFeature.KDS) && (isOwner() || hasPermission(StaffPermission.KITCHEN_VIEW))
-        ? [{ label: 'Service (KDS)', icon: ChefHat, href: '/kitchen' }]
+        ? [{ label: m.admin_nav_kitchen(), icon: ChefHat, href: '/kitchen' }]
         : []),
-      ...(isOwner() ? [{ label: 'Businesses', icon: Warehouse, href: '/businesses' }] : []),
+      ...(isOwner()
+        ? [{ label: m.admin_nav_businesses(), icon: Warehouse, href: '/businesses' }]
+        : []),
     ],
     [canSee, hasPermission, isOwner],
   )
 
   const otherItems: NavItem[] = [
     ...(isOwner() || hasPermission(StaffPermission.STAFF_MANAGE)
-      ? [{ label: 'Staff', icon: Users, href: '/staff' }]
+      ? [{ label: m.admin_nav_staff(), icon: Users, href: '/staff' }]
       : []),
     ...(isOwner() ||
     hasPermission(StaffPermission.PAYMENT_TAKE) ||
     hasPermission(StaffPermission.REPORTS_VIEW)
-      ? [{ label: 'Payments', icon: CreditCard, href: '/payments' }]
+      ? [{ label: m.admin_nav_payments(), icon: CreditCard, href: '/payments' }]
       : []),
-    ...(isOwner() ? [{ label: 'Payment Methods', icon: Wallet, href: '/payment-methods' }] : []),
+    ...(isOwner()
+      ? [{ label: m.admin_nav_payment_methods(), icon: Wallet, href: '/payment-methods' }]
+      : []),
     ...(isOwner() || staffRole() === StaffRole.MANAGER
-      ? [{ label: 'TV Displays', icon: Monitor, href: '/displays' }]
+      ? [{ label: m.admin_nav_displays(), icon: Monitor, href: '/displays' }]
       : []),
     ...(isOwner() || hasPermission(StaffPermission.BUSINESS_SETTINGS)
-      ? [{ label: 'Settings', icon: Settings, href: '/settings' }]
+      ? [{ label: m.admin_nav_settings(), icon: Settings, href: '/settings' }]
       : []),
-    ...(isOwner() ? [{ label: 'Account', icon: UserCircle, href: '/user-settings' }] : []),
+    ...(isOwner()
+      ? [{ label: m.admin_nav_account(), icon: UserCircle, href: '/user-settings' }]
+      : []),
   ]
 
   const logoutMutation = useLogoutMutation()
@@ -381,7 +391,7 @@ function AdminLayout() {
                 <div className='mb-4 px-4 h-2.5 w-10 rounded bg-muted animate-pulse' />
               ) : (
                 <p className='mb-4 px-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
-                  Menu
+                  {m.admin_nav_section_menu()}
                 </p>
               ))}
             {isSidebarLoading ? (
@@ -407,7 +417,7 @@ function AdminLayout() {
                 <div className='mb-4 px-4 h-2.5 w-12 rounded bg-muted animate-pulse' />
               ) : (
                 <p className='mb-4 px-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
-                  Others
+                  {m.admin_nav_section_others()}
                 </p>
               ))}
             <nav className='space-y-1'>
@@ -434,7 +444,7 @@ function AdminLayout() {
                 onClick={() => setIsLogoutOpen(true)}
               >
                 <LogOut className='h-5 w-5' />
-                {!isCollapsed && <span>Logout</span>}
+                {!isCollapsed && <span>{m.admin_nav_logout()}</span>}
               </Button>
             </nav>
           </div>
@@ -466,6 +476,7 @@ function AdminLayout() {
 
           <div className='flex items-center gap-3'>
             <PaletteSwitcher />
+            <LanguageSwitcher />
             <ThemeSwitcher />
             {isOwner() && <BusinessSwitcher />}
 
@@ -501,11 +512,11 @@ function AdminLayout() {
       <Modal
         isOpen={isLogoutOpen}
         onClose={() => setIsLogoutOpen(false)}
-        title='Confirm logout'
+        title={m.admin_logout_confirm_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setIsLogoutOpen(false)}>
-              No
+              {m.admin_logout_confirm_no()}
             </Button>
             <Button
               onClick={() => {
@@ -513,12 +524,12 @@ function AdminLayout() {
                 void handleLogout()
               }}
             >
-              Yes
+              {m.admin_logout_confirm_yes()}
             </Button>
           </>
         }
       >
-        <p>Do you really want to logout?</p>
+        <p>{m.admin_logout_confirm_body()}</p>
       </Modal>
     </div>
   )

@@ -39,6 +39,7 @@ import {
   useUpdateModifierMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -131,7 +132,7 @@ export function AdminModifiersPage() {
   const onCreateGroup = async (values: CreateGroupValues) => {
     try {
       const created = await createGroupMutation.mutateAsync({ businessId, data: values })
-      showSuccess('Modifier group created')
+      showSuccess(m.admin_modifiers_group_created())
       createGroupForm.reset({
         name: '',
         selectionType: 'SINGLE',
@@ -153,7 +154,7 @@ export function AdminModifiersPage() {
         groupId: editingGroup.id,
         data: values,
       })
-      showSuccess('Modifier group updated')
+      showSuccess(m.admin_modifiers_group_updated())
       setEditingGroup(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -163,7 +164,7 @@ export function AdminModifiersPage() {
   const onDeleteGroup = async (groupId: string) => {
     try {
       await deleteGroupMutation.mutateAsync({ businessId, groupId })
-      showSuccess('Modifier group deleted')
+      showSuccess(m.admin_modifiers_group_deleted())
       if (selectedGroupId === groupId) setSelectedGroupId(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -174,7 +175,7 @@ export function AdminModifiersPage() {
     if (!selectedGroupId) return
     try {
       await addModifierMutation.mutateAsync({ businessId, groupId: selectedGroupId, data: values })
-      showSuccess('Modifier added')
+      showSuccess(m.admin_modifiers_modifier_added())
       addModifierForm.reset({
         name: '',
         priceType: 'adjustment',
@@ -196,7 +197,7 @@ export function AdminModifiersPage() {
         modifierId: editingModifier.id,
         data: values,
       })
-      showSuccess('Modifier updated')
+      showSuccess(m.admin_modifiers_modifier_updated())
       setEditingModifier(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -207,7 +208,7 @@ export function AdminModifiersPage() {
     if (!selectedGroupId) return
     try {
       await deleteModifierMutation.mutateAsync({ businessId, groupId: selectedGroupId, modifierId })
-      showSuccess('Modifier deleted')
+      showSuccess(m.admin_modifiers_modifier_deleted())
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
@@ -217,13 +218,11 @@ export function AdminModifiersPage() {
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Modifiers</h1>
-          <p className='text-muted-foreground'>
-            Create modifier groups and their options to let customers customize their orders.
-          </p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_modifiers_heading()}</h1>
+          <p className='text-muted-foreground'>{m.admin_modifiers_subheading()}</p>
         </div>
         <Button size='sm' className='rounded-full' onClick={() => setIsCreateGroupOpen(true)}>
-          <Plus className='mr-2 h-4 w-4' /> New Modifier Group
+          <Plus className='mr-2 h-4 w-4' /> {m.admin_modifiers_new_group()}
         </Button>
       </div>
 
@@ -232,16 +231,18 @@ export function AdminModifiersPage() {
         <Card className='h-fit w-full lg:w-72'>
           <CardHeader>
             <CardTitle className='text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
-              Groups
+              {m.admin_modifiers_groups_title()}
             </CardTitle>
           </CardHeader>
           <CardContent className='space-y-1 p-2 pt-0'>
             {groupsQuery.isPending && (
-              <p className='px-4 py-3 text-sm text-muted-foreground'>Loading...</p>
+              <p className='px-4 py-3 text-sm text-muted-foreground'>
+                {m.admin_modifiers_loading()}
+              </p>
             )}
             {!groupsQuery.isPending && groups.length === 0 && (
               <p className='px-4 py-3 text-sm text-muted-foreground'>
-                No modifier groups yet. Create one to get started.
+                {m.admin_modifiers_no_groups()}
               </p>
             )}
             {groups.map((group) => (
@@ -261,7 +262,9 @@ export function AdminModifiersPage() {
                 >
                   <span>{group.name}</span>
                   <span className='ml-2 text-xs opacity-60'>
-                    {group.selectionType === 'SINGLE' ? 'Single' : 'Multi'}
+                    {group.selectionType === 'SINGLE'
+                      ? m.admin_modifiers_single()
+                      : m.admin_modifiers_multi()}
                   </span>
                 </button>
                 <div className='flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100'>
@@ -269,7 +272,7 @@ export function AdminModifiersPage() {
                     type='button'
                     className='rounded-lg p-1 hover:bg-background/60'
                     onClick={() => openEditGroup(group)}
-                    title='Edit group'
+                    title={m.admin_modifiers_edit_group_title()}
                   >
                     <Edit2 className='h-3.5 w-3.5' />
                   </button>
@@ -277,7 +280,7 @@ export function AdminModifiersPage() {
                     type='button'
                     className='rounded-lg p-1 text-destructive hover:bg-destructive/10'
                     onClick={() => void onDeleteGroup(group.id)}
-                    title='Delete group'
+                    title={m.admin_modifiers_delete_group_title()}
                   >
                     <Trash2 className='h-3.5 w-3.5' />
                   </button>
@@ -292,7 +295,9 @@ export function AdminModifiersPage() {
           <CardHeader className='border-b border-border'>
             <div className='flex items-center justify-between'>
               <CardTitle>
-                {selectedGroup ? `${selectedGroup.name} — Modifiers` : 'Select a group'}
+                {selectedGroup
+                  ? m.admin_modifiers_group_modifiers_title({ name: selectedGroup.name })
+                  : m.admin_modifiers_select_group()}
               </CardTitle>
               {selectedGroupId && (
                 <Button
@@ -300,7 +305,7 @@ export function AdminModifiersPage() {
                   className='rounded-full'
                   onClick={() => setIsAddModifierOpen(true)}
                 >
-                  <Plus className='mr-2 h-4 w-4' /> Add Modifier
+                  <Plus className='mr-2 h-4 w-4' /> {m.admin_modifiers_add_modifier()}
                 </Button>
               )}
             </div>
@@ -308,24 +313,26 @@ export function AdminModifiersPage() {
           <CardContent className='p-0'>
             {!selectedGroupId ? (
               <div className='flex h-40 items-center justify-center text-sm text-muted-foreground'>
-                Select a modifier group on the left to manage its options.
+                {m.admin_modifiers_select_group_hint()}
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className='pl-8'>Name</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className='pr-8 text-right'>Actions</TableHead>
+                    <TableHead className='pl-8'>{m.admin_modifiers_col_name()}</TableHead>
+                    <TableHead>{m.admin_modifiers_col_price()}</TableHead>
+                    <TableHead>{m.admin_modifiers_col_position()}</TableHead>
+                    <TableHead>{m.admin_modifiers_col_status()}</TableHead>
+                    <TableHead className='pr-8 text-right'>
+                      {m.admin_modifiers_col_actions()}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {modifiersQuery.isPending && (
                     <TableRow>
                       <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
-                        Loading modifiers...
+                        {m.admin_modifiers_loading_modifiers()}
                       </TableCell>
                     </TableRow>
                   )}
@@ -333,7 +340,7 @@ export function AdminModifiersPage() {
                   {!modifiersQuery.isPending && modifiers.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
-                        No modifiers yet. Add one above.
+                        {m.admin_modifiers_no_modifiers()}
                       </TableCell>
                     </TableRow>
                   )}
@@ -343,18 +350,22 @@ export function AdminModifiersPage() {
                       <TableCell className='pl-8 font-bold'>{modifier.name}</TableCell>
                       <TableCell className='font-mono'>
                         {Number(modifier.priceAdjustment) === 0 && modifier.priceType !== 'fixed'
-                          ? 'Free'
+                          ? m.admin_modifiers_free()
                           : modifier.priceType === 'fixed'
                             ? formatPrice(Number(modifier.priceAdjustment), currency)
                             : `+${formatPrice(Number(modifier.priceAdjustment), currency)}`}
                         {modifier.priceType === 'fixed' && (
-                          <span className='ml-1 text-xs text-muted-foreground'>(fixed)</span>
+                          <span className='ml-1 text-xs text-muted-foreground'>
+                            {m.admin_modifiers_fixed_suffix()}
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className='text-muted-foreground'>{modifier.position}</TableCell>
                       <TableCell>
                         <Badge variant={modifier.isActive ? 'success' : 'outline'}>
-                          {modifier.isActive ? 'Active' : 'Inactive'}
+                          {modifier.isActive
+                            ? m.admin_modifiers_active()
+                            : m.admin_modifiers_inactive()}
                         </Badge>
                       </TableCell>
                       <TableCell className='pr-8 text-right'>
@@ -390,17 +401,19 @@ export function AdminModifiersPage() {
       <Modal
         isOpen={isCreateGroupOpen}
         onClose={() => setIsCreateGroupOpen(false)}
-        title='Create modifier group'
+        title={m.admin_modifiers_create_group_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setIsCreateGroupOpen(false)}>
-              Cancel
+              {m.admin_modifiers_cancel()}
             </Button>
             <Button
               disabled={createGroupMutation.isPending}
               onClick={() => void createGroupForm.handleSubmit(onCreateGroup)()}
             >
-              {createGroupMutation.isPending ? 'Creating...' : 'Create'}
+              {createGroupMutation.isPending
+                ? m.admin_modifiers_creating()
+                : m.admin_modifiers_create_btn()}
             </Button>
           </>
         }
@@ -412,17 +425,19 @@ export function AdminModifiersPage() {
       <Modal
         isOpen={Boolean(editingGroup)}
         onClose={() => setEditingGroup(null)}
-        title='Edit modifier group'
+        title={m.admin_modifiers_edit_group_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setEditingGroup(null)}>
-              Cancel
+              {m.admin_modifiers_cancel()}
             </Button>
             <Button
               disabled={updateGroupMutation.isPending}
               onClick={() => void updateGroupForm.handleSubmit(onUpdateGroup)()}
             >
-              {updateGroupMutation.isPending ? 'Saving...' : 'Save'}
+              {updateGroupMutation.isPending
+                ? m.admin_modifiers_saving()
+                : m.admin_modifiers_save()}
             </Button>
           </>
         }
@@ -434,17 +449,19 @@ export function AdminModifiersPage() {
       <Modal
         isOpen={isAddModifierOpen}
         onClose={() => setIsAddModifierOpen(false)}
-        title='Add modifier'
+        title={m.admin_modifiers_add_modifier_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setIsAddModifierOpen(false)}>
-              Cancel
+              {m.admin_modifiers_cancel()}
             </Button>
             <Button
               disabled={addModifierMutation.isPending}
               onClick={() => void addModifierForm.handleSubmit(onAddModifier)()}
             >
-              {addModifierMutation.isPending ? 'Adding...' : 'Add'}
+              {addModifierMutation.isPending
+                ? m.admin_modifiers_adding()
+                : m.admin_modifiers_add_btn()}
             </Button>
           </>
         }
@@ -456,17 +473,19 @@ export function AdminModifiersPage() {
       <Modal
         isOpen={Boolean(editingModifier)}
         onClose={() => setEditingModifier(null)}
-        title='Edit modifier'
+        title={m.admin_modifiers_edit_modifier_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setEditingModifier(null)}>
-              Cancel
+              {m.admin_modifiers_cancel()}
             </Button>
             <Button
               disabled={updateModifierMutation.isPending}
               onClick={() => void updateModifierForm.handleSubmit(onUpdateModifier)()}
             >
-              {updateModifierMutation.isPending ? 'Saving...' : 'Save'}
+              {updateModifierMutation.isPending
+                ? m.admin_modifiers_saving()
+                : m.admin_modifiers_save()}
             </Button>
           </>
         }
@@ -489,7 +508,7 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
     <form className='space-y-4'>
       <div className='space-y-1'>
         <label htmlFor={nameId} className='text-xs font-semibold uppercase text-muted-foreground'>
-          Group name
+          {m.admin_modifiers_group_name_label()}
         </label>
         <input
           id={nameId}
@@ -507,7 +526,7 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
           htmlFor={selectionTypeId}
           className='text-xs font-semibold uppercase text-muted-foreground'
         >
-          Selection type
+          {m.admin_modifiers_selection_type_label()}
         </label>
         <Controller
           name='selectionType'
@@ -518,8 +537,8 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
               value={field.value ?? 'SINGLE'}
               onChange={field.onChange}
               options={[
-                { value: 'SINGLE', label: 'Single choice' },
-                { value: 'MULTIPLE', label: 'Multiple choice' },
+                { value: 'SINGLE', label: m.admin_modifiers_single_choice() },
+                { value: 'MULTIPLE', label: m.admin_modifiers_multiple_choice() },
               ]}
               className='rounded-xl'
             />
@@ -533,7 +552,7 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
             htmlFor={minSelectionsId}
             className='text-xs font-semibold uppercase text-muted-foreground'
           >
-            Min selections
+            {m.admin_modifiers_min_selections_label()}
           </label>
           <input
             id={minSelectionsId}
@@ -551,7 +570,7 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
             htmlFor={maxSelectionsId}
             className='text-xs font-semibold uppercase text-muted-foreground'
           >
-            Max selections
+            {m.admin_modifiers_max_selections_label()}
           </label>
           <input
             id={maxSelectionsId}
@@ -568,12 +587,12 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
       <div className='flex gap-6'>
         <div className='flex items-center gap-2 text-sm'>
           <input id={isRequiredId} type='checkbox' {...form.register('isRequired')} />
-          <label htmlFor={isRequiredId}>Required</label>
+          <label htmlFor={isRequiredId}>{m.admin_modifiers_required_label()}</label>
         </div>
 
         <div className='flex items-center gap-2 text-sm'>
           <input id={isActiveId} type='checkbox' {...form.register('isActive')} />
-          <label htmlFor={isActiveId}>Active</label>
+          <label htmlFor={isActiveId}>{m.admin_modifiers_active_label()}</label>
         </div>
       </div>
     </form>
@@ -598,7 +617,7 @@ function ModifierForm({
     <form className='space-y-4'>
       <div className='space-y-1'>
         <label htmlFor={nameId} className='text-xs font-semibold uppercase text-muted-foreground'>
-          Name
+          {m.admin_modifiers_name_label()}
         </label>
         <input
           id={nameId}
@@ -616,7 +635,7 @@ function ModifierForm({
           htmlFor={priceTypeId}
           className='text-xs font-semibold uppercase text-muted-foreground'
         >
-          Price type
+          {m.admin_modifiers_price_type_label()}
         </label>
         <Controller
           name='priceType'
@@ -627,8 +646,8 @@ function ModifierForm({
               value={field.value ?? 'adjustment'}
               onChange={(v) => field.onChange(v as ModifierPriceType)}
               options={[
-                { value: 'adjustment', label: 'Price adjustment (added to base price)' },
-                { value: 'fixed', label: 'Fixed price (overrides base price)' },
+                { value: 'adjustment', label: m.admin_modifiers_price_adjustment_option() },
+                { value: 'fixed', label: m.admin_modifiers_fixed_price_option() },
               ]}
               className='rounded-xl'
             />
@@ -638,7 +657,9 @@ function ModifierForm({
 
       <div className='space-y-1'>
         <label htmlFor={priceId} className='text-xs font-semibold uppercase text-muted-foreground'>
-          {priceType === 'fixed' ? `Fixed price (${currency})` : `Price adjustment (${currency})`}
+          {priceType === 'fixed'
+            ? m.admin_modifiers_fixed_price_label({ currency })
+            : m.admin_modifiers_price_adjustment_label({ currency })}
         </label>
         <input
           id={priceId}
@@ -661,7 +682,7 @@ function ModifierForm({
           htmlFor={positionId}
           className='text-xs font-semibold uppercase text-muted-foreground'
         >
-          Position
+          {m.admin_modifiers_position_field_label()}
         </label>
         <input
           id={positionId}
@@ -675,7 +696,7 @@ function ModifierForm({
       <div>
         <input id={activeId} type='checkbox' {...form.register('isActive')} />
         <label htmlFor={activeId} className='ml-2 text-sm'>
-          Active
+          {m.admin_modifiers_active_label()}
         </label>
       </div>
     </form>

@@ -2,6 +2,7 @@ import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils.ts'
+import { m } from '#/paraglide/messages'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
 
 interface ModalProps {
@@ -31,7 +32,7 @@ export function Modal({
     >
       <button
         type='button'
-        aria-label='Close modal backdrop'
+        aria-label={m.shared_modal_close_backdrop_aria()}
         className='fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity'
         onClick={onClose}
       />
