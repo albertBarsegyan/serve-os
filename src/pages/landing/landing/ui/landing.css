@@ -445,6 +445,7 @@ a {
 }
 
 .small-font {
+  /* biome-ignore lint/complexity/noImportantStyles: <we need it> */
   font-size: 12px !important;
 }
 
