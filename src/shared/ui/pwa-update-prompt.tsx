@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
+import { m } from '#/paraglide/messages'
 
 // Dynamic import keeps virtual:pwa-register out of the Nitro SSR bundle entirely.
 // The import only executes inside useEffect, which is browser-only.
@@ -12,18 +13,18 @@ export function PwaUpdatePrompt() {
 
       updateSW = registerSW({
         onNeedRefresh() {
-          toast('Update available', {
-            description: 'A new version of ServeOS is ready.',
+          toast(m.shared_pwa_update_title(), {
+            description: m.shared_pwa_update_description(),
             duration: Number.POSITIVE_INFINITY,
             action: {
-              label: 'Reload',
+              label: m.shared_pwa_update_reload(),
               onClick: () => updateSW?.(true),
             },
           })
         },
         onOfflineReady() {
-          toast.success('Ready to work offline', {
-            description: 'App is cached and available offline.',
+          toast.success(m.shared_pwa_offline_title(), {
+            description: m.shared_pwa_offline_description(),
             duration: 4000,
           })
         },

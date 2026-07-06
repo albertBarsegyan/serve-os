@@ -4,13 +4,17 @@ import { memo, useMemo } from 'react'
 import { Badge } from '#/components/ui/badge'
 import type { Order } from '#/features/platform/api/platform.types.ts'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import type { AdvanceStatus, columns } from '../lib/kanban.ts'
 import { OrderCard } from './order-card.tsx'
 
-const EMPTY_STATE_COPY: Record<string, { title: string; hint: string }> = {
-  queue: { title: 'No orders waiting', hint: 'New orders will appear here' },
-  preparing: { title: 'Nothing in progress', hint: 'Orders you start will show here' },
-  ready: { title: 'Nothing ready yet', hint: 'Completed orders will show here' },
+const EMPTY_STATE_COPY: Record<string, { title: () => string; hint: () => string }> = {
+  queue: { title: m.admin_kitchen_empty_queue_title, hint: m.admin_kitchen_empty_queue_hint },
+  preparing: {
+    title: m.admin_kitchen_empty_preparing_title,
+    hint: m.admin_kitchen_empty_preparing_hint,
+  },
+  ready: { title: m.admin_kitchen_empty_ready_title, hint: m.admin_kitchen_empty_ready_hint },
 }
 
 interface KanbanColumnProps {
@@ -67,12 +71,12 @@ export const KanbanColumn = memo(function KanbanColumn({
             <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
               <column.icon className={cn('h-5 w-5', column.color)} />
             </div>
-            <p className='text-sm font-semibold'>{empty.title}</p>
-            <p className='mt-1 max-w-[10rem] text-xs text-muted-foreground'>{empty.hint}</p>
+            <p className='text-sm font-semibold'>{empty.title()}</p>
+            <p className='mt-1 max-w-[10rem] text-xs text-muted-foreground'>{empty.hint()}</p>
           </div>
         )}
         {isLoading && column.key === 'queue' && (
-          <div className='text-sm text-muted-foreground'>Loading…</div>
+          <div className='text-sm text-muted-foreground'>{m.admin_kitchen_loading()}</div>
         )}
       </div>
     </div>

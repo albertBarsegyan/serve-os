@@ -23,6 +23,7 @@ import {
   useBusinessesQuery,
   useUpdateBusinessMutation,
 } from '#/features/business/model/business-hooks'
+import { m } from '#/paraglide/messages'
 import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
@@ -134,7 +135,7 @@ export function AdminSettingsContent() {
       }
 
       await updateMutation.mutateAsync({ id: currentBusiness.id, payload })
-      showSuccess('Business settings saved')
+      showSuccess(m.admin_settings_saved())
       setHasUnsaved(false)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -144,10 +145,8 @@ export function AdminSettingsContent() {
   if (!selectedBusinessId) {
     return (
       <div className='space-y-4'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Settings</h1>
-        <p className='text-muted-foreground'>
-          No active business selected. Please select a business from the sidebar.
-        </p>
+        <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_settings_title()}</h1>
+        <p className='text-muted-foreground'>{m.admin_settings_no_business()}</p>
       </div>
     )
   }
@@ -156,10 +155,8 @@ export function AdminSettingsContent() {
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Settings</h1>
-          <p className='text-muted-foreground'>
-            Configure your business profile and enabled features.
-          </p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_settings_title()}</h1>
+          <p className='text-muted-foreground'>{m.admin_settings_subtitle()}</p>
         </div>
         <Button
           size='sm'
@@ -168,7 +165,7 @@ export function AdminSettingsContent() {
           onClick={() => void handleSubmit(onSubmit)()}
         >
           <Save className='mr-2 h-4 w-4' />
-          {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
+          {updateMutation.isPending ? m.admin_settings_saving() : m.admin_settings_save_changes()}
         </Button>
       </div>
 
@@ -180,7 +177,9 @@ export function AdminSettingsContent() {
         }}
         onChange={() => setHasUnsaved(true)}
       >
-        {hasUnsaved && <p className='text-xs text-amber-600 my-2'>You have unsaved changes.</p>}
+        {hasUnsaved && (
+          <p className='text-xs text-amber-600 my-2'>{m.admin_settings_unsaved_changes()}</p>
+        )}
         <div className='flex flex-col gap-4 space-y-6 lg:flex-row md:space-y-0'>
           {/* Business info */}
 
@@ -191,10 +190,8 @@ export function AdminSettingsContent() {
                   <Settings className='h-5 w-5' />
                 </div>
                 <div>
-                  <CardTitle>Business Information</CardTitle>
-                  <CardDescription>
-                    Core details shown on customer menus and receipts.
-                  </CardDescription>
+                  <CardTitle>{m.admin_settings_business_info()}</CardTitle>
+                  <CardDescription>{m.admin_settings_business_info_desc()}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -203,14 +200,14 @@ export function AdminSettingsContent() {
                 value={logoUrl}
                 onChange={setLogoUrl}
                 entityType={ImageEntityType.BUSINESS_LOGO}
-                label='Business logo'
+                label={m.admin_settings_business_logo_label()}
                 previewShape='square'
                 enableEditor
               />
               {/* Name */}
               <div className='space-y-2'>
                 <label htmlFor={nameId} className='text-sm font-medium text-muted-foreground'>
-                  Business Name
+                  {m.admin_settings_business_name_label()}
                 </label>
                 <div className='relative'>
                   <Building2 className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
@@ -227,7 +224,7 @@ export function AdminSettingsContent() {
               {/* Type */}
               <div className='space-y-2'>
                 <label htmlFor={typeId} className='text-sm font-medium text-muted-foreground'>
-                  Business Type
+                  {m.admin_settings_business_type_label()}
                 </label>
                 <Controller
                   name='type'
@@ -241,7 +238,7 @@ export function AdminSettingsContent() {
                         value,
                         label,
                       }))}
-                      placeholder='Select type'
+                      placeholder={m.admin_settings_select_type_placeholder()}
                       className='rounded-xl'
                     />
                   )}
@@ -253,7 +250,7 @@ export function AdminSettingsContent() {
               <div className='grid grid-cols-2 gap-4'>
                 <div className='space-y-2'>
                   <label htmlFor={countryId} className='text-sm font-medium text-muted-foreground'>
-                    Country
+                    {m.admin_settings_country_label()}
                   </label>
                   <Controller
                     name='locationCountry'
@@ -264,7 +261,7 @@ export function AdminSettingsContent() {
                         value={field.value}
                         onChange={field.onChange}
                         options={countryOptions}
-                        placeholder='Select country'
+                        placeholder={m.admin_settings_select_country_placeholder()}
                         className='rounded-xl'
                         startIcon={<MapPin className='h-4 w-4' />}
                       />
@@ -277,7 +274,7 @@ export function AdminSettingsContent() {
 
                 <div className='space-y-2'>
                   <label htmlFor={cityId} className='text-sm font-medium text-muted-foreground'>
-                    City
+                    {m.admin_settings_city_label()}
                   </label>
                   <Controller
                     name='locationCity'
@@ -288,7 +285,11 @@ export function AdminSettingsContent() {
                         value={field.value}
                         onChange={field.onChange}
                         options={cityOptions}
-                        placeholder={selectedCountry ? 'Select city' : 'Select country first'}
+                        placeholder={
+                          selectedCountry
+                            ? m.admin_settings_select_city_placeholder()
+                            : m.admin_settings_select_country_first_placeholder()
+                        }
                         disabled={!selectedCountry}
                         className='rounded-xl'
                       />
@@ -303,7 +304,7 @@ export function AdminSettingsContent() {
               {/* Currency */}
               <div className='space-y-2'>
                 <label htmlFor={currencyId} className='text-sm font-medium text-muted-foreground'>
-                  Currency
+                  {m.admin_settings_currency_label()}
                 </label>
                 <Controller
                   name='currency'
@@ -314,7 +315,7 @@ export function AdminSettingsContent() {
                       value={field.value}
                       onChange={(v) => field.onChange(v.toUpperCase())}
                       options={currencyOptions}
-                      placeholder='Select currency'
+                      placeholder={m.admin_settings_select_currency_placeholder()}
                       className='rounded-xl'
                     />
                   )}
@@ -329,7 +330,7 @@ export function AdminSettingsContent() {
                   htmlFor={workingHoursId}
                   className='text-sm font-medium text-muted-foreground'
                 >
-                  Working Hours
+                  {m.admin_settings_working_hours_label()}
                 </label>
                 <Controller
                   name='workingHours'
@@ -349,10 +350,8 @@ export function AdminSettingsContent() {
           {/* Features */}
           <Card>
             <CardHeader>
-              <CardTitle>Enabled Features</CardTitle>
-              <CardDescription>
-                Control which capabilities are active for this business.
-              </CardDescription>
+              <CardTitle>{m.admin_settings_enabled_features()}</CardTitle>
+              <CardDescription>{m.admin_settings_enabled_features_desc()}</CardDescription>
             </CardHeader>
             <CardContent>
               <FeatureSelector

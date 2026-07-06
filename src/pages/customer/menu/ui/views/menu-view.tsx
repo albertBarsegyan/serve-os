@@ -1,9 +1,17 @@
-import { Moon, Plus, Search, ShoppingCart, Sun } from 'lucide-react'
+import { Languages, Moon, Plus, Search, ShoppingCart, Sun } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { m } from '#/paraglide/messages'
+import { getLocale, locales, setLocale } from '#/paraglide/runtime'
 import type { CustomerCategory, CustomerProduct } from '#/shared/api/customer/menu.types'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { LazyImage } from '#/shared/ui/lazy-image'
 import { C } from '../customer-theme'
+
+function nextLocale() {
+  const current = getLocale()
+  const currentIndex = locales.indexOf(current)
+  return locales[(currentIndex + 1) % locales.length]
+}
 
 interface MenuViewProps {
   businessName: string
@@ -101,26 +109,49 @@ export function MenuView({
           backdropFilter: 'blur(12px)',
         }}
       >
-        {/* Theme toggle – left */}
-        <button
-          type='button'
-          onClick={toggleTheme}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '7px 12px',
-            borderRadius: C.rFull,
-            background: C.surface2,
-            border: `1px solid ${C.hairline}`,
-            cursor: 'pointer',
-          }}
-        >
-          {isDark ? <Sun size={15} color={C.dim} /> : <Moon size={15} color={C.dim} />}
-          <span style={{ color: C.dim, fontSize: 12, fontWeight: 600 }}>
-            {isDark ? 'Light' : 'Dark'}
-          </span>
-        </button>
+        {/* Theme + language toggles – left */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            type='button'
+            onClick={toggleTheme}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '7px 12px',
+              borderRadius: C.rFull,
+              background: C.surface2,
+              border: `1px solid ${C.hairline}`,
+              cursor: 'pointer',
+            }}
+          >
+            {isDark ? <Sun size={15} color={C.dim} /> : <Moon size={15} color={C.dim} />}
+            <span style={{ color: C.dim, fontSize: 12, fontWeight: 600 }}>
+              {isDark ? m.customer_theme_light() : m.customer_theme_dark()}
+            </span>
+          </button>
+          <button
+            type='button'
+            onClick={() => setLocale(nextLocale())}
+            aria-label={m.customer_change_language()}
+            title={m.customer_change_language()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '7px 12px',
+              borderRadius: C.rFull,
+              background: C.surface2,
+              border: `1px solid ${C.hairline}`,
+              cursor: 'pointer',
+            }}
+          >
+            <Languages size={15} color={C.dim} />
+            <span style={{ color: C.dim, fontSize: 12, fontWeight: 600 }}>
+              {getLocale().toUpperCase()}
+            </span>
+          </button>
+        </div>
 
         {/* Right – search + cart */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -202,10 +233,14 @@ export function MenuView({
                 boxShadow: '0 0 0 3px rgba(34,197,94,0.2)',
               }}
             />
-            <span style={{ color: C.dim, fontSize: 12, fontWeight: 500 }}>Open Now</span>
+            <span style={{ color: C.dim, fontSize: 12, fontWeight: 500 }}>
+              {m.customer_open_now()}
+            </span>
           </div>
           <span style={{ color: C.hairline }}>·</span>
-          <span style={{ color: C.dim, fontSize: 12 }}>Table {tableName}</span>
+          <span style={{ color: C.dim, fontSize: 12 }}>
+            {m.customer_table({ name: tableName })}
+          </span>
         </div>
       </div>
 
@@ -277,7 +312,7 @@ export function MenuView({
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {cat.products.length === 0 ? (
-                <p style={{ color: C.faint, fontSize: 13, margin: 0 }}>No items yet</p>
+                <p style={{ color: C.faint, fontSize: 13, margin: 0 }}>{m.customer_no_items()}</p>
               ) : (
                 cat.products.map((product) => (
                   <ProductCard
@@ -338,7 +373,9 @@ export function MenuView({
             >
               {cartCount}
             </div>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>View Order</span>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
+              {m.customer_view_order()}
+            </span>
             <span style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>
               {formatPrice(cartTotal)}
             </span>
@@ -486,7 +523,7 @@ function ProductCard({
                   fontWeight: 600,
                 }}
               >
-                {DIETARY_SHORT[f] ?? f}
+                {dietaryShort(f)}
               </span>
             ))}
           </div>
@@ -567,11 +604,19 @@ function ProductCard({
   )
 }
 
-const DIETARY_SHORT: Record<string, string> = {
-  vegan: 'Vegan',
-  vegetarian: 'Veg',
-  gluten_free: 'GF',
-  dairy_free: 'DF',
+function dietaryShort(flag: string): string {
+  switch (flag) {
+    case 'vegan':
+      return m.customer_dietary_short_vegan()
+    case 'vegetarian':
+      return m.customer_dietary_short_veg()
+    case 'gluten_free':
+      return m.customer_dietary_short_gf()
+    case 'dairy_free':
+      return m.customer_dietary_short_df()
+    default:
+      return flag
+  }
 }
 
 // Kept for use in the loading skeleton inside customer-menu-content
@@ -585,8 +630,14 @@ export function BottomNav({
   cartCount: number
 }>) {
   const tabs = [
-    { key: 'home' as const, label: 'Home', icon: '🏠', action: undefined },
-    { key: 'cart' as const, label: 'Cart', icon: '🛒', action: onCart, badge: cartCount },
+    { key: 'home' as const, label: m.customer_nav_home(), icon: '🏠', action: undefined },
+    {
+      key: 'cart' as const,
+      label: m.customer_nav_cart(),
+      icon: '🛒',
+      action: onCart,
+      badge: cartCount,
+    },
   ]
   return (
     <nav

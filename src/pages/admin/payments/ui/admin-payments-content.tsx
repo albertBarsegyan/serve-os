@@ -16,6 +16,7 @@ import type { PaymentMethod, PaymentStatus } from '#/features/platform/api/platf
 import { pagedPaymentsQueryOptions } from '#/features/platform/lib/query-options.ts'
 import { useConfirmPaymentMutation } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -28,10 +29,10 @@ function statusBadgeVariant(status: PaymentStatus): 'success' | 'warning' | 'out
   return 'outline'
 }
 
-const METHOD_LABELS: Record<PaymentMethod, string> = {
-  CASH: 'Cash',
-  POS: 'Card (POS)',
-  ONLINE: 'Online',
+function methodLabel(method: PaymentMethod): string {
+  if (method === 'CASH') return m.admin_payments_method_cash()
+  if (method === 'POS') return m.admin_payments_method_card_pos()
+  return m.admin_payments_method_online()
 }
 
 const ALL_STATUSES: (PaymentStatus | 'all')[] = ['all', 'PENDING', 'CONFIRMED', 'FAILED']
@@ -70,7 +71,7 @@ export function AdminPaymentsContent() {
   const handleConfirm = async (paymentId: string) => {
     try {
       await confirmMutation.mutateAsync({ paymentId, data: {} })
-      showSuccess('Payment confirmed')
+      showSuccess(m.admin_payments_payment_confirmed())
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
@@ -90,13 +91,15 @@ export function AdminPaymentsContent() {
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Payments</h1>
-          <p className='text-muted-foreground'>Review and confirm payments across all orders.</p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_payments_title()}</h1>
+          <p className='text-muted-foreground'>{m.admin_payments_subtitle()}</p>
         </div>
         <div className='flex items-center gap-2'>
           <Badge variant='outline' className='h-8 rounded-full bg-muted px-4 text-xs font-semibold'>
             <CreditCard className='mr-1.5 h-3.5 w-3.5' />
-            {payments.filter((p) => p.status === 'PENDING').length} pending this page
+            {m.admin_payments_pending_this_page({
+              count: payments.filter((p) => p.status === 'PENDING').length,
+            })}
           </Badge>
         </div>
       </div>
@@ -109,7 +112,7 @@ export function AdminPaymentsContent() {
             className='ml-2 font-semibold underline'
             onClick={() => void refetch()}
           >
-            Retry
+            {m.admin_payments_retry()}
           </button>
         </div>
       )}
@@ -130,7 +133,9 @@ export function AdminPaymentsContent() {
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
-                  {status === 'all' ? 'All' : status.charAt(0) + status.slice(1).toLowerCase()}
+                  {status === 'all'
+                    ? m.admin_payments_status_all()
+                    : status.charAt(0) + status.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
@@ -138,7 +143,7 @@ export function AdminPaymentsContent() {
               <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
               <input
                 type='text'
-                placeholder='Search this page…'
+                placeholder={m.admin_payments_search_placeholder()}
                 className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
@@ -150,20 +155,20 @@ export function AdminPaymentsContent() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className='pl-8'>Payment ID</TableHead>
-                <TableHead>Order</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className='pr-8 text-right'>Actions</TableHead>
+                <TableHead className='pl-8'>{m.admin_payments_col_payment_id()}</TableHead>
+                <TableHead>{m.admin_payments_col_order()}</TableHead>
+                <TableHead>{m.admin_payments_col_method()}</TableHead>
+                <TableHead>{m.admin_payments_col_amount()}</TableHead>
+                <TableHead>{m.admin_payments_col_status()}</TableHead>
+                <TableHead>{m.admin_payments_col_date()}</TableHead>
+                <TableHead className='pr-8 text-right'>{m.admin_payments_col_actions()}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isPending && (
                 <TableRow>
                   <TableCell colSpan={7} className='h-32 text-center text-muted-foreground'>
-                    Loading payments…
+                    {m.admin_payments_loading()}
                   </TableCell>
                 </TableRow>
               )}
@@ -171,7 +176,7 @@ export function AdminPaymentsContent() {
               {!isPending && filteredPayments.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className='h-32 text-center text-muted-foreground'>
-                    No payments found.
+                    {m.admin_payments_no_payments()}
                   </TableCell>
                 </TableRow>
               )}
@@ -184,7 +189,7 @@ export function AdminPaymentsContent() {
                   <TableCell className='font-mono text-xs text-muted-foreground'>
                     #{payment.orderId.slice(0, 8).toUpperCase()}
                   </TableCell>
-                  <TableCell>{METHOD_LABELS[payment.method]}</TableCell>
+                  <TableCell>{methodLabel(payment.method)}</TableCell>
                   <TableCell className='font-mono font-semibold'>
                     {formatPrice(Number(payment.amount), currency)}
                   </TableCell>
@@ -211,7 +216,7 @@ export function AdminPaymentsContent() {
                         disabled={confirmMutation.isPending}
                         onClick={() => void handleConfirm(payment.id)}
                       >
-                        <CheckCircle2 className='mr-1.5 h-4 w-4' /> Confirm
+                        <CheckCircle2 className='mr-1.5 h-4 w-4' /> {m.admin_payments_confirm()}
                       </Button>
                     )}
                   </TableCell>

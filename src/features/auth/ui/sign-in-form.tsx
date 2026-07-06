@@ -13,6 +13,7 @@ import {
 } from '#/features/auth/lib/schemas/sign-in-form.schema.ts'
 import { useSignInMutation } from '#/features/auth/model/auth-hooks'
 import { getPostAuthDestination } from '#/features/business/lib/utils/business-routing.ts'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 
@@ -50,7 +51,7 @@ export function SignInForm() {
           htmlFor={emailId}
           className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
         >
-          Email Address
+          {m.auth_email_label()}
         </Label>
 
         <div className='relative'>
@@ -60,7 +61,7 @@ export function SignInForm() {
             id={emailId}
             required
             autoComplete='email'
-            placeholder='name@company.com'
+            placeholder={m.auth_email_placeholder()}
             className='h-14 rounded-xl pl-12'
             {...register('email')}
           />
@@ -73,7 +74,7 @@ export function SignInForm() {
             htmlFor={passwordId}
             className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
           >
-            Password
+            {m.auth_password_label()}
           </Label>
         </div>
         <div className='relative'>
@@ -102,13 +103,13 @@ export function SignInForm() {
         disabled={signInMutation.isPending}
         className='mt-4 h-14 w-full rounded-xl'
       >
-        {signInMutation.isPending ? 'Signing in…' : 'Sign In'}
+        {signInMutation.isPending ? m.auth_signing_in() : m.auth_sign_in_submit()}
       </Button>
 
       <p className='mt-2 text-center text-sm font-medium text-muted-foreground'>
-        Don't have an account?{' '}
+        {m.auth_no_account()}{' '}
         <Link to='/auth/sign-up' className='font-semibold text-primary hover:underline'>
-          Create an account
+          {m.auth_create_account_link()}
         </Link>
       </p>
     </form>

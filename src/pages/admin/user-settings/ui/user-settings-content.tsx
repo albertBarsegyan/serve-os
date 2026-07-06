@@ -17,6 +17,7 @@ import {
   useChangePasswordMutation,
   useUpdateProfileMutation,
 } from '#/features/users/model/users-hooks'
+import { m } from '#/paraglide/messages'
 import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
@@ -70,7 +71,7 @@ export function UserSettingsContent() {
   const onProfileSubmit = async (values: UpdateProfileFormValues) => {
     try {
       await updateProfileMutation.mutateAsync({ ...values, avatarUrl })
-      showSuccess('Profile updated')
+      showSuccess(m.admin_user_settings_profile_updated())
     } catch (error) {
       showError(getResponseErrorMessage(error))
     }
@@ -82,7 +83,7 @@ export function UserSettingsContent() {
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       })
-      showSuccess('Password changed')
+      showSuccess(m.admin_user_settings_password_changed())
       resetPassword()
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -92,8 +93,8 @@ export function UserSettingsContent() {
   if (authUser?.type !== 'owner') {
     return (
       <div className='space-y-4'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Account Settings</h1>
-        <p className='text-muted-foreground'>Account settings are only available for owners.</p>
+        <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_user_settings_title()}</h1>
+        <p className='text-muted-foreground'>{m.admin_user_settings_owners_only()}</p>
       </div>
     )
   }
@@ -101,8 +102,8 @@ export function UserSettingsContent() {
   return (
     <div className='space-y-8'>
       <div>
-        <h1 className='text-3xl font-semibold tracking-tight'>Account Settings</h1>
-        <p className='text-muted-foreground'>Manage your personal profile and security settings.</p>
+        <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_user_settings_title()}</h1>
+        <p className='text-muted-foreground'>{m.admin_user_settings_subtitle()}</p>
       </div>
 
       <div className='flex flex-col gap-4 lg:flex-row'>
@@ -114,8 +115,8 @@ export function UserSettingsContent() {
                 <User className='h-5 w-5' />
               </div>
               <div>
-                <CardTitle>Profile</CardTitle>
-                <CardDescription>Update your name and email address.</CardDescription>
+                <CardTitle>{m.admin_user_settings_profile()}</CardTitle>
+                <CardDescription>{m.admin_user_settings_profile_desc()}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -131,7 +132,7 @@ export function UserSettingsContent() {
                 value={avatarUrl}
                 onChange={setAvatarUrl}
                 entityType={ImageEntityType.USER_AVATAR}
-                label='Profile photo'
+                label={m.admin_user_settings_profile_photo_label()}
                 previewShape='circle'
               />
               <div className='grid grid-cols-2 gap-4'>
@@ -140,7 +141,7 @@ export function UserSettingsContent() {
                     htmlFor={firstNameId}
                     className='text-sm font-medium text-muted-foreground'
                   >
-                    First Name
+                    {m.admin_user_settings_first_name_label()}
                   </label>
                   <input
                     id={firstNameId}
@@ -154,7 +155,7 @@ export function UserSettingsContent() {
                 </div>
                 <div className='space-y-2'>
                   <label htmlFor={lastNameId} className='text-sm font-medium text-muted-foreground'>
-                    Last Name
+                    {m.admin_user_settings_last_name_label()}
                   </label>
                   <input
                     id={lastNameId}
@@ -169,7 +170,7 @@ export function UserSettingsContent() {
               </div>
               <div className='space-y-2'>
                 <label htmlFor={emailId} className='text-sm font-medium text-muted-foreground'>
-                  Email Address
+                  {m.admin_user_settings_email_label()}
                 </label>
                 <input
                   id={emailId}
@@ -188,7 +189,9 @@ export function UserSettingsContent() {
                 disabled={updateProfileMutation.isPending}
               >
                 <Save className='mr-2 h-4 w-4' />
-                {updateProfileMutation.isPending ? 'Saving…' : 'Save Profile'}
+                {updateProfileMutation.isPending
+                  ? m.admin_user_settings_saving()
+                  : m.admin_user_settings_save_profile()}
               </Button>
             </form>
           </CardContent>
@@ -202,8 +205,8 @@ export function UserSettingsContent() {
                 <KeyRound className='h-5 w-5' />
               </div>
               <div>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>Use a strong password you don't use elsewhere.</CardDescription>
+                <CardTitle>{m.admin_user_settings_change_password()}</CardTitle>
+                <CardDescription>{m.admin_user_settings_change_password_desc()}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -220,7 +223,7 @@ export function UserSettingsContent() {
                   htmlFor={currentPasswordId}
                   className='text-sm font-medium text-muted-foreground'
                 >
-                  Current Password
+                  {m.admin_user_settings_current_password_label()}
                 </label>
                 <input
                   id={currentPasswordId}
@@ -238,7 +241,7 @@ export function UserSettingsContent() {
                   htmlFor={newPasswordId}
                   className='text-sm font-medium text-muted-foreground'
                 >
-                  New Password
+                  {m.admin_user_settings_new_password_label()}
                 </label>
                 <input
                   id={newPasswordId}
@@ -256,7 +259,7 @@ export function UserSettingsContent() {
                   htmlFor={confirmPasswordId}
                   className='text-sm font-medium text-muted-foreground'
                 >
-                  Confirm New Password
+                  {m.admin_user_settings_confirm_password_label()}
                 </label>
                 <input
                   id={confirmPasswordId}
@@ -276,7 +279,9 @@ export function UserSettingsContent() {
                 disabled={changePasswordMutation.isPending}
               >
                 <KeyRound className='mr-2 h-4 w-4' />
-                {changePasswordMutation.isPending ? 'Changing…' : 'Change Password'}
+                {changePasswordMutation.isPending
+                  ? m.admin_user_settings_changing()
+                  : m.admin_user_settings_change_password_button()}
               </Button>
             </form>
           </CardContent>

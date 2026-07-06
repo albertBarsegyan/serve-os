@@ -1,6 +1,7 @@
 import { ImageIcon, Loader2, Trash2, UploadCloud } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { type ImageEntityType, uploadImage } from '#/shared/api/images/images.api'
 import { ImageEditorDialog } from '#/shared/ui/image-editor-dialog'
 
@@ -44,7 +45,7 @@ export function ImageUpload({
       const uploaded = await uploadImage(file, { entityType, entityId })
       onChange(uploaded.url)
     } catch {
-      setError('Upload failed. Please try again.')
+      setError(m.shared_image_upload_failed())
     } finally {
       setIsUploading(false)
       if (inputRef.current) inputRef.current.value = ''
@@ -55,12 +56,12 @@ export function ImageUpload({
     const file = e.target.files?.[0]
     if (!file) return
     if (!ALLOWED_MIME_TYPES.has(file.type)) {
-      setError('Only SVG, PNG, JPG, JPEG, and WebP files are allowed')
+      setError(m.shared_image_upload_invalid_type())
       if (inputRef.current) inputRef.current.value = ''
       return
     }
     if (file.size > MAX_FILE_SIZE) {
-      setError('File size must be under 3 MB')
+      setError(m.shared_image_upload_too_large())
       if (inputRef.current) inputRef.current.value = ''
       return
     }
@@ -101,7 +102,11 @@ export function ImageUpload({
           )}
         >
           {value ? (
-            <img src={value} alt='preview' className='h-full w-full object-cover' />
+            <img
+              src={value}
+              alt={m.shared_image_upload_preview_alt()}
+              className='h-full w-full object-cover'
+            />
           ) : (
             <ImageIcon className='h-8 w-8 text-muted-foreground/40' />
           )}
@@ -119,7 +124,7 @@ export function ImageUpload({
             ) : (
               <UploadCloud className='h-4 w-4' />
             )}
-            {isUploading ? 'Uploading…' : 'Upload image'}
+            {isUploading ? m.shared_image_upload_uploading() : m.shared_image_upload_button()}
           </button>
 
           {value && (
@@ -129,7 +134,7 @@ export function ImageUpload({
               className='flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer'
             >
               <Trash2 className='h-4 w-4' />
-              Remove
+              {m.shared_image_upload_remove()}
             </button>
           )}
         </div>

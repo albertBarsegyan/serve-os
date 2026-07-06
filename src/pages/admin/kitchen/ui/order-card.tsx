@@ -6,6 +6,7 @@ import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import type { Order } from '#/features/platform/api/platform.types.ts'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { type AdvanceStatus, formatItemLines, orderColumn } from '../lib/kanban.ts'
 
 interface OrderCardProps {
@@ -50,7 +51,7 @@ export const OrderCard = memo(function OrderCard({
           <button
             type='button'
             className='cursor-grab touch-none text-muted-foreground active:cursor-grabbing'
-            aria-label='Drag to move order'
+            aria-label={m.admin_kitchen_drag_aria()}
             {...attributes}
             {...listeners}
           >
@@ -59,7 +60,9 @@ export const OrderCard = memo(function OrderCard({
           <div className='flex flex-col'>
             <span className='text-sm font-bold'>#{order.id.slice(0, 8).toUpperCase()}</span>
             <span className='text-lg font-semibold text-primary'>
-              {order.table ? `Table ${order.table.number}` : order.type}
+              {order.table
+                ? m.admin_kitchen_table_number({ number: order.table.number })
+                : order.type}
             </span>
           </div>
         </div>
@@ -86,7 +89,7 @@ export const OrderCard = memo(function OrderCard({
               disabled={isMutating}
               onClick={() => onAdvance(order.id, 'IN_KITCHEN')}
             >
-              Start Preparing <ArrowRight className='ml-2 h-4 w-4' />
+              {m.admin_kitchen_start_preparing()} <ArrowRight className='ml-2 h-4 w-4' />
             </Button>
           )}
           {column === 'preparing' && (
@@ -96,7 +99,7 @@ export const OrderCard = memo(function OrderCard({
               disabled={isMutating}
               onClick={() => onAdvance(order.id, 'READY')}
             >
-              Mark as Ready <CheckCircle2 className='ml-2 h-4 w-4' />
+              {m.admin_kitchen_mark_ready()} <CheckCircle2 className='ml-2 h-4 w-4' />
             </Button>
           )}
           {column === 'ready' && (
@@ -107,7 +110,7 @@ export const OrderCard = memo(function OrderCard({
               disabled={isMutating}
               onClick={() => onAdvance(order.id, 'DELIVERED')}
             >
-              Served
+              {m.admin_kitchen_served()}
             </Button>
           )}
         </div>

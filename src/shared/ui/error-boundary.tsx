@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { AlertTriangle, Home, RotateCcw } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
+import { m } from '#/paraglide/messages'
 
 interface ErrorBoundaryProps {
   error: Error
@@ -28,21 +29,19 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
             <AlertTriangle className='h-8 w-8 text-destructive' />
           </div>
           <h1 className='mb-2 text-3xl font-semibold tracking-tight text-foreground'>
-            Page Not Found
+            {m.shared_error_not_found_title()}
           </h1>
-          <p className='mb-8 text-muted-foreground'>
-            The page you're looking for doesn't exist or has been moved.
-          </p>
+          <p className='mb-8 text-muted-foreground'>{m.shared_error_not_found_message()}</p>
           <div className='flex flex-col gap-3 sm:flex-row justify-center'>
             <Button
               onClick={() => navigate({ to: '/' })}
               className='flex items-center justify-center gap-2'
             >
               <Home className='h-4 w-4' />
-              Go to Home
+              {m.shared_error_go_home()}
             </Button>
             <Button variant='outline' onClick={() => globalThis.history.back()}>
-              Go Back
+              {m.shared_error_go_back()}
             </Button>
           </div>
         </div>
@@ -51,7 +50,7 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
   }
 
   const isDev = import.meta.env.DEV
-  const errorMessage = error?.message || 'An unexpected error occurred'
+  const errorMessage = error?.message || m.shared_error_unexpected_default()
   const errorStack = error?.stack || ''
 
   return (
@@ -62,17 +61,14 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
             <AlertTriangle className='h-7 w-7 text-destructive' />
           </div>
 
-          <h1 className='mb-2 text-2xl font-semibold tracking-tight'>Something Went Wrong</h1>
+          <h1 className='mb-2 text-2xl font-semibold tracking-tight'>{m.shared_error_title()}</h1>
 
-          <p className='mb-6 text-muted-foreground'>
-            We encountered an unexpected error. Please try again or contact support if the problem
-            persists.
-          </p>
+          <p className='mb-6 text-muted-foreground'>{m.shared_error_description()}</p>
 
           {isDev && (
             <div className='mb-6 rounded-lg border border-destructive/20 bg-destructive/5 p-4'>
               <p className='mb-2 text-xs font-mono font-semibold text-destructive'>
-                Error Details:
+                {m.shared_error_details_label()}
               </p>
               <p className='mb-3 wrap-break-word font-mono text-sm text-destructive'>
                 {errorMessage}
@@ -80,7 +76,7 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
               {errorStack && (
                 <details className='text-xs'>
                   <summary className='mb-2 cursor-pointer font-semibold text-destructive'>
-                    Stack Trace
+                    {m.shared_error_stack_trace()}
                   </summary>
                   <pre className='max-h-40 overflow-auto rounded bg-foreground p-2 text-xs text-background'>
                     {errorStack}
@@ -93,7 +89,7 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
           <div className='flex flex-col gap-3'>
             <Button onClick={handleReset} className='w-full flex items-center justify-center gap-2'>
               <RotateCcw className='h-4 w-4' />
-              Try Again
+              {m.shared_error_try_again()}
             </Button>
             <Button
               variant='outline'
@@ -101,7 +97,7 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
               className='w-full flex items-center justify-center gap-2'
             >
               <Home className='h-4 w-4' />
-              Go to Home
+              {m.shared_error_go_home()}
             </Button>
           </div>
         </div>

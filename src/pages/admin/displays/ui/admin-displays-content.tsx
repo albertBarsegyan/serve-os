@@ -20,6 +20,7 @@ import {
   useRegenerateDisplayMutation,
   useRevokeDisplayMutation,
 } from '#/features/display/model/display-hooks.ts'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -32,30 +33,27 @@ function RevealUrlModal({
   const copyLink = () => {
     if (!display) return
     navigator.clipboard.writeText(display.url)
-    showSuccess('Display link copied to clipboard')
+    showSuccess(m.admin_displays_link_copied())
   }
 
   return (
     <Modal
       isOpen={display !== null}
       onClose={onClose}
-      title={display ? `"${display.name}" is ready` : ''}
+      title={display ? m.admin_displays_ready_title({ name: display.name }) : ''}
       footer={
         <>
           <Button variant='ghost' onClick={onClose}>
-            Done
+            {m.admin_displays_done()}
           </Button>
           <Button onClick={copyLink}>
-            <Copy className='mr-2 h-4 w-4' /> Copy link
+            <Copy className='mr-2 h-4 w-4' /> {m.admin_displays_copy_link()}
           </Button>
         </>
       }
     >
       <div className='space-y-3'>
-        <p className='text-sm text-muted-foreground'>
-          Open this link on the TV's browser. For security, it's shown only once — copy it now.
-          Regenerating or revoking it will stop this exact link from working.
-        </p>
+        <p className='text-sm text-muted-foreground'>{m.admin_displays_reveal_description()}</p>
         <div className='rounded-xl border border-border bg-muted/40 p-3 font-mono text-xs break-all'>
           {display?.url}
         </div>
@@ -99,14 +97,18 @@ function CreateDisplayForm({
     >
       <div className='flex-1 space-y-1'>
         <label htmlFor='display-name' className='text-sm font-medium'>
-          Display name
+          {m.admin_displays_name_label()}
         </label>
-        <Input id='display-name' placeholder='e.g. Kitchen TV' {...register('name')} />
+        <Input
+          id='display-name'
+          placeholder={m.admin_displays_name_placeholder()}
+          {...register('name')}
+        />
         {errors.name && <p className='text-xs text-red-600'>{errors.name.message}</p>}
       </div>
       <Button type='submit' className='rounded-full' disabled={createMutation.isPending}>
         <Plus className='mr-2 h-4 w-4' />
-        {createMutation.isPending ? 'Creating…' : 'Create display'}
+        {createMutation.isPending ? m.admin_displays_creating() : m.admin_displays_create_button()}
       </Button>
     </form>
   )
@@ -129,7 +131,7 @@ function DisplayRow({
     try {
       const rotated = await regenerateMutation.mutateAsync(display.id)
       onRegenerated(rotated)
-      showSuccess('Display link regenerated')
+      showSuccess(m.admin_displays_link_regenerated())
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
@@ -138,7 +140,7 @@ function DisplayRow({
   const handleRevoke = async () => {
     try {
       await revokeMutation.mutateAsync(display.id)
-      showSuccess('Display revoked')
+      showSuccess(m.admin_displays_revoked_toast())
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
@@ -157,10 +159,14 @@ function DisplayRow({
         <div>
           <p className='flex items-center gap-2 text-sm font-semibold'>
             {display.name}
-            {display.revoked && <Badge variant='destructive'>Revoked</Badge>}
+            {display.revoked && (
+              <Badge variant='destructive'>{m.admin_displays_revoked_badge()}</Badge>
+            )}
           </p>
           <p className='text-xs text-muted-foreground'>
-            Created {new Date(display.createdAt).toLocaleDateString()}
+            {m.admin_displays_created_on({
+              date: new Date(display.createdAt).toLocaleDateString(),
+            })}
           </p>
         </div>
       </div>
@@ -175,7 +181,7 @@ function DisplayRow({
           onClick={() => void handleRegenerate()}
         >
           <RefreshCw className='mr-1.5 h-3.5 w-3.5' />
-          {display.revoked ? 'Reactivate' : 'Regenerate link'}
+          {display.revoked ? m.admin_displays_reactivate() : m.admin_displays_regenerate_link()}
         </Button>
         {!display.revoked && (
           <Button
@@ -185,7 +191,7 @@ function DisplayRow({
             className='h-8 w-8 text-muted-foreground hover:text-destructive'
             disabled={isBusy}
             onClick={() => void handleRevoke()}
-            title='Revoke display'
+            title={m.admin_displays_revoke()}
           >
             <Trash2 className='h-4 w-4' />
           </Button>
@@ -204,10 +210,8 @@ export function AdminDisplaysContent() {
   if (!activeBusiness) {
     return (
       <div className='space-y-4'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Venue TV Displays</h1>
-        <p className='text-muted-foreground'>
-          No active business selected. Please select a business from the sidebar.
-        </p>
+        <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_displays_title()}</h1>
+        <p className='text-muted-foreground'>{m.admin_displays_no_business()}</p>
       </div>
     )
   }
@@ -215,17 +219,14 @@ export function AdminDisplaysContent() {
   return (
     <div className='space-y-8'>
       <div>
-        <h1 className='text-3xl font-semibold tracking-tight'>Venue TV Displays</h1>
-        <p className='text-muted-foreground'>
-          Create a link for a TV in your kitchen or dining area — it shows the live order queue with
-          no login required. Anyone with the link can view it, so keep it private.
-        </p>
+        <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_displays_title()}</h1>
+        <p className='text-muted-foreground'>{m.admin_displays_subtitle()}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className='text-base'>New display</CardTitle>
-          <CardDescription>Give it a name so you can tell your TVs apart.</CardDescription>
+          <CardTitle className='text-base'>{m.admin_displays_new_display()}</CardTitle>
+          <CardDescription>{m.admin_displays_new_display_desc()}</CardDescription>
         </CardHeader>
         <CardContent>
           <CreateDisplayForm businessId={businessId} onCreated={setRevealedDisplay} />
@@ -239,7 +240,7 @@ export function AdminDisplaysContent() {
           ))}
         </div>
       ) : displays.length === 0 ? (
-        <p className='text-sm text-muted-foreground'>No displays yet.</p>
+        <p className='text-sm text-muted-foreground'>{m.admin_displays_empty()}</p>
       ) : (
         <div className='space-y-3'>
           {displays.map((display) => (

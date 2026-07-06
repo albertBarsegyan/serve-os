@@ -20,6 +20,7 @@ import {
   useStaffLookupMutation,
   useStaffPinLoginMutation,
 } from '#/features/staff-auth/model/staff-auth-hooks.ts'
+import { m } from '#/paraglide/messages'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { showError } from '#/shared/libs/hooks/toast.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -70,9 +71,9 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
     } catch (err) {
       const msg = getResponseErrorMessage(err)
       if (msg.toLowerCase().includes('lock')) {
-        setLookupError('Account locked. Contact your manager.')
+        setLookupError(m.staff_auth_pin_locked())
       } else if (msg.toLowerCase().includes('not found')) {
-        setLookupError('Employee ID not found.')
+        setLookupError(m.staff_auth_employee_id_not_found())
       } else {
         setLookupError(msg)
       }
@@ -145,9 +146,9 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
               {roster.business.name}
             </CardTitle>
             <CardDescription className='text-sm text-muted-foreground'>
-              {mode === 'employeeId' && 'Enter your Employee ID to sign in'}
-              {mode === 'pin' && 'Confirm your identity'}
-              {mode === 'email' && 'Sign in with email and password'}
+              {mode === 'employeeId' && m.staff_auth_enter_employee_id()}
+              {mode === 'pin' && m.staff_auth_confirm_identity()}
+              {mode === 'email' && m.staff_auth_sign_in_email_password()}
             </CardDescription>
           </CardHeader>
 
@@ -159,13 +160,13 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
                     htmlFor='employeeId'
                     className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                   >
-                    Employee ID
+                    {m.staff_auth_employee_id_label()}
                   </Label>
                   <Input
                     id='employeeId'
                     type='text'
                     autoComplete='off'
-                    placeholder='EMP-XXXXXX'
+                    placeholder={m.staff_auth_employee_id_placeholder()}
                     className='h-14 rounded-xl text-center text-lg font-mono uppercase tracking-widest'
                     value={employeeIdInput}
                     onChange={(e) => {
@@ -181,12 +182,12 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
                   disabled={lookupMutation.isPending || !employeeIdInput.trim()}
                   className='mt-4 h-14 w-full rounded-xl'
                 >
-                  {lookupMutation.isPending ? 'Looking up…' : 'Continue'}
+                  {lookupMutation.isPending ? m.staff_auth_looking_up() : m.staff_auth_continue()}
                 </Button>
 
                 <div className='flex justify-center'>
                   <Button type='button' variant='ghost' size='sm' onClick={() => setMode('email')}>
-                    Sign in with email instead
+                    {m.staff_auth_sign_in_email_instead()}
                   </Button>
                 </div>
               </form>
@@ -215,7 +216,7 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
                     htmlFor='email'
                     className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                   >
-                    Email
+                    {m.staff_auth_email_label()}
                   </Label>
                   <div className='relative'>
                     <Mail className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -223,7 +224,7 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
                       id='email'
                       type='email'
                       autoComplete='email'
-                      placeholder='name@company.com'
+                      placeholder={m.staff_auth_email_placeholder()}
                       className='h-14 rounded-xl pl-12'
                       {...emailForm.register('email')}
                     />
@@ -240,7 +241,7 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
                     htmlFor='password'
                     className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                   >
-                    Password
+                    {m.staff_auth_password_label()}
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -265,7 +266,9 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
                   disabled={emailLoginMutation.isPending}
                   className='mt-4 h-14 w-full rounded-xl'
                 >
-                  {emailLoginMutation.isPending ? 'Signing in…' : 'Sign In'}
+                  {emailLoginMutation.isPending
+                    ? m.staff_auth_signing_in()
+                    : m.staff_auth_sign_in_submit()}
                 </Button>
 
                 <div className='flex justify-center'>
@@ -276,7 +279,7 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
                     onClick={() => setMode('employeeId')}
                     disabled={emailLoginMutation.isPending}
                   >
-                    ← Back
+                    ← {m.staff_auth_back()}
                   </Button>
                 </div>
               </form>
@@ -286,7 +289,7 @@ export function StaffLoginPage({ slug, roster }: Readonly<StaffLoginPageProps>) 
       </div>
 
       <div className='mt-8 text-center text-sm text-muted-foreground'>
-        <p>&copy; {new Date().getFullYear()} ServeOS. All rights reserved.</p>
+        <p>{m.staff_auth_footer_copyright({ year: new Date().getFullYear() })}</p>
       </div>
     </div>
   )

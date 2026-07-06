@@ -1,6 +1,7 @@
 import { Check, ChevronDown, Search } from 'lucide-react'
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 
 export interface SearchSelectOption {
   value: string
@@ -23,8 +24,8 @@ export function SearchSelect({
   options,
   value,
   onChange,
-  placeholder = 'Select...',
-  searchPlaceholder = 'Search...',
+  placeholder = m.shared_search_select_placeholder(),
+  searchPlaceholder = m.shared_search_select_search_placeholder(),
   disabled = false,
   id,
   className,
@@ -153,7 +154,9 @@ export function SearchSelect({
             className='max-h-52 overflow-y-auto p-1'
           >
             {filtered.length === 0 ? (
-              <p className='py-2 text-center text-sm text-muted-foreground'>No results.</p>
+              <p className='py-2 text-center text-sm text-muted-foreground'>
+                {m.shared_search_select_no_results()}
+              </p>
             ) : (
               filtered.map((option, index) => (
                 <button

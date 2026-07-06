@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { CartModifier } from '#/features/cart/model/cart.store'
 import { cartItemTotal, useCartStore } from '#/features/cart/model/cart.store'
 import type { CustomerPaymentMethod } from '#/features/platform/api/platform.types'
+import { m } from '#/paraglide/messages'
 import { fetchCustomerMenu } from '#/shared/api/customer/customer-api'
 import type { CustomerProduct } from '#/shared/api/customer/menu.types'
 import { showSuccess } from '#/shared/libs/hooks/toast.ts'
@@ -158,7 +159,7 @@ export function CustomerMenuContent({
       notes: '',
       selectedModifiers: [],
     })
-    showSuccess(`${product.name} added`)
+    showSuccess(m.customer_item_added({ name: product.name }))
   }
 
   function handleBackToMenu() {
@@ -244,9 +245,9 @@ export function CustomerMenuContent({
       >
         <span style={{ fontSize: 48 }}>😕</span>
         <p style={{ color: C.white, fontSize: 16, fontWeight: 700, margin: 0 }}>
-          Could not load menu
+          {m.customer_menu_load_error()}
         </p>
-        <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>Please check your connection</p>
+        <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>{m.customer_check_connection()}</p>
         <button
           type='button'
           onClick={() => void menuQuery.refetch()}
@@ -262,7 +263,7 @@ export function CustomerMenuContent({
             cursor: 'pointer',
           }}
         >
-          Retry
+          {m.customer_retry()}
         </button>
       </div>
     )

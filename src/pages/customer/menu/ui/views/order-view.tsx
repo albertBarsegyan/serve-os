@@ -2,6 +2,7 @@ import { Check, Clock, MapPin } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useOrderNotifications } from '#/features/notification'
+import { m } from '#/paraglide/messages'
 import { cancelCustomerOrder } from '#/shared/api/customer/customer-api'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { CLIENT_EVENTS, type OrderStatusChangedPayload } from '#/shared/realtime/events'
@@ -50,15 +51,19 @@ export interface OrderRecord {
   paymentMethod: string
 }
 
-const STEPS: Array<{ status: CustomerOrderStatus; label: string; icon: string }> = [
-  { status: 'placed', label: 'Order Placed', icon: '📋' },
-  { status: 'confirmed', label: 'Confirmed', icon: '✅' },
-  { status: 'preparing', label: 'Being Prepared', icon: '👨‍🍳' },
-  { status: 'ready', label: 'Ready to Serve', icon: '🍽️' },
-  { status: 'served', label: 'Served', icon: '🎉' },
-  { status: 'payment', label: 'Payment', icon: '💳' },
-  { status: 'paid', label: 'All Done', icon: '✨' },
-]
+// NOTE: built by functions (not module-level constants) so labels/hints re-evaluate
+// against the current locale on every render instead of being baked in at first import.
+function getSteps(): Array<{ status: CustomerOrderStatus; label: string; icon: string }> {
+  return [
+    { status: 'placed', label: m.customer_step_order_placed(), icon: '📋' },
+    { status: 'confirmed', label: m.customer_step_confirmed(), icon: '✅' },
+    { status: 'preparing', label: m.customer_step_preparing(), icon: '👨‍🍳' },
+    { status: 'ready', label: m.customer_step_ready(), icon: '🍽️' },
+    { status: 'served', label: m.customer_step_served(), icon: '🎉' },
+    { status: 'payment', label: m.customer_step_payment(), icon: '💳' },
+    { status: 'paid', label: m.customer_step_paid(), icon: '✨' },
+  ]
+}
 
 const STATUS_ORDER: CustomerOrderStatus[] = [
   'placed',
@@ -70,17 +75,19 @@ const STATUS_ORDER: CustomerOrderStatus[] = [
   'paid',
 ]
 
-const STATUS_HINT: Record<CustomerOrderStatus, string> = {
-  placed: 'Waiting for confirmation…',
-  confirmed: 'Confirmed! Sending to kitchen…',
-  preparing: 'Our kitchen is working on it!',
-  ready: 'Ready to be served!',
-  served: 'Enjoy your meal! Payment will follow shortly.',
-  payment: 'Payment is being processed…',
-  paid: 'Payment confirmed. Thank you!',
-  cancelled: 'Your order was cancelled.',
-  payment_failed: 'Payment failed — please try again.',
-  refunded: 'This order has been refunded.',
+function getStatusHint(): Record<CustomerOrderStatus, string> {
+  return {
+    placed: m.customer_hint_placed(),
+    confirmed: m.customer_hint_confirmed(),
+    preparing: m.customer_hint_preparing(),
+    ready: m.customer_hint_ready(),
+    served: m.customer_hint_served(),
+    payment: m.customer_hint_payment(),
+    paid: m.customer_hint_paid(),
+    cancelled: m.customer_hint_cancelled(),
+    payment_failed: m.customer_hint_payment_failed(),
+    refunded: m.customer_hint_refunded(),
+  }
 }
 
 interface OrderViewProps {
@@ -138,7 +145,7 @@ function TerminalScreen({
       </div>
       <h1 style={{ color: C.white, fontSize: 20, fontWeight: 800, margin: 0 }}>{title}</h1>
       <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>
-        #{orderId.slice(0, 8).toUpperCase()} · Table {tableNumber}
+        #{orderId.slice(0, 8).toUpperCase()} · {m.customer_table({ name: tableNumber })}
       </p>
       <button
         type='button'
@@ -158,7 +165,7 @@ function TerminalScreen({
           boxShadow: C.shadowAmber,
         }}
       >
-        Back to Menu
+        {m.customer_back_to_menu()}
       </button>
     </div>
   )
@@ -223,7 +230,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       await cancelCustomerOrder(order.orderId, sessionToken)
       setCurrentStatus('cancelled')
     } catch {
-      toast.error('Could not cancel the order. Please ask a waiter for help.')
+      toast.error(m.customer_cancel_order_error())
     } finally {
       setIsCancelling(false)
     }
@@ -231,7 +238,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
 
   function handleCallWaiter() {
     if (callWaiterCooldownRef.current) {
-      toast.info('Waiter already notified — give them a moment!', { position: 'top-center' })
+      toast.info(m.customer_waiter_already_notified(), { position: 'top-center' })
       return
     }
     callWaiterCooldownRef.current = true
@@ -240,7 +247,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
     }, 5000)
 
     getSocket().emit(CLIENT_EVENTS.CALL_WAITER, { sessionToken })
-    toast.success('Waiter has been called!', { position: 'top-center' })
+    toast.success(m.customer_waiter_called(), { position: 'top-center' })
   }
 
   const isCancelled = currentStatus === 'cancelled'
@@ -259,7 +266,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       <TerminalScreen
         icon='❌'
         iconBg='rgba(239,68,68,0.12)'
-        title='Order Cancelled'
+        title={m.customer_order_cancelled_title()}
         orderId={order.orderId}
         tableNumber={order.tableNumber}
         onBackToMenu={onBackToMenu}
@@ -272,7 +279,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       <TerminalScreen
         icon='⚠️'
         iconBg='rgba(239,68,68,0.12)'
-        title='Payment Failed — Please Try Again'
+        title={m.customer_payment_failed_title()}
         orderId={order.orderId}
         tableNumber={order.tableNumber}
         onBackToMenu={onBackToMenu}
@@ -285,7 +292,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
       <TerminalScreen
         icon='💸'
         iconBg='rgba(99,102,241,0.12)'
-        title='Order Refunded'
+        title={m.customer_order_refunded_title()}
         orderId={order.orderId}
         tableNumber={order.tableNumber}
         onBackToMenu={onBackToMenu}
@@ -320,10 +327,15 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
           {isPaid ? '✨' : isServed ? '🎉' : isPayment ? '💳' : '⏳'}
         </div>
         <h1 style={{ color: C.white, fontSize: 20, fontWeight: 800, margin: '0 0 6px' }}>
-          {isPaid ? 'All done! Thank you!' : isServed ? 'Enjoy your meal!' : 'Order in Progress'}
+          {isPaid
+            ? m.customer_all_done_title()
+            : isServed
+              ? m.customer_enjoy_meal_title()
+              : m.customer_order_in_progress_title()}
         </h1>
         <p style={{ color: C.w40, fontSize: 13, margin: 0 }}>
-          #{order.orderId.slice(0, 8).toUpperCase()} · Table {order.tableNumber}
+          #{order.orderId.slice(0, 8).toUpperCase()} ·{' '}
+          {m.customer_table({ name: order.tableNumber })}
         </p>
       </div>
 
@@ -344,16 +356,18 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
           <Clock size={20} color={C.amber} />
           <div>
             <p style={{ color: C.amber, fontSize: 13, fontWeight: 700, margin: '0 0 1px' }}>
-              {STATUS_HINT[currentStatus]}
+              {getStatusHint()[currentStatus]}
             </p>
-            <p style={{ color: C.w40, fontSize: 11, margin: 0 }}>Waiting {elapsedLabel}</p>
+            <p style={{ color: C.w40, fontSize: 11, margin: 0 }}>
+              {m.customer_waiting_time({ time: elapsedLabel })}
+            </p>
           </div>
         </div>
       )}
 
       {/* Progress stepper */}
       <div style={{ padding: '24px 20px 0' }}>
-        {STEPS.map((step, i) => {
+        {getSteps().map((step, i, steps) => {
           const done = i < currentIdx || (isPaid && i === currentIdx)
           const active = i === currentIdx && !isPaid
           const pending = i > currentIdx
@@ -375,7 +389,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
           return (
             <div
               key={step.status}
-              style={{ display: 'flex', gap: 16, minHeight: i < STEPS.length - 1 ? 72 : 'auto' }}
+              style={{ display: 'flex', gap: 16, minHeight: i < steps.length - 1 ? 72 : 'auto' }}
             >
               {/* Connector column */}
               <div
@@ -394,7 +408,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
                     <span style={{ fontSize: 18, opacity: pending ? 0.3 : 1 }}>{step.icon}</span>
                   )}
                 </div>
-                {i < STEPS.length - 1 && (
+                {i < steps.length - 1 && (
                   <div
                     style={{
                       width: 2,
@@ -423,10 +437,12 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
                 </p>
                 {active && (
                   <p style={{ color: C.amber, fontSize: 11, fontWeight: 600, margin: 0 }}>
-                    In progress…
+                    {m.customer_in_progress()}
                   </p>
                 )}
-                {done && <p style={{ color: C.w40, fontSize: 11, margin: 0 }}>Completed</p>}
+                {done && (
+                  <p style={{ color: C.w40, fontSize: 11, margin: 0 }}>{m.customer_completed()}</p>
+                )}
               </div>
             </div>
           )
@@ -446,11 +462,11 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <MapPin size={14} color={C.amber} />
           <span style={{ color: C.w60, fontSize: 12, fontWeight: 600 }}>
-            Table {order.tableNumber} · {order.paymentMethod}
+            {m.customer_table({ name: order.tableNumber })} · {order.paymentMethod}
           </span>
         </div>
         <h3 style={{ color: C.white, fontSize: 14, fontWeight: 700, margin: '0 0 10px' }}>
-          Order Details
+          {m.customer_order_details()}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {order.items.map((item) => (
@@ -472,7 +488,9 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
         </div>
         <div style={{ height: 1, background: C.border, margin: '12px 0' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: C.white, fontSize: 14, fontWeight: 700 }}>Total</span>
+          <span style={{ color: C.white, fontSize: 14, fontWeight: 700 }}>
+            {m.customer_total()}
+          </span>
           <span style={{ color: C.amber, fontSize: 16, fontWeight: 800 }}>
             {formatPrice(order.total)}
           </span>
@@ -496,7 +514,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
             cursor: 'pointer',
           }}
         >
-          🙋 Call Waiter
+          {m.customer_call_waiter()}
         </button>
 
         {currentStatus === 'placed' && (
@@ -517,7 +535,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
               opacity: isCancelling ? 0.6 : 1,
             }}
           >
-            {isCancelling ? 'Cancelling…' : '✕ Cancel Order'}
+            {isCancelling ? m.customer_cancelling() : m.customer_cancel_order()}
           </button>
         )}
       </div>
@@ -541,7 +559,7 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
               boxShadow: C.shadowAmber,
             }}
           >
-            Back to Menu
+            {m.customer_back_to_menu()}
           </button>
         </div>
       )}

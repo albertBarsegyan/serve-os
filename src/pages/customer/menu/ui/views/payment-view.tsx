@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import type { CartItem } from '#/features/cart/model/cart.store'
 import { cartItemTotal } from '#/features/cart/model/cart.store'
 import type { CustomerPaymentMethod } from '#/features/platform/api/platform.types'
+import { m } from '#/paraglide/messages'
 import { createCustomerOrder, createCustomerPayment } from '#/shared/api/customer/customer-api'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { C } from '../customer-theme'
@@ -20,28 +21,32 @@ interface PaymentMethodConfig {
   iconBg: string
 }
 
-const PAYMENT_METHOD_CONFIGS: Record<ApiPaymentMethod, PaymentMethodConfig> = {
-  CASH: {
-    method: 'CASH',
-    label: 'Cash',
-    sublabel: 'Pay at the table',
-    icon: <Banknote size={18} color={C.green} />,
-    iconBg: C.greenBg,
-  },
-  POS: {
-    method: 'POS',
-    label: 'Card (POS)',
-    sublabel: 'Swipe or tap at counter',
-    icon: <CreditCard size={18} color='#6366F1' />,
-    iconBg: 'rgba(99,102,241,0.15)',
-  },
-  ONLINE: {
-    method: 'ONLINE',
-    label: 'Online Payment',
-    sublabel: 'UPI, GPay, PhonePe & more',
-    icon: <Smartphone size={18} color='#F97316' />,
-    iconBg: 'rgba(249,115,22,0.12)',
-  },
+// NOTE: built by a function (not a module-level constant) so labels re-evaluate against
+// the current locale on every render instead of being baked in at first import.
+function getPaymentMethodConfigs(): Record<ApiPaymentMethod, PaymentMethodConfig> {
+  return {
+    CASH: {
+      method: 'CASH',
+      label: m.customer_payment_cash(),
+      sublabel: m.customer_payment_cash_sub(),
+      icon: <Banknote size={18} color={C.green} />,
+      iconBg: C.greenBg,
+    },
+    POS: {
+      method: 'POS',
+      label: m.customer_payment_pos(),
+      sublabel: m.customer_payment_pos_sub(),
+      icon: <CreditCard size={18} color='#6366F1' />,
+      iconBg: 'rgba(99,102,241,0.15)',
+    },
+    ONLINE: {
+      method: 'ONLINE',
+      label: m.customer_payment_online(),
+      sublabel: m.customer_payment_online_sub(),
+      icon: <Smartphone size={18} color='#F97316' />,
+      iconBg: 'rgba(249,115,22,0.12)',
+    },
+  }
 }
 
 interface PaymentViewProps {
@@ -61,13 +66,15 @@ export function PaymentView({
   onBack,
   onSuccess,
 }: Readonly<PaymentViewProps>) {
+  const paymentMethodConfigs = useMemo(() => getPaymentMethodConfigs(), [])
+
   const activeMethods = useMemo<ApiPaymentMethod[]>(() => {
     const active = paymentMethods
-      .filter((m) => m.isActive)
-      .map((m) => m.method)
-      .filter((m): m is ApiPaymentMethod => m in PAYMENT_METHOD_CONFIGS)
+      .filter((pm) => pm.isActive)
+      .map((pm) => pm.method)
+      .filter((pm): pm is ApiPaymentMethod => pm in paymentMethodConfigs)
     return active.length > 0 ? active : (['CASH', 'POS', 'ONLINE'] as ApiPaymentMethod[])
-  }, [paymentMethods])
+  }, [paymentMethods, paymentMethodConfigs])
 
   const [selected, setSelected] = useState<ApiPaymentMethod>(() => activeMethods[0] ?? 'CASH')
 
@@ -129,7 +136,7 @@ export function PaymentView({
           <ChevronLeft size={20} color={C.w80} />
         </button>
         <h1 style={{ color: C.white, fontSize: 18, fontWeight: 700, margin: 0 }}>
-          Payment Options
+          {m.customer_payment_options_title()}
         </h1>
       </div>
 
@@ -152,10 +159,10 @@ export function PaymentView({
             }}
           >
             <span style={{ color: C.w60, fontSize: 12, fontWeight: 600 }}>
-              ORDER SUMMARY · {tableName}
+              {m.customer_order_summary()} · {tableName}
             </span>
             <span style={{ color: C.w40, fontSize: 12 }}>
-              {items.length} item{items.length !== 1 ? 's' : ''}
+              {m.customer_item_count({ count: items.length })}
             </span>
           </div>
           {items.slice(0, 3).map((item) => (
@@ -176,24 +183,26 @@ export function PaymentView({
           ))}
           {items.length > 3 && (
             <p style={{ color: C.w40, fontSize: 11, margin: '2px 0 0' }}>
-              +{items.length - 3} more items
+              {m.customer_more_items({ count: items.length - 3 })}
             </p>
           )}
           <div style={{ height: 1, background: C.border, margin: '10px 0' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 40 }}>
-                <span style={{ color: C.w40, fontSize: 12 }}>Subtotal</span>
+                <span style={{ color: C.w40, fontSize: 12 }}>{m.customer_subtotal()}</span>
                 <span style={{ color: C.w60, fontSize: 12 }}>{formatPrice(subtotal)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 40 }}>
-                <span style={{ color: C.w40, fontSize: 12 }}>GST (5%)</span>
+                <span style={{ color: C.w40, fontSize: 12 }}>
+                  {m.customer_gst_percent({ percent: (GST_RATE * 100).toFixed(0) })}
+                </span>
                 <span style={{ color: C.w60, fontSize: 12 }}>{formatPrice(gst)}</span>
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ color: C.w40, fontSize: 10, margin: '0 0 2px', fontWeight: 600 }}>
-                TOTAL
+                {m.customer_total_caps()}
               </p>
               <span style={{ color: C.amber, fontSize: 18, fontWeight: 800 }}>
                 {formatPrice(grandTotal)}
@@ -203,9 +212,9 @@ export function PaymentView({
         </div>
 
         {/* Payment methods */}
-        <PaymentSection title='Choose Payment Method'>
+        <PaymentSection title={m.customer_choose_payment_method()}>
           {activeMethods.map((method) => {
-            const config = PAYMENT_METHOD_CONFIGS[method]
+            const config = paymentMethodConfigs[method]
             return (
               <PaymentRow
                 key={method}
@@ -232,7 +241,7 @@ export function PaymentView({
               fontSize: 13,
             }}
           >
-            Something went wrong. Please try again.
+            {m.customer_generic_error()}
           </div>
         )}
       </div>
@@ -267,7 +276,9 @@ export function PaymentView({
             boxShadow: placeOrder.isPending ? 'none' : C.shadowAmber,
           }}
         >
-          {placeOrder.isPending ? 'Placing Order…' : `PROCEED TO PAY · ${formatPrice(grandTotal)}`}
+          {placeOrder.isPending
+            ? m.customer_placing_order()
+            : `${m.customer_proceed_to_pay()} · ${formatPrice(grandTotal)}`}
         </button>
       </div>
     </div>

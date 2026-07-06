@@ -16,18 +16,21 @@ import {
   usePaymentMethodsQuery,
   useUpsertPaymentMethodMutation,
 } from '#/features/business/model/business-hooks'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
 
-const onlineConfigSchema = z.object({
-  clientId: z.string().min(1, 'Client ID is required'),
-  secretKey: z.string().min(1, 'Secret key is required'),
-  merchantId: z.string().min(1, 'Merchant ID is required'),
-  testMode: z.boolean(),
-})
+function getOnlineConfigSchema() {
+  return z.object({
+    clientId: z.string().min(1, m.admin_payment_methods_client_id_required()),
+    secretKey: z.string().min(1, m.admin_payment_methods_secret_key_required()),
+    merchantId: z.string().min(1, m.admin_payment_methods_merchant_id_required()),
+    testMode: z.boolean(),
+  })
+}
 
-type OnlineConfigForm = z.infer<typeof onlineConfigSchema>
+type OnlineConfigForm = z.infer<ReturnType<typeof getOnlineConfigSchema>>
 
 interface MethodMeta {
   method: PaymentMethodType
@@ -86,7 +89,7 @@ function OnlineConfigForm({
     setValue,
     formState: { errors, isDirty },
   } = useForm<OnlineConfigForm>({
-    resolver: zodResolver(onlineConfigSchema),
+    resolver: zodResolver(getOnlineConfigSchema()),
     defaultValues: {
       clientId: config?.clientId ?? '',
       secretKey: config?.secretKey ?? '',
@@ -110,7 +113,7 @@ function OnlineConfigForm({
         businessId,
         payload: { method: 'ONLINE', isActive: isEnabled, config: values },
       })
-      showSuccess('Ameriabank vPOS credentials saved')
+      showSuccess(m.admin_payment_methods_vpos_credentials_saved())
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
@@ -127,20 +130,20 @@ function OnlineConfigForm({
       }}
     >
       <p className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-        Ameriabank vPOS Credentials
+        {m.admin_payment_methods_vpos_credentials_heading()}
       </p>
 
       <div className='grid gap-4 sm:grid-cols-2'>
         <div className='space-y-1'>
           <label htmlFor='clientId' className='text-sm font-medium'>
-            Client ID
+            {m.admin_payment_methods_client_id_label()}
           </label>
           <div className='relative'>
             <KeyRound className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
             <input
               id='clientId'
               type='text'
-              placeholder='e.g. 12345678'
+              placeholder={m.admin_payment_methods_client_id_placeholder()}
               className='h-10 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
               {...register('clientId')}
             />
@@ -150,7 +153,7 @@ function OnlineConfigForm({
 
         <div className='space-y-1'>
           <label htmlFor='secretKey' className='text-sm font-medium'>
-            Secret Key
+            {m.admin_payment_methods_secret_key_label()}
           </label>
           <div className='relative'>
             <KeyRound className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
@@ -167,12 +170,12 @@ function OnlineConfigForm({
 
         <div className='space-y-1'>
           <label htmlFor='merchantId' className='text-sm font-medium'>
-            Merchant ID
+            {m.admin_payment_methods_merchant_id_label()}
           </label>
           <input
             id='merchantId'
             type='text'
-            placeholder='e.g. MerchantID'
+            placeholder={m.admin_payment_methods_merchant_id_placeholder()}
             className='h-10 w-full rounded-xl border border-input bg-background px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
             {...register('merchantId')}
           />
@@ -186,7 +189,7 @@ function OnlineConfigForm({
             onChange={(e) => setValue('testMode', e.target.checked, { shouldDirty: true })}
           />
           <label htmlFor='testMode' className='cursor-pointer text-sm font-medium'>
-            Test mode (sandbox)
+            {m.admin_payment_methods_test_mode()}
           </label>
         </div>
       </div>
@@ -199,10 +202,14 @@ function OnlineConfigForm({
           disabled={upsertMutation.isPending || !isDirty}
         >
           <Save className='mr-2 h-4 w-4' />
-          {upsertMutation.isPending ? 'Saving…' : 'Save Credentials'}
+          {upsertMutation.isPending
+            ? m.admin_payment_methods_saving()
+            : m.admin_payment_methods_save_credentials()}
         </Button>
         {!isDirty && existing?.config && (
-          <span className='text-xs text-emerald-600'>Credentials saved</span>
+          <span className='text-xs text-emerald-600'>
+            {m.admin_payment_methods_credentials_saved()}
+          </span>
         )}
       </div>
     </form>
@@ -232,7 +239,11 @@ function PaymentMethodCard({
           config: existing?.config ?? undefined,
         },
       })
-      showSuccess(`${methodMeta.label} ${enabled ? 'enabled' : 'disabled'}`)
+      showSuccess(
+        enabled
+          ? m.admin_payment_methods_enabled({ method: methodMeta.label })
+          : m.admin_payment_methods_disabled({ method: methodMeta.label }),
+      )
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
@@ -242,7 +253,7 @@ function PaymentMethodCard({
     if (!existing) return
     try {
       await deleteMutation.mutateAsync({ businessId, methodId: existing.id })
-      showSuccess(`${methodMeta.label} configuration removed`)
+      showSuccess(m.admin_payment_methods_config_removed({ method: methodMeta.label }))
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
@@ -275,7 +286,7 @@ function PaymentMethodCard({
                 className='h-8 w-8 text-muted-foreground hover:text-destructive'
                 disabled={isBusy}
                 onClick={() => void handleDelete()}
-                title='Remove configuration'
+                title={m.admin_payment_methods_remove_config()}
               >
                 <Trash2 className='h-4 w-4' />
               </Button>
@@ -298,8 +309,7 @@ function PaymentMethodCard({
       {isEnabled && methodMeta.method === 'POS' && (
         <CardContent>
           <div className='rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground'>
-            Physical card terminal — no API credentials required. Staff manually process card
-            payments on the bank terminal and confirm in the POS interface.
+            {m.admin_payment_methods_pos_description()}
           </div>
         </CardContent>
       )}
@@ -307,8 +317,7 @@ function PaymentMethodCard({
       {isEnabled && methodMeta.method === 'CASH' && (
         <CardContent>
           <div className='rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground'>
-            Cash payments — no additional configuration required. Staff confirm cash received
-            directly in the POS interface.
+            {m.admin_payment_methods_cash_description()}
           </div>
         </CardContent>
       )}
@@ -316,28 +325,28 @@ function PaymentMethodCard({
   )
 }
 
-const METHOD_META: MethodMeta[] = [
-  {
-    method: 'CASH',
-    label: 'Cash',
-    description: 'Accept cash payments. Staff confirm receipt in the POS.',
-    icon: <Banknote className='h-5 w-5' />,
-  },
-  {
-    method: 'POS',
-    label: 'Card — Physical Terminal',
-    description:
-      'Accept card payments via a physical bank terminal (Ameriabank, Evocabank, ACBA, Converse, etc.). No API integration needed.',
-    icon: <CreditCard className='h-5 w-5' />,
-  },
-  {
-    method: 'ONLINE',
-    label: 'Online — Ameriabank vPOS',
-    description:
-      'Accept online card payments (Visa, Mastercard, ArCa, Apple Pay, Google Pay) via Ameriabank vPOS redirect. Used for QR self-order flow.',
-    icon: <Globe className='h-5 w-5' />,
-  },
-]
+function getMethodMeta(): MethodMeta[] {
+  return [
+    {
+      method: 'CASH',
+      label: m.admin_payment_methods_cash_label(),
+      description: m.admin_payment_methods_cash_desc(),
+      icon: <Banknote className='h-5 w-5' />,
+    },
+    {
+      method: 'POS',
+      label: m.admin_payment_methods_pos_label(),
+      description: m.admin_payment_methods_pos_desc(),
+      icon: <CreditCard className='h-5 w-5' />,
+    },
+    {
+      method: 'ONLINE',
+      label: m.admin_payment_methods_online_label(),
+      description: m.admin_payment_methods_online_desc(),
+      icon: <Globe className='h-5 w-5' />,
+    },
+  ]
+}
 
 export function AdminPaymentMethodsContent() {
   const activeBusiness = useActiveBusiness()
@@ -349,10 +358,8 @@ export function AdminPaymentMethodsContent() {
   if (!activeBusiness) {
     return (
       <div className='space-y-4'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Payment Methods</h1>
-        <p className='text-muted-foreground'>
-          No active business selected. Please select a business from the sidebar.
-        </p>
+        <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_payment_methods_title()}</h1>
+        <p className='text-muted-foreground'>{m.admin_payment_methods_no_business()}</p>
       </div>
     )
   }
@@ -360,10 +367,8 @@ export function AdminPaymentMethodsContent() {
   return (
     <div className='space-y-8'>
       <div>
-        <h1 className='text-3xl font-semibold tracking-tight'>Payment Methods</h1>
-        <p className='text-muted-foreground'>
-          Enable the payment methods your business accepts and configure provider credentials.
-        </p>
+        <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_payment_methods_title()}</h1>
+        <p className='text-muted-foreground'>{m.admin_payment_methods_subtitle()}</p>
       </div>
 
       {isPending ? (
@@ -374,7 +379,7 @@ export function AdminPaymentMethodsContent() {
         </div>
       ) : (
         <div className='space-y-4'>
-          {METHOD_META.map((meta) => (
+          {getMethodMeta().map((meta) => (
             <PaymentMethodCard
               key={meta.method}
               methodMeta={meta}

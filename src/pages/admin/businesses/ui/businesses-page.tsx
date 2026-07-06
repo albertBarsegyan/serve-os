@@ -5,6 +5,7 @@ import {
   useBusinessesQuery,
   useDeleteBusinessMutation,
 } from '#/features/business/model/business-hooks'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
 import { Modal } from '#/shared/ui/modal'
@@ -43,7 +44,7 @@ export function AdminBusinessesPage() {
 
     try {
       await deleteBusinessMutation.mutateAsync(deleteTargetId)
-      showSuccess('Business deleted successfully')
+      showSuccess(m.admin_businesses_delete_success())
       setIsDeleteConfirmOpen(false)
       setDeleteTargetId(null)
     } catch (error) {
@@ -67,12 +68,14 @@ export function AdminBusinessesPage() {
       return (
         <div className='rounded-2xl border border-dashed border-border bg-muted/30 p-8 text-center'>
           <AlertCircle className='mx-auto h-12 w-12 text-muted-foreground/50' />
-          <h3 className='mt-4 text-lg font-semibold text-foreground'>No businesses yet</h3>
+          <h3 className='mt-4 text-lg font-semibold text-foreground'>
+            {m.admin_businesses_empty_heading()}
+          </h3>
           <p className='mt-2 text-sm text-muted-foreground'>
-            Create your first business to get started.
+            {m.admin_businesses_empty_description()}
           </p>
           <Button className='mt-6 rounded-full' onClick={() => handleOpenForm('add')}>
-            <Plus className='mr-2 h-4 w-4' /> Create First Business
+            <Plus className='mr-2 h-4 w-4' /> {m.admin_businesses_create_first()}
           </Button>
         </div>
       )
@@ -95,14 +98,18 @@ export function AdminBusinessesPage() {
                   business.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                 }`}
               >
-                {business.isActive ? 'Active' : 'Inactive'}
+                {business.isActive ? m.admin_businesses_active() : m.admin_businesses_inactive()}
               </div>
             </div>
 
             <div className='mb-6 space-y-2 text-sm text-muted-foreground'>
               <p>📍 {business.location}</p>
               <p>💰 {business.currency}</p>
-              <p className='text-xs'>Created {new Date(business.createdAt).toLocaleDateString()}</p>
+              <p className='text-xs'>
+                {m.admin_businesses_created({
+                  date: new Date(business.createdAt).toLocaleDateString(),
+                })}
+              </p>
             </div>
 
             <div className='flex gap-2'>
@@ -112,7 +119,7 @@ export function AdminBusinessesPage() {
                 className='flex-1 rounded-lg'
                 onClick={() => handleOpenForm('edit', business.id)}
               >
-                <Edit className='mr-2 h-4 w-4' /> Edit
+                <Edit className='mr-2 h-4 w-4' /> {m.admin_businesses_edit()}
               </Button>
               <Button
                 variant='outline'
@@ -121,7 +128,7 @@ export function AdminBusinessesPage() {
                 onClick={() => handleDeleteClick(business.id)}
                 disabled={deleteBusinessMutation.isPending}
               >
-                <Trash2 className='mr-2 h-4 w-4' /> Delete
+                <Trash2 className='mr-2 h-4 w-4' /> {m.admin_businesses_delete()}
               </Button>
             </div>
           </div>
@@ -134,11 +141,11 @@ export function AdminBusinessesPage() {
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Businesses</h1>
-          <p className='text-muted-foreground'>Manage all your registered businesses.</p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_businesses_heading()}</h1>
+          <p className='text-muted-foreground'>{m.admin_businesses_subtitle()}</p>
         </div>
         <Button size='sm' className='rounded-full' onClick={() => handleOpenForm('add')}>
-          <Plus className='mr-2 h-4 w-4' /> Add Business
+          <Plus className='mr-2 h-4 w-4' /> {m.admin_businesses_add_business()}
         </Button>
       </div>
 
@@ -151,23 +158,25 @@ export function AdminBusinessesPage() {
       <Modal
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
-        title='Delete Business'
+        title={m.admin_businesses_delete_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setIsDeleteConfirmOpen(false)}>
-              Cancel
+              {m.admin_businesses_cancel()}
             </Button>
             <Button
               variant='destructive'
               onClick={handleConfirmDelete}
               disabled={deleteBusinessMutation.isPending}
             >
-              {deleteBusinessMutation.isPending ? 'Deleting...' : 'Delete'}
+              {deleteBusinessMutation.isPending
+                ? m.admin_businesses_deleting()
+                : m.admin_businesses_delete()}
             </Button>
           </>
         }
       >
-        <p>Are you sure you want to delete this business? This action cannot be undone.</p>
+        <p>{m.admin_businesses_delete_confirm_text()}</p>
       </Modal>
     </div>
   )

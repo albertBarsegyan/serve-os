@@ -35,6 +35,7 @@ import {
   useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils.ts'
+import { m } from '#/paraglide/messages'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import type { TablePermissions } from '#/shared/libs/hooks/use-table-permissions.ts'
@@ -81,63 +82,73 @@ type StatusConfig = {
   pulse: boolean
 }
 
-const STATUS_CONFIG: Record<TableStatus, StatusConfig> = {
-  free: {
-    label: 'Available',
-    description: 'Table is free and ready for guests',
-    icon: Utensils,
-    nextLabel: 'Start order',
-    pulse: false,
-  },
-  new: {
-    label: 'New order',
-    description: 'Order placed, awaiting confirmation',
-    icon: Sparkles,
-    nextLabel: 'Confirm order',
-    pulse: false,
-  },
-  confirmed: {
-    label: 'Confirmed',
-    description: 'Order confirmed, ready for kitchen',
-    icon: Check,
-    nextLabel: 'Start preparing',
-    pulse: false,
-  },
-  preparing: {
-    label: 'In the kitchen',
-    description: 'Kitchen is working on this order',
-    icon: ChefHat,
-    nextLabel: 'Mark ready',
-    pulse: false,
-  },
-  ready: {
-    label: 'Ready to serve',
-    description: 'Order ready — bring it to the table',
-    icon: CheckCircle2,
-    nextLabel: 'Mark served',
-    pulse: true,
-  },
-  served: {
-    label: 'Served',
-    description: 'Food delivered, awaiting payment',
-    icon: Utensils,
-    nextLabel: 'Open payment',
-    pulse: false,
-  },
-  payment: {
-    label: 'Payment due',
-    description: 'Payment initiated, awaiting confirmation',
-    icon: CreditCard,
-    nextLabel: 'Confirm payment',
-    pulse: true,
-  },
-  paid: {
-    label: 'Paid',
-    description: 'Payment received — ready to close',
-    icon: CheckCircle2,
-    nextLabel: 'Close table',
-    pulse: false,
-  },
+function getStatusConfig(status: TableStatus): StatusConfig {
+  switch (status) {
+    case 'free':
+      return {
+        label: m.admin_tables_status_free_label(),
+        description: m.admin_tables_status_free_description(),
+        icon: Utensils,
+        nextLabel: m.admin_tables_status_free_next(),
+        pulse: false,
+      }
+    case 'new':
+      return {
+        label: m.admin_tables_status_new_label(),
+        description: m.admin_tables_status_new_description(),
+        icon: Sparkles,
+        nextLabel: m.admin_tables_status_new_next(),
+        pulse: false,
+      }
+    case 'confirmed':
+      return {
+        label: m.admin_tables_status_confirmed_label(),
+        description: m.admin_tables_status_confirmed_description(),
+        icon: Check,
+        nextLabel: m.admin_tables_status_confirmed_next(),
+        pulse: false,
+      }
+    case 'preparing':
+      return {
+        label: m.admin_tables_status_preparing_label(),
+        description: m.admin_tables_status_preparing_description(),
+        icon: ChefHat,
+        nextLabel: m.admin_tables_status_preparing_next(),
+        pulse: false,
+      }
+    case 'ready':
+      return {
+        label: m.admin_tables_status_ready_label(),
+        description: m.admin_tables_status_ready_description(),
+        icon: CheckCircle2,
+        nextLabel: m.admin_tables_status_ready_next(),
+        pulse: true,
+      }
+    case 'served':
+      return {
+        label: m.admin_tables_status_served_label(),
+        description: m.admin_tables_status_served_description(),
+        icon: Utensils,
+        nextLabel: m.admin_tables_status_served_next(),
+        pulse: false,
+      }
+    case 'payment':
+      return {
+        label: m.admin_tables_status_payment_label(),
+        description: m.admin_tables_status_payment_description(),
+        icon: CreditCard,
+        nextLabel: m.admin_tables_status_payment_next(),
+        pulse: true,
+      }
+    case 'paid':
+      return {
+        label: m.admin_tables_status_paid_label(),
+        description: m.admin_tables_status_paid_description(),
+        icon: CheckCircle2,
+        nextLabel: m.admin_tables_status_paid_next(),
+        pulse: false,
+      }
+  }
 }
 
 // ── Tone maps (literal Tailwind classes — no dynamic construction) ─────────────
@@ -260,7 +271,7 @@ function deriveStatus(
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function StatusPill({ status }: { status: TableStatus }) {
-  const { label, pulse } = STATUS_CONFIG[status]
+  const { label, pulse } = getStatusConfig(status)
   return (
     <span
       className={cn(
@@ -351,7 +362,7 @@ export function AdminTable({
   const [localWaiterCalled, setLocalWaiterCalled] = useState(false)
 
   const status = deriveStatus(activeOrder, pendingPayment, table.currentSessionId)
-  const config = STATUS_CONFIG[status]
+  const config = getStatusConfig(status)
   const StatusIcon = config.icon
 
   const confirmOrderMutation = useConfirmOrderMutation()
@@ -393,28 +404,28 @@ export function AdminTable({
       switch (status) {
         case 'new':
           await confirmOrderMutation.mutateAsync(activeOrder.id)
-          showSuccess('Order confirmed')
+          showSuccess(m.admin_tables_order_confirmed())
           break
         case 'confirmed':
           await updateStatusMutation.mutateAsync({
             orderId: activeOrder.id,
             data: { status: 'IN_KITCHEN' },
           })
-          showSuccess('Kitchen is preparing the order')
+          showSuccess(m.admin_tables_kitchen_preparing())
           break
         case 'preparing':
           await updateStatusMutation.mutateAsync({
             orderId: activeOrder.id,
             data: { status: 'READY' },
           })
-          showSuccess('Order is ready!')
+          showSuccess(m.admin_tables_order_ready())
           break
         case 'ready':
           await updateStatusMutation.mutateAsync({
             orderId: activeOrder.id,
             data: { status: 'DELIVERED' },
           })
-          showSuccess('Order served')
+          showSuccess(m.admin_tables_order_served())
           break
         case 'served':
           setShowPaymentChoice(true)
@@ -422,12 +433,12 @@ export function AdminTable({
         case 'payment':
           if (!pendingPayment) return
           await confirmPaymentMutation.mutateAsync({ paymentId: pendingPayment.id, data: {} })
-          showSuccess('Payment confirmed')
+          showSuccess(m.admin_tables_payment_confirmed())
           break
         case 'paid':
           if (!table.currentSessionId) return
           await closeSessionMutation.mutateAsync(table.currentSessionId)
-          showSuccess('Table is now available')
+          showSuccess(m.admin_tables_table_available())
           setIsOpen(false)
           break
       }
@@ -443,7 +454,7 @@ export function AdminTable({
         orderId: activeOrder.id,
         data: { status: 'CANCELLED' },
       })
-      showSuccess('Order was cancelled')
+      showSuccess(m.admin_tables_order_cancelled())
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
@@ -457,7 +468,7 @@ export function AdminTable({
       } else {
         await posMutation.mutateAsync({ orderId: activeOrder.id, data: {} })
       }
-      showSuccess('Payment due')
+      showSuccess(m.admin_tables_payment_due_toast())
       setShowPaymentChoice(false)
     } catch (err) {
       showError(getResponseErrorMessage(err))
@@ -485,7 +496,7 @@ export function AdminTable({
           {table.imageUrl ? (
             <LazyImage
               src={table.imageUrl}
-              alt={`Table ${table.number}`}
+              alt={m.admin_tables_table_label({ number: table.number })}
               className='absolute inset-0'
               imgClassName='h-full w-full object-contain'
             />
@@ -513,22 +524,26 @@ export function AdminTable({
         {/* Body */}
         <div className='p-2'>
           <div className='flex items-start justify-between gap-1'>
-            <span className='text-sm font-bold'>Table {table.number}</span>
+            <span className='text-sm font-bold'>
+              {m.admin_tables_table_label({ number: table.number })}
+            </span>
             <div className='flex shrink-0 flex-wrap justify-end gap-1'>
               <Badge
                 variant={table.isActive ? 'success' : 'outline'}
                 className='px-1.5 py-0 text-xs'
               >
-                {table.isActive ? 'Active' : 'Inactive'}
+                {table.isActive ? m.admin_tables_active() : m.admin_tables_inactive()}
               </Badge>
               {table.isReserved && (
                 <Badge variant='warning' className='px-1.5 py-0 text-xs'>
-                  Reserved
+                  {m.admin_tables_reserved_badge()}
                 </Badge>
               )}
             </div>
           </div>
-          <p className='mt-0.5 text-xs text-muted-foreground'>{table.capacity} seats</p>
+          <p className='mt-0.5 text-xs text-muted-foreground'>
+            {m.admin_tables_seats_count({ capacity: table.capacity })}
+          </p>
         </div>
       </button>
 
@@ -540,7 +555,7 @@ export function AdminTable({
             {/* Backdrop */}
             <button
               type='button'
-              aria-label='Close table detail'
+              aria-label={m.admin_tables_close_detail_aria()}
               className='fixed inset-0 bg-background/80 backdrop-blur-sm'
               onClick={() => setIsOpen(false)}
             />
@@ -549,13 +564,13 @@ export function AdminTable({
             <div
               role='dialog'
               aria-modal
-              aria-label={`Table ${table.number} details`}
+              aria-label={m.admin_tables_detail_aria_label({ number: table.number })}
               className='relative flex h-[92vh] max-h-[920px] w-[96vw] max-w-3xl animate-in fade-in zoom-in flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl duration-200'
             >
               {/* Close button */}
               <button
                 type='button'
-                aria-label='Close dialog'
+                aria-label={m.admin_tables_close_dialog_aria()}
                 onClick={() => setIsOpen(false)}
                 className='absolute right-4 top-4 z-10 bg-red-600 flex h-11 w-11 items-center justify-center rounded-xl border border-border text-white shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
               >
@@ -566,13 +581,17 @@ export function AdminTable({
               <div className='flex flex-1 flex-col gap-5 overflow-y-auto p-6 pb-8'>
                 {/* Header */}
                 <div className='pr-16'>
-                  <h2 className='text-2xl font-bold'>Table {table.number}</h2>
+                  <h2 className='text-2xl font-bold'>
+                    {m.admin_tables_table_label({ number: table.number })}
+                  </h2>
                   <div className='mt-2 flex flex-wrap items-center gap-2'>
                     <Badge variant={table.isActive ? 'success' : 'outline'}>
-                      {table.isActive ? 'Active' : 'Inactive'}
+                      {table.isActive ? m.admin_tables_active() : m.admin_tables_inactive()}
                     </Badge>
                     {table.isReserved && <Badge variant='warning'>{reservedLabel}</Badge>}
-                    <span className='text-sm text-muted-foreground'>{table.capacity} seats</span>
+                    <span className='text-sm text-muted-foreground'>
+                      {m.admin_tables_seats_count({ capacity: table.capacity })}
+                    </span>
                   </div>
                 </div>
 
@@ -581,7 +600,7 @@ export function AdminTable({
                   <div className='flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3'>
                     <div className='flex items-center gap-2 text-amber-400'>
                       <BellRing className='h-4 w-4 shrink-0' />
-                      <span className='text-sm font-medium'>Table needs a waiter</span>
+                      <span className='text-sm font-medium'>{m.admin_tables_needs_waiter()}</span>
                     </div>
                     <Button
                       size='sm'
@@ -589,7 +608,7 @@ export function AdminTable({
                       className='shrink-0 rounded-lg border-amber-500/40 text-amber-400 hover:bg-amber-500/10'
                       onClick={handleAcknowledge}
                     >
-                      Acknowledge
+                      {m.admin_tables_acknowledge()}
                     </Button>
                   </div>
                 )}
@@ -597,7 +616,7 @@ export function AdminTable({
                 {/* Status hero */}
                 <div className={cn('rounded-2xl border p-5', TONE_HERO[status])}>
                   <p className='mb-4 text-xs font-semibold uppercase tracking-widest opacity-50'>
-                    Order status
+                    {m.admin_tables_order_status_label()}
                   </p>
                   <div className='flex items-start gap-4'>
                     <div
@@ -620,7 +639,7 @@ export function AdminTable({
                 {showPaymentChoice ? (
                   <div className='space-y-3 rounded-xl border border-border p-4'>
                     <p className='text-sm font-medium text-muted-foreground'>
-                      Choose payment method
+                      {m.admin_tables_choose_payment_method()}
                     </p>
                     <div className='flex gap-3'>
                       <Button
@@ -629,14 +648,16 @@ export function AdminTable({
                         disabled={cashMutation.isPending || posMutation.isPending}
                         onClick={() => void handlePayment('cash')}
                       >
-                        {cashMutation.isPending ? 'Processing…' : 'Cash'}
+                        {cashMutation.isPending
+                          ? m.admin_tables_processing()
+                          : m.admin_tables_cash()}
                       </Button>
                       <Button
                         className='h-12 flex-1 rounded-xl'
                         disabled={cashMutation.isPending || posMutation.isPending}
                         onClick={() => void handlePayment('pos')}
                       >
-                        {posMutation.isPending ? 'Processing…' : 'POS'}
+                        {posMutation.isPending ? m.admin_tables_processing() : m.admin_tables_pos()}
                       </Button>
                     </div>
                     <Button
@@ -645,7 +666,7 @@ export function AdminTable({
                       className='w-full'
                       onClick={() => setShowPaymentChoice(false)}
                     >
-                      Cancel
+                      {m.admin_tables_cancel()}
                     </Button>
                   </div>
                 ) : (
@@ -668,12 +689,16 @@ export function AdminTable({
                 {/* Secondary actions */}
                 <div>
                   <p className='mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-                    Actions
+                    {m.admin_tables_actions_label()}
                   </p>
                   <div className='grid grid-cols-3 gap-3 sm:grid-cols-4'>
                     <ActionButton
                       icon={BellRing}
-                      label={effectiveWaiterCalled ? 'Clear call' : 'Call waiter'}
+                      label={
+                        effectiveWaiterCalled
+                          ? m.admin_tables_clear_call()
+                          : m.admin_tables_call_waiter()
+                      }
                       onClick={() => {
                         if (effectiveWaiterCalled) {
                           handleAcknowledge()
@@ -690,9 +715,12 @@ export function AdminTable({
 
                     <ActionButton
                       icon={QrCode}
-                      label='QR Code'
+                      label={m.admin_tables_qr_code_action()}
                       onClick={() => {
-                        setSelectedTable({ label: `Table ${table.number}`, qrCode: table.qrCode })
+                        setSelectedTable({
+                          label: m.admin_tables_table_label({ number: table.number }),
+                          qrCode: table.qrCode,
+                        })
                         setIsQrModalOpen(true)
                       }}
                     />
@@ -700,7 +728,7 @@ export function AdminTable({
                     {perms.canEdit && (
                       <ActionButton
                         icon={Edit2}
-                        label='Edit'
+                        label={m.admin_tables_edit_action()}
                         onClick={() => openEditTable(table)}
                       />
                     )}
@@ -708,7 +736,11 @@ export function AdminTable({
                     {perms.canManageReservation && (
                       <ActionButton
                         icon={table.isReserved ? CalendarX : Calendar}
-                        label={table.isReserved ? 'Unreserve' : 'Reserve'}
+                        label={
+                          table.isReserved
+                            ? m.admin_tables_unreserve_action()
+                            : m.admin_tables_reserve_action()
+                        }
                         disabled={isBusy || isSessionReserved}
                         onClick={() => void handleToggleReservation(table)}
                       />
@@ -717,7 +749,11 @@ export function AdminTable({
                     {perms.canToggleStatus && (
                       <ActionButton
                         icon={table.isActive ? PowerOff : Power}
-                        label={table.isActive ? 'Deactivate' : 'Activate'}
+                        label={
+                          table.isActive
+                            ? m.admin_tables_deactivate_action()
+                            : m.admin_tables_activate_action()
+                        }
                         disabled={isBusy}
                         onClick={() => void handleToggleStatus(table)}
                       />
@@ -726,7 +762,7 @@ export function AdminTable({
                     {hasActiveOrder && (
                       <ActionButton
                         icon={X}
-                        label='Cancel order'
+                        label={m.admin_tables_cancel_order_action()}
                         disabled={isActionBusy}
                         onClick={() => void handleCancelOrder()}
                         className='border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive'
@@ -747,7 +783,7 @@ export function AdminTable({
                       }}
                     >
                       <Trash2 className='mr-2 h-4 w-4' />
-                      Delete table
+                      {m.admin_tables_delete_table()}
                     </Button>
                   </div>
                 )}

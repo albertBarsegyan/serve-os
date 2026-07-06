@@ -33,6 +33,7 @@ import {
 } from '#/features/platform/model/platform-hooks.ts'
 import { ProductModal } from '#/features/product/ui/product-modal.tsx'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { ImageEntityType } from '#/shared/api/images/images.api'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
@@ -162,7 +163,7 @@ export function AdminMenuContent() {
         description: values.description || null,
         imageUrl: createImageUrl,
       })
-      showSuccess('Category created')
+      showSuccess(m.admin_menu_category_created())
       resetCreateForm({ name: '', description: '', sortOrder: 0 })
       setCreateImageUrl(null)
       setIsCategoryModalOpen(false)
@@ -188,7 +189,7 @@ export function AdminMenuContent() {
         categoryId: editingCategory.id,
         data: { ...values, description: values.description || null, imageUrl: editImageUrl },
       })
-      showSuccess('Category updated')
+      showSuccess(m.admin_menu_category_updated())
       setEditingCategory(null)
       if (activeCategory === editingCategory.name && values.name) {
         setActiveCategory(values.name)
@@ -202,7 +203,7 @@ export function AdminMenuContent() {
     if (!deletingCategory) return
     try {
       await deleteCategoryMutation.mutateAsync(deletingCategory.id)
-      showSuccess('Category deleted')
+      showSuccess(m.admin_menu_category_deleted())
       if (activeCategory === deletingCategory.name) {
         setActiveCategory('All')
         setPage(1)
@@ -217,7 +218,7 @@ export function AdminMenuContent() {
     if (!deletingProduct) return
     try {
       await deleteProductMutation.mutateAsync(deletingProduct.id)
-      showSuccess('Product removed')
+      showSuccess(m.admin_menu_product_removed())
       setDeletingProduct(null)
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -254,10 +255,8 @@ export function AdminMenuContent() {
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Menu Management</h1>
-          <p className='text-muted-foreground'>
-            Create and organize your digital menu categories and products.
-          </p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_menu_heading()}</h1>
+          <p className='text-muted-foreground'>{m.admin_menu_subheading()}</p>
         </div>
         {canEditMenu && (
           <div className='flex items-center gap-3'>
@@ -267,10 +266,10 @@ export function AdminMenuContent() {
               className='rounded-full'
               onClick={() => setIsCategoryModalOpen(true)}
             >
-              Add Category
+              {m.admin_menu_add_category()}
             </Button>
             <Button size='sm' className='rounded-full' onClick={openCreateModal}>
-              <Plus className='mr-2 h-4 w-4' /> Add Product
+              <Plus className='mr-2 h-4 w-4' /> {m.admin_menu_add_product()}
             </Button>
           </div>
         )}
@@ -280,7 +279,7 @@ export function AdminMenuContent() {
         <Card className='h-fit w-full lg:w-64'>
           <CardHeader>
             <CardTitle className='text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
-              Categories
+              {m.admin_menu_categories_title()}
             </CardTitle>
           </CardHeader>
           <CardContent className='space-y-1 p-2 pt-0'>
@@ -297,7 +296,7 @@ export function AdminMenuContent() {
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               )}
             >
-              All
+              {m.admin_menu_all_categories()}
             </button>
             {allCategoryData.map((category) => (
               <div key={category.id} className='group flex items-center gap-1'>
@@ -328,7 +327,7 @@ export function AdminMenuContent() {
                     <button
                       type='button'
                       className='rounded-lg p-1 hover:bg-accent'
-                      title='Edit category'
+                      title={m.admin_menu_edit_category_title()}
                       onClick={() => openEditCategory(category)}
                     >
                       <Edit2 className='h-3.5 w-3.5' />
@@ -336,7 +335,7 @@ export function AdminMenuContent() {
                     <button
                       type='button'
                       className='rounded-lg p-1 text-destructive hover:bg-destructive/10'
-                      title='Delete category'
+                      title={m.admin_menu_delete_category_title()}
                       onClick={() => setDeletingCategory(category)}
                     >
                       <Trash2 className='h-3.5 w-3.5' />
@@ -351,12 +350,12 @@ export function AdminMenuContent() {
         <Card className='flex-1 overflow-hidden'>
           <CardHeader className='border-b border-border'>
             <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-              <CardTitle>Products in {activeCategory}</CardTitle>
+              <CardTitle>{m.admin_menu_products_in({ category: activeCategory })}</CardTitle>
               <div className='relative'>
                 <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
                 <input
                   type='text'
-                  placeholder='Search products...'
+                  placeholder={m.admin_menu_search_placeholder()}
                   className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                   value={search}
                   onChange={(event) => {
@@ -371,18 +370,18 @@ export function AdminMenuContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='pl-8'>Product Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className='pr-8 text-right'>Actions</TableHead>
+                  <TableHead className='pl-8'>{m.admin_menu_col_product_name()}</TableHead>
+                  <TableHead>{m.admin_menu_col_category()}</TableHead>
+                  <TableHead>{m.admin_menu_col_price()}</TableHead>
+                  <TableHead>{m.admin_menu_col_status()}</TableHead>
+                  <TableHead className='pr-8 text-right'>{m.admin_menu_col_actions()}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isProductsPending && (
                   <TableRow>
                     <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
-                      Loading products...
+                      {m.admin_menu_loading_products()}
                     </TableCell>
                   </TableRow>
                 )}
@@ -394,15 +393,17 @@ export function AdminMenuContent() {
                         <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted'>
                           <ShoppingBag className='h-6 w-6 text-muted-foreground' />
                         </div>
-                        <h3 className='mb-1 text-base font-semibold'>No products yet</h3>
+                        <h3 className='mb-1 text-base font-semibold'>
+                          {m.admin_menu_no_products_title()}
+                        </h3>
                         <p className='mb-6 max-w-xs text-sm text-muted-foreground'>
                           {canEditMenu
-                            ? "You don't have any products yet. Start by adding your first product."
-                            : 'No products have been added yet.'}
+                            ? m.admin_menu_no_products_owner()
+                            : m.admin_menu_no_products_viewer()}
                         </p>
                         {canEditMenu && (
                           <Button size='sm' className='rounded-full' onClick={openCreateModal}>
-                            <Plus className='mr-2 h-4 w-4' /> Add your first product
+                            <Plus className='mr-2 h-4 w-4' /> {m.admin_menu_add_first_product()}
                           </Button>
                         )}
                       </div>
@@ -413,7 +414,7 @@ export function AdminMenuContent() {
                 {!isProductsPending && products.length > 0 && filteredItems.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className='h-24 text-center text-muted-foreground'>
-                      No products match your search.
+                      {m.admin_menu_no_products_match()}
                     </TableCell>
                   </TableRow>
                 )}
@@ -424,7 +425,7 @@ export function AdminMenuContent() {
                   return (
                     <TableRow key={item.id}>
                       <TableCell className='pl-8 font-bold'>{item.name}</TableCell>
-                      <TableCell>{category?.label ?? 'Uncategorized'}</TableCell>
+                      <TableCell>{category?.label ?? m.admin_menu_uncategorized()}</TableCell>
                       <TableCell className='font-mono'>
                         {formatPrice(Number(item.price), currency)}
                       </TableCell>
@@ -439,7 +440,7 @@ export function AdminMenuContent() {
                               item.isAvailable ? 'bg-white dark:bg-white' : 'bg-muted-foreground',
                             )}
                           />
-                          {item.isAvailable ? 'Available' : 'Hidden'}
+                          {item.isAvailable ? m.admin_menu_available() : m.admin_menu_hidden()}
                         </Badge>
                       </TableCell>
                       <TableCell className='pr-8 text-right'>
@@ -449,7 +450,11 @@ export function AdminMenuContent() {
                               variant='ghost'
                               size='icon'
                               className='rounded-full'
-                              title={item.isAvailable ? 'Mark as unavailable' : 'Mark as available'}
+                              title={
+                                item.isAvailable
+                                  ? m.admin_menu_mark_unavailable()
+                                  : m.admin_menu_mark_available()
+                              }
                               disabled={setAvailabilityMutation.isPending}
                               onClick={() =>
                                 setAvailabilityMutation.mutate({
@@ -515,7 +520,7 @@ export function AdminMenuContent() {
         onClose={() => setDeletingCategory(null)}
         onConfirm={() => void handleDeleteCategory()}
         name={deletingCategory?.name ?? ''}
-        entityLabel='category'
+        entityLabel={m.admin_menu_entity_label_category()}
         isPending={deleteCategoryMutation.isPending}
       />
 
@@ -525,7 +530,7 @@ export function AdminMenuContent() {
         onClose={() => setDeletingProduct(null)}
         onConfirm={() => void removeProduct()}
         name={deletingProduct?.name ?? ''}
-        entityLabel='product'
+        entityLabel={m.admin_menu_entity_label_product()}
         isPending={deleteProductMutation.isPending}
       />
 
@@ -533,11 +538,11 @@ export function AdminMenuContent() {
       <Modal
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
-        title='Create category'
+        title={m.admin_menu_create_category_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setIsCategoryModalOpen(false)}>
-              Cancel
+              {m.admin_menu_cancel()}
             </Button>
             <Button
               disabled={createCategoryMutation.isPending}
@@ -545,7 +550,7 @@ export function AdminMenuContent() {
                 void handleCreateSubmit(onCategorySubmit)()
               }}
             >
-              {createCategoryMutation.isPending ? 'Saving...' : 'Save'}
+              {createCategoryMutation.isPending ? m.admin_menu_saving() : m.admin_menu_save()}
             </Button>
           </>
         }
@@ -555,7 +560,7 @@ export function AdminMenuContent() {
             value={createImageUrl}
             onChange={setCreateImageUrl}
             entityType={ImageEntityType.BUSINESS_CATEGORY}
-            label='Category image'
+            label={m.admin_menu_category_image_label()}
             previewShape='square'
           />
           <div className='space-y-1'>
@@ -563,7 +568,7 @@ export function AdminMenuContent() {
               htmlFor={categoryNameId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Category name
+              {m.admin_menu_category_name_label()}
             </label>
             <input
               id={categoryNameId}
@@ -581,7 +586,7 @@ export function AdminMenuContent() {
               htmlFor={categoryDescriptionId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Description (optional)
+              {m.admin_menu_description_optional_label()}
             </label>
             <input
               id={categoryDescriptionId}
@@ -596,7 +601,7 @@ export function AdminMenuContent() {
               htmlFor={categorySortOrderId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Sort order
+              {m.admin_menu_sort_order_label()}
             </label>
             <input
               id={categorySortOrderId}
@@ -616,17 +621,17 @@ export function AdminMenuContent() {
       <Modal
         isOpen={Boolean(editingCategory)}
         onClose={() => setEditingCategory(null)}
-        title='Edit category'
+        title={m.admin_menu_edit_category_modal_title()}
         footer={
           <>
             <Button variant='ghost' onClick={() => setEditingCategory(null)}>
-              Cancel
+              {m.admin_menu_cancel()}
             </Button>
             <Button
               disabled={updateCategoryMutation.isPending}
               onClick={() => void handleEditSubmit(onEditCategorySubmit)()}
             >
-              {updateCategoryMutation.isPending ? 'Saving...' : 'Save'}
+              {updateCategoryMutation.isPending ? m.admin_menu_saving() : m.admin_menu_save()}
             </Button>
           </>
         }
@@ -636,7 +641,7 @@ export function AdminMenuContent() {
             value={editImageUrl}
             onChange={setEditImageUrl}
             entityType={ImageEntityType.BUSINESS_CATEGORY}
-            label='Category image'
+            label={m.admin_menu_category_image_label()}
             previewShape='square'
           />
           <div className='space-y-1'>
@@ -644,7 +649,7 @@ export function AdminMenuContent() {
               htmlFor={editNameId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Category name
+              {m.admin_menu_category_name_label()}
             </label>
             <input
               id={editNameId}
@@ -660,7 +665,7 @@ export function AdminMenuContent() {
               htmlFor={editDescriptionId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Description (optional)
+              {m.admin_menu_description_optional_label()}
             </label>
             <input
               id={editDescriptionId}
@@ -675,7 +680,7 @@ export function AdminMenuContent() {
               htmlFor={editSortOrderId}
               className='text-xs font-semibold uppercase text-muted-foreground'
             >
-              Sort order
+              {m.admin_menu_sort_order_label()}
             </label>
             <input
               id={editSortOrderId}

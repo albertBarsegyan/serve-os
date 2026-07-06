@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import type { Area, Point } from 'react-easy-crop'
 import Cropper from 'react-easy-crop'
 import { Button } from '#/components/ui/button'
+import { m } from '#/paraglide/messages'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock'
 
 interface ImageEditorDialogProps {
@@ -106,13 +107,13 @@ function EditorOverlay({
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
       <button
         type='button'
-        aria-label='Close editor'
+        aria-label={m.shared_image_editor_close_aria()}
         className='fixed inset-0 bg-background/80 backdrop-blur-sm'
         onClick={onCancel}
       />
 
       <div className='relative w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-lg'>
-        <h2 className='mb-4 text-lg font-semibold'>Edit Image</h2>
+        <h2 className='mb-4 text-lg font-semibold'>{m.shared_image_editor_title()}</h2>
 
         <div className='relative h-64 w-full overflow-hidden rounded-lg bg-black/10'>
           <Cropper
@@ -129,7 +130,9 @@ function EditorOverlay({
 
         <div className='mt-5 space-y-4'>
           <div className='flex items-center gap-3'>
-            <span className='w-18 shrink-0 text-sm text-muted-foreground'>Zoom</span>
+            <span className='w-18 shrink-0 text-sm text-muted-foreground'>
+              {m.shared_image_editor_zoom()}
+            </span>
             <input
               type='range'
               min={1}
@@ -143,7 +146,9 @@ function EditorOverlay({
           </div>
 
           <div className='flex items-center gap-3'>
-            <span className='w-18 shrink-0 text-sm text-muted-foreground'>Rotation</span>
+            <span className='w-18 shrink-0 text-sm text-muted-foreground'>
+              {m.shared_image_editor_rotation()}
+            </span>
             <input
               type='range'
               min={-180}
@@ -158,7 +163,7 @@ function EditorOverlay({
                 type='button'
                 onClick={() => setRotation((r) => r - 90)}
                 className='text-muted-foreground hover:text-foreground transition-colors'
-                title='Rotate -90°'
+                title={m.shared_image_editor_rotate_ccw()}
               >
                 <RotateCcw className='h-4 w-4' />
               </button>
@@ -166,7 +171,7 @@ function EditorOverlay({
                 type='button'
                 onClick={() => setRotation((r) => r + 90)}
                 className='text-muted-foreground hover:text-foreground transition-colors'
-                title='Rotate +90°'
+                title={m.shared_image_editor_rotate_cw()}
               >
                 <RotateCw className='h-4 w-4' />
               </button>
@@ -176,10 +181,10 @@ function EditorOverlay({
 
         <div className='mt-6 flex justify-end gap-3'>
           <Button variant='ghost' onClick={onCancel} disabled={isSaving}>
-            Cancel
+            {m.shared_image_editor_cancel()}
           </Button>
           <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Applying…' : 'Apply'}
+            {isSaving ? m.shared_image_editor_applying() : m.shared_image_editor_apply()}
           </Button>
         </div>
       </div>
