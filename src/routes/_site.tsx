@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { Nav, SiteFooter } from '#/pages/landing/landing/ui/landing-page'
+import Footer from '#/components/footer.tsx'
+import { Nav } from '#/pages/landing/landing/ui/landing-page'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 
 export const Route = createFileRoute('/_site')({
@@ -12,7 +13,7 @@ function SiteLayout() {
     <>
       <Nav />
       <Outlet />
-      <SiteFooter />
+      <Footer />
     </>
   )
 }

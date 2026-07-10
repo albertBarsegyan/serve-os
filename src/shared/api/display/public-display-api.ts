@@ -4,6 +4,8 @@ import type { DisplayOrderPayload } from '#/shared/realtime/events'
 
 export interface DisplaySnapshotResponse {
   businessId: string
+  businessName: string
+  logoUrl?: string | null
   preparing: DisplayOrderPayload[]
   ready: DisplayOrderPayload[]
 }

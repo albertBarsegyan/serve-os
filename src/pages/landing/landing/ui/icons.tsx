@@ -6,7 +6,7 @@ interface SvgProps {
   fill?: string
 }
 
-function Svg({ children, sw = 2, fill = 'none' }: SvgProps) {
+function Svg({ children, sw = 2, fill = 'none' }: Readonly<SvgProps>) {
   return (
     <svg
       viewBox='0 0 24 24'

@@ -4,8 +4,8 @@ import { createPortal } from 'react-dom'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
 import './landing.css'
 import { useNavigate } from '@tanstack/react-router'
-import Footer from '#/components/footer.tsx'
 import { LanguageSwitcher } from '#/components/language-switcher.tsx'
+import { ContactForm } from '#/features/contact/ui/contact-form.tsx'
 import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
 import { cn } from '#/lib/utils.ts'
 import { m } from '#/paraglide/messages'
@@ -136,7 +136,7 @@ export function Nav() {
           </nav>
           <div className='nav-right'>
             <PaletteSwitcher triggerClassName='palette-toggle h-[40px] w-[40px] rounded-[11px]' />
-            <LanguageSwitcher triggerClassName='palette-toggle h-[40px] w-[40px] rounded-[11px]' />
+            <LanguageSwitcher triggerClassName='h-[40px] w-auto gap-1.5 rounded-[11px] border border-[var(--line)] bg-[var(--panel)] px-3 text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--panel)] hover:text-[var(--accent)]' />
             <button
               type='button'
               className='theme-toggle'
@@ -516,54 +516,6 @@ function Timeline() {
 }
 
 function Pricing() {
-  const [cycle, setCycle] = useState('mo')
-  const plans = [
-    {
-      name: m.landing_pricing_starter_name(),
-      mo: '0',
-      yr: '0',
-      dollar: true,
-      suffix: '/mo',
-      desc: m.landing_pricing_starter_desc(),
-      feats: [
-        m.landing_pricing_starter_feat_1(),
-        m.landing_pricing_starter_feat_2(),
-        m.landing_pricing_starter_feat_3(),
-      ],
-      cta: m.landing_pricing_starter_cta(),
-      btn: 'ghost',
-    },
-    {
-      name: m.landing_pricing_pro_name(),
-      tag: m.landing_pricing_tag_popular(),
-      mo: '49',
-      yr: '39',
-      dollar: true,
-      suffix: '/mo',
-      feat: true,
-      desc: m.landing_pricing_pro_desc(),
-      feats: [
-        m.landing_pricing_pro_feat_1(),
-        m.landing_pricing_pro_feat_2(),
-        m.landing_pricing_pro_feat_3(),
-        m.landing_pricing_pro_feat_4(),
-      ],
-      cta: m.landing_nav_start_trial(),
-      btn: 'primary',
-    },
-    {
-      name: m.landing_pricing_scale_name(),
-      custom: m.landing_pricing_custom(),
-      desc: m.landing_pricing_scale_desc(),
-      feats: [
-        m.landing_pricing_scale_feat_1(),
-        m.landing_pricing_scale_feat_2(),
-        m.landing_pricing_scale_feat_3(),
-      ],
-      cta: m.landing_pricing_scale_cta(),
-      btn: 'ghost',
-    },
-  ]
   return (
     <section
       className='sec-pad'
@@ -582,56 +534,10 @@ function Pricing() {
             <span className='g'>{m.landing_pricing_title_line2()}</span>
           </h2>
           <p>{m.landing_pricing_subtitle()}</p>
-          <div className='price-toggle'>
-            <button
-              type='button'
-              className={cycle === 'mo' ? 'on' : ''}
-              onClick={() => setCycle('mo')}
-            >
-              {m.landing_pricing_toggle_monthly()}
-            </button>
-            <button
-              type='button'
-              className={cycle === 'yr' ? 'on' : ''}
-              onClick={() => setCycle('yr')}
-            >
-              {m.landing_pricing_toggle_yearly()}
-            </button>
-          </div>
         </Reveal>
-        <div className='price-grid'>
-          {plans.map((p) => (
-            <Reveal className={`plan${p.feat ? ' feat' : ''}`} key={p.name}>
-              <div className='pname'>
-                {p.name}
-                {p.tag && <span className='tag'>{p.tag}</span>}
-              </div>
-              <div className='price'>
-                {p.custom ? (
-                  <span className='amt nodollar'>{p.custom}</span>
-                ) : (
-                  <>
-                    <span>$</span>
-                    <span className='amt'>{cycle === 'yr' ? p.yr : p.mo}</span>
-                    <span>{p.suffix}</span>
-                  </>
-                )}
-              </div>
-              <p className='pdesc'>{p.desc}</p>
-              <ul>
-                {p.feats.map((f) => (
-                  <li key={f}>
-                    <Icons.Check />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <a className={`btn ${p.btn}`} href='/auth/sign-up'>
-                {p.cta}
-              </a>
-            </Reveal>
-          ))}
-        </div>
+        <Reveal className='contact-form-wrap'>
+          <ContactForm />
+        </Reveal>
       </div>
     </section>
   )
@@ -651,10 +557,6 @@ export function SiteCta() {
       </div>
     </section>
   )
-}
-
-export function SiteFooter() {
-  return <Footer />
 }
 
 export function LandingPage() {

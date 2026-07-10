@@ -119,9 +119,7 @@ function OrderDetailModal({
     order != null &&
     (['CREATED', 'CONFIRMED', 'IN_KITCHEN'] as OrderStatus[]).includes(order.status)
   const canRefund =
-    (isOwner() || hasPermission(StaffPermission.PAYMENT_REFUND)) &&
-    order != null &&
-    order.status === 'CLOSED'
+    (isOwner() || hasPermission(StaffPermission.PAYMENT_REFUND)) && order?.status === 'CLOSED'
 
   const refund = async () => {
     try {
@@ -463,13 +461,23 @@ export function AdminOrdersContent() {
     }
   }
 
-  const nextStatus: Partial<
-    Record<OrderStatus, 'IN_KITCHEN' | 'READY' | 'DELIVERED' | 'CLOSED' | 'CANCELLED'>
-  > = {
-    CONFIRMED: 'IN_KITCHEN',
-    IN_KITCHEN: 'READY',
-    READY: 'DELIVERED',
-    DELIVERED: 'CLOSED',
+  // READY → DELIVERED only exists for DINE_IN orders (backend OrderTransitionService);
+  // takeaway/delivery orders go straight from READY to CLOSED via the payment flow instead.
+  const getNextStatus = (
+    order: Order,
+  ): 'IN_KITCHEN' | 'READY' | 'DELIVERED' | 'CLOSED' | undefined => {
+    switch (order.status) {
+      case 'CONFIRMED':
+        return 'IN_KITCHEN'
+      case 'IN_KITCHEN':
+        return 'READY'
+      case 'READY':
+        return order.type === 'DINE_IN' ? 'DELIVERED' : undefined
+      case 'DELIVERED':
+        return 'CLOSED'
+      default:
+        return undefined
+    }
   }
 
   const confirmMutation = useConfirmOrderMutation()
@@ -681,7 +689,7 @@ export function AdminOrdersContent() {
                             : m.admin_orders_confirm()}
                         </Button>
                       )}
-                      {order.status !== 'CREATED' && nextStatus[order.status] && (
+                      {order.status !== 'CREATED' && getNextStatus(order) && (
                         <Button
                           variant='secondary'
                           size='sm'
@@ -689,14 +697,14 @@ export function AdminOrdersContent() {
                           className='rounded-full'
                           disabled={pendingOrderIds.has(order.id)}
                           onClick={() => {
-                            const next = nextStatus[order.status]
+                            const next = getNextStatus(order)
                             if (next) void moveOrderForward(order.id, next)
                           }}
                         >
                           {pendingOrderIds.has(order.id)
                             ? '…'
                             : m.admin_orders_to_status({
-                                status: String(nextStatus[order.status])
+                                status: String(getNextStatus(order))
                                   .toLowerCase()
                                   .replaceAll('_', ' '),
                               })}

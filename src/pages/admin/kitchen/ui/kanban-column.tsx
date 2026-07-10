@@ -5,7 +5,7 @@ import { Badge } from '#/components/ui/badge'
 import type { Order } from '#/features/platform/api/platform.types.ts'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
-import type { AdvanceStatus, columns } from '../lib/kanban.ts'
+import { type AdvanceStatus, COLUMN_THEME, type columns } from '../lib/kanban.ts'
 import { OrderCard } from './order-card.tsx'
 
 const EMPTY_STATE_COPY: Record<string, { title: () => string; hint: () => string }> = {
@@ -35,15 +35,18 @@ export const KanbanColumn = memo(function KanbanColumn({
   const { setNodeRef, isOver } = useDroppable({ id: column.key })
   const orderIds = useMemo(() => orders.map((order) => order.id), [orders])
   const empty = EMPTY_STATE_COPY[column.key]
+  const theme = COLUMN_THEME[column.key]
 
   return (
     <div className='flex flex-col space-y-4 overflow-hidden'>
-      <div className='flex items-center justify-between px-2'>
+      <div
+        className={cn('flex items-center justify-between rounded-2xl px-4 py-3', theme.headerBg)}
+      >
         <div className='flex items-center gap-2'>
-          <column.icon className={cn('h-5 w-5', column.color)} />
-          <h3 className='text-lg font-semibold'>{column.title}</h3>
+          <theme.icon className={cn('h-5 w-5', theme.iconColor)} />
+          <h3 className={cn('text-lg font-semibold', theme.headerText)}>{column.title}</h3>
         </div>
-        <Badge variant='default' className='rounded-full'>
+        <Badge variant='default' className={cn('rounded-full', theme.badge)}>
           {orders.length}
         </Badge>
       </div>
@@ -68,11 +71,16 @@ export const KanbanColumn = memo(function KanbanColumn({
 
         {!isLoading && orders.length === 0 && (
           <div className='flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border py-10 text-center'>
-            <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
-              <column.icon className={cn('h-5 w-5', column.color)} />
+            <div
+              className={cn(
+                'mb-3 flex h-12 w-12 items-center justify-center rounded-full',
+                theme.headerBg,
+              )}
+            >
+              <theme.icon className={cn('h-5 w-5', theme.iconColor)} />
             </div>
             <p className='text-sm font-semibold'>{empty.title()}</p>
-            <p className='mt-1 max-w-[10rem] text-xs text-muted-foreground'>{empty.hint()}</p>
+            <p className='mt-1 max-w-40 text-xs text-muted-foreground'>{empty.hint()}</p>
           </div>
         )}
         {isLoading && column.key === 'queue' && (

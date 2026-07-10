@@ -154,47 +154,52 @@ function getStatusConfig(status: TableStatus): StatusConfig {
 // ── Tone maps (literal Tailwind classes — no dynamic construction) ─────────────
 
 const TONE_BADGE: Record<TableStatus, string> = {
-  free: 'bg-slate-500 text-slate-300 border border-slate-500/30',
-  new: 'bg-sky-500 text-sky-100 border border-sky-500/30',
-  confirmed: 'bg-indigo-500 text-indigo-100 border border-indigo-500/30',
-  preparing: 'bg-amber-500 text-amber-200 border border-amber-500/30',
-  ready: 'bg-emerald-500 text-emerald-100 border border-emerald-500/30',
-  served: 'bg-teal-500 text-teal-100 border border-teal-500/30',
-  payment: 'bg-orange-500 text-orange-100 border border-orange-500/30',
-  paid: 'bg-green-500 text-green-200 border border-green-600',
+  free: 'bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-900/50 dark:text-slate-200 dark:border-slate-700',
+  new: 'bg-sky-100 text-sky-800 border border-sky-200 dark:bg-sky-900/40 dark:text-sky-200 dark:border-sky-700',
+  confirmed:
+    'bg-indigo-100 text-indigo-800 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-200 dark:border-indigo-700',
+  preparing:
+    'bg-amber-100 text-amber-900 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700',
+  ready:
+    'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-700',
+  served:
+    'bg-teal-100 text-teal-800 border border-teal-200 dark:bg-teal-900/40 dark:text-teal-200 dark:border-teal-700',
+  payment:
+    'bg-orange-100 text-orange-900 border border-orange-200 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-700',
+  paid: 'bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/40 dark:text-green-200 dark:border-green-700',
 }
 
 const TONE_DOT: Record<TableStatus, string> = {
-  free: 'bg-slate-300',
-  new: 'bg-sky-100',
-  confirmed: 'bg-indigo-100',
-  preparing: 'bg-amber-200',
-  ready: 'bg-emerald-100',
-  served: 'bg-teal-100',
-  payment: 'bg-orange-100',
-  paid: 'bg-green-200',
+  free: 'bg-slate-500',
+  new: 'bg-sky-500',
+  confirmed: 'bg-indigo-500',
+  preparing: 'bg-amber-500',
+  ready: 'bg-emerald-500',
+  served: 'bg-teal-500',
+  payment: 'bg-orange-500',
+  paid: 'bg-green-500',
 }
 
 const TONE_HERO: Record<TableStatus, string> = {
-  free: 'bg-slate-500/10 border-slate-500/20',
-  new: 'bg-sky-500/10 border-sky-500/20',
-  confirmed: 'bg-indigo-500/10 border-indigo-500/20',
-  preparing: 'bg-amber-500/10 border-amber-500/20',
-  ready: 'bg-emerald-500/10 border-emerald-500/20',
-  served: 'bg-teal-500/10 border-teal-500/20',
-  payment: 'bg-orange-500/10 border-orange-500/20',
-  paid: 'bg-green-500/10 border-green-500/20',
+  free: 'bg-slate-50 border-slate-200 dark:bg-slate-900/20 dark:border-slate-800',
+  new: 'bg-sky-50 border-sky-200 dark:bg-sky-900/20 dark:border-sky-800',
+  confirmed: 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-800',
+  preparing: 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800',
+  ready: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800',
+  served: 'bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:border-teal-800',
+  payment: 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800',
+  paid: 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800',
 }
 
 const TONE_ICON: Record<TableStatus, string> = {
-  free: 'text-slate-400',
-  new: 'text-sky-400',
-  confirmed: 'text-indigo-400',
-  preparing: 'text-amber-400',
-  ready: 'text-emerald-400',
-  served: 'text-teal-400',
-  payment: 'text-orange-400',
-  paid: 'text-green-400',
+  free: 'text-slate-600 dark:text-slate-400',
+  new: 'text-sky-600 dark:text-sky-400',
+  confirmed: 'text-indigo-600 dark:text-indigo-400',
+  preparing: 'text-amber-600 dark:text-amber-400',
+  ready: 'text-emerald-600 dark:text-emerald-400',
+  served: 'text-teal-600 dark:text-teal-400',
+  payment: 'text-orange-600 dark:text-orange-400',
+  paid: 'text-green-600 dark:text-green-400',
 }
 
 const TONE_BUTTON: Record<TableStatus, string> = {
@@ -209,14 +214,14 @@ const TONE_BUTTON: Record<TableStatus, string> = {
 }
 
 const TONE_STEPPER: Record<TableStatus, string> = {
-  free: 'bg-slate-400',
-  new: 'bg-sky-400',
-  confirmed: 'bg-indigo-400',
-  preparing: 'bg-amber-400',
-  ready: 'bg-emerald-400',
-  served: 'bg-teal-400',
-  payment: 'bg-orange-400',
-  paid: 'bg-green-400',
+  free: 'bg-slate-500',
+  new: 'bg-sky-500',
+  confirmed: 'bg-indigo-500',
+  preparing: 'bg-amber-500',
+  ready: 'bg-emerald-500',
+  served: 'bg-teal-500',
+  payment: 'bg-orange-500',
+  paid: 'bg-green-500',
 }
 
 const LIFECYCLE: TableStatus[] = [

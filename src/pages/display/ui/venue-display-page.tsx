@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { isHTTPError } from 'ky'
-import { ChefHat, Utensils, Wifi, WifiOff } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Building2, ChefHat, Maximize, Minimize, Utensils, Wifi, WifiOff } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { ThemeSwitcher } from '#/components/theme-switcher.tsx'
 import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
+import { cn } from '#/lib/utils.ts'
 import { displaySnapshotQueryOptions } from '#/shared/api/display/public-display-api'
+import { useAutoCycleScroll } from '#/shared/libs/hooks/use-auto-cycle-scroll'
 import type { DisplayOrderPayload } from '#/shared/realtime/events'
 import { getSocket } from '#/shared/realtime/socket'
 import { useDisplayRealtime } from '#/shared/realtime/use-display-realtime'
@@ -37,9 +39,18 @@ function DisplayColumn({
   title,
   icon,
   orders,
-}: Readonly<{ title: string; icon: React.ReactNode; orders: DisplayOrderPayload[] }>) {
+  className,
+}: Readonly<{
+  title: string
+  icon: React.ReactNode
+  orders: DisplayOrderPayload[]
+  className?: string
+}>) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useAutoCycleScroll(scrollRef, [orders.length])
+
   return (
-    <section className='flex min-h-0 flex-1 flex-col'>
+    <section className={cn('flex min-h-0 flex-1 flex-col', className)}>
       <div className='mb-4 flex items-center gap-2'>
         {icon}
         <h2 className='text-2xl font-bold tracking-tight'>{title}</h2>
@@ -47,7 +58,10 @@ function DisplayColumn({
           {orders.length}
         </span>
       </div>
-      <div className='grid flex-1 auto-rows-min grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2 xl:grid-cols-3'>
+      <div
+        ref={scrollRef}
+        className='grid flex-1 auto-rows-min grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2 xl:grid-cols-3'
+      >
         {orders.length === 0 ? (
           <p className='text-muted-foreground'>Nothing here right now.</p>
         ) : (
@@ -59,7 +73,9 @@ function DisplayColumn({
 }
 
 export function VenueDisplayPage({ token }: Readonly<{ token: string }>) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isConnected, setIsConnected] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useDisplayRealtime(token)
 
@@ -76,6 +92,22 @@ export function VenueDisplayPage({ token }: Readonly<{ token: string }>) {
       socket.off('disconnect', onDisconnect)
     }
   }, [])
+
+  useEffect(() => {
+    if (globalThis.document === undefined) return
+    const onFullscreenChange = () => setIsFullscreen(document.fullscreenElement !== null)
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
+
+  function toggleFullscreen() {
+    if (globalThis.document === undefined) return
+    if (document.fullscreenElement) {
+      void document.exitFullscreen()
+    } else {
+      void containerRef.current?.requestFullscreen()
+    }
+  }
 
   const { data, isPending, isError, error } = useQuery(displaySnapshotQueryOptions(token))
 
@@ -95,23 +127,49 @@ export function VenueDisplayPage({ token }: Readonly<{ token: string }>) {
   }
 
   return (
-    <div className='flex h-screen flex-col gap-6 overflow-hidden bg-background p-8 text-foreground'>
+    <div
+      ref={containerRef}
+      className='flex h-screen flex-col gap-6 overflow-hidden bg-background p-8 text-foreground'
+    >
       <header className='flex shrink-0 items-center justify-between'>
         <div>
+          <div id='businessInfo' className='flex items-center gap-2.5'>
+            {data?.logoUrl ? (
+              <img
+                src={data.logoUrl}
+                alt={data.businessName}
+                className='h-9 w-9 shrink-0 rounded-lg object-cover'
+              />
+            ) : data?.businessName ? (
+              <Building2 className='h-7 w-7 shrink-0 text-muted-foreground' />
+            ) : null}
+            {data?.businessName && (
+              <span className='text-lg font-semibold text-foreground'>{data.businessName}</span>
+            )}
+          </div>
           <h1 className='text-3xl font-bold tracking-tight'>Orders</h1>
-          <div></div>
         </div>
-        <div className='flex items-center gap-1.5 text-sm text-muted-foreground'>
-          <PaletteSwitcher />
-          <ThemeSwitcher />
+        {!isFullscreen && (
+          <div id='controllers' className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+            <PaletteSwitcher />
+            <ThemeSwitcher />
+            <button
+              type='button'
+              onClick={toggleFullscreen}
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              className='rounded-md p-1.5 hover:bg-muted'
+            >
+              {isFullscreen ? <Minimize className='h-4 w-4' /> : <Maximize className='h-4 w-4' />}
+            </button>
 
-          {isConnected ? (
-            <Wifi className='h-4 w-4 text-emerald-500' />
-          ) : (
-            <WifiOff className='h-4 w-4 text-amber-500' />
-          )}
-          <span>{isConnected ? 'Live' : 'Reconnecting…'}</span>
-        </div>
+            {isConnected ? (
+              <Wifi className='h-4 w-4 text-emerald-500' />
+            ) : (
+              <WifiOff className='h-4 w-4 text-amber-500' />
+            )}
+            <span>{isConnected ? 'Live' : 'Reconnecting…'}</span>
+          </div>
+        )}
       </header>
 
       {isPending ? (
@@ -123,16 +181,18 @@ export function VenueDisplayPage({ token }: Readonly<{ token: string }>) {
           Couldn't load orders — retrying automatically.
         </div>
       ) : (
-        <div className='grid min-h-0 flex-1 grid-cols-1 gap-8 md:grid-cols-2'>
+        <div className='grid min-h-0 flex-1 grid-cols-2'>
           <DisplayColumn
             title='Preparing'
             icon={<ChefHat className='h-6 w-6 text-amber-500' />}
             orders={data?.preparing ?? []}
+            className='pr-6'
           />
           <DisplayColumn
             title='Ready'
             icon={<Utensils className='h-6 w-6 text-emerald-500' />}
             orders={data?.ready ?? []}
+            className='border-l border-border pl-6'
           />
         </div>
       )}
