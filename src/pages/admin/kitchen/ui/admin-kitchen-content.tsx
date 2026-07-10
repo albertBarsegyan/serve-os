@@ -9,32 +9,32 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { useQuery } from '@tanstack/react-query'
-import { Maximize2, Minimize2, Wifi, WifiOff } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { useOrderNotifications } from '#/features/notification'
-import type { Order } from '#/features/platform/api/platform.types.ts'
-import { kitchenActiveOrdersQueryOptions } from '#/features/platform/lib/query-options.ts'
-import { useUpdateOrderStatusMutation } from '#/features/platform/model/platform-hooks.ts'
-import { cn } from '#/lib/utils'
-import { m } from '#/paraglide/messages'
-import { showError } from '#/shared/libs/hooks/toast.ts'
-import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { getSocket } from '#/shared/realtime/socket'
+import {sortableKeyboardCoordinates} from '@dnd-kit/sortable'
+import {useQuery} from '@tanstack/react-query'
+import {Maximize2, Minimize2, Wifi, WifiOff} from 'lucide-react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {Badge} from '#/components/ui/badge'
+import {Button} from '#/components/ui/button'
+import {useOrderNotifications} from '#/features/notification'
+import type {Order} from '#/features/platform/api/platform.types.ts'
+import {kitchenActiveOrdersQueryOptions} from '#/features/platform/lib/query-options.ts'
+import {useUpdateOrderStatusMutation} from '#/features/platform/model/platform-hooks.ts'
+import {cn} from '#/lib/utils'
+import {m} from '#/paraglide/messages'
+import {showError} from '#/shared/libs/hooks/toast.ts'
+import {useSelectedBusinessId} from '#/shared/libs/hooks/use-active-business.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import {getSocket} from '#/shared/realtime/socket'
 import {
   type AdvanceStatus,
-  COLUMN_KEYS,
   type Column,
+  COLUMN_KEYS,
   columns,
   FORWARD_TRANSITIONS,
   groupOrdersByColumn,
 } from '../lib/kanban.ts'
-import { KanbanColumn } from './kanban-column.tsx'
-import { OrderCard } from './order-card.tsx'
+import {KanbanColumn} from './kanban-column.tsx'
+import {OrderCard} from './order-card.tsx'
 
 export function AdminKitchenContent() {
   const businessId = useSelectedBusinessId() ?? ''
@@ -93,8 +93,6 @@ export function AdminKitchenContent() {
 
   const advance = useCallback(
     (orderId: string, status: AdvanceStatus) => {
-      console.log('status', status)
-
       mutate(
         { orderId, data: { status } },
         { onError: (err) => showError(getResponseErrorMessage(err)) },

@@ -47,7 +47,7 @@ function DisplayColumn({
   className?: string
 }>) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  useAutoCycleScroll(scrollRef, [orders])
+  useAutoCycleScroll(scrollRef, [orders.length])
 
   return (
     <section className={cn('flex min-h-0 flex-1 flex-col', className)}>

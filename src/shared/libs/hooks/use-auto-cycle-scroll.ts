@@ -43,5 +43,6 @@ export function useAutoCycleScroll(
     timeoutId = setTimeout(step, STEP_INTERVAL_MS)
 
     return () => clearTimeout(timeoutId)
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <deps are correct array, rerender when reference changes>
   }, deps)
 }

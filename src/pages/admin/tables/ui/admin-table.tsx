@@ -15,12 +15,17 @@ import {
   Utensils,
   X,
 } from 'lucide-react'
-import {useEffect, useState} from 'react'
-import {createPortal} from 'react-dom'
-import {Badge} from '#/components/ui/badge'
-import {Button} from '#/components/ui/button'
-import {CreateStaffOrderDialog} from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
-import type {Order, OrderStatus, Payment, TableEntity,} from '#/features/platform/api/platform.types.ts'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { CreateStaffOrderDialog } from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
+import type {
+  Order,
+  OrderStatus,
+  Payment,
+  TableEntity,
+} from '#/features/platform/api/platform.types.ts'
 import {
   useCloseSessionMutation,
   useConfirmOrderMutation,
@@ -29,13 +34,13 @@ import {
   useProcessPosPaymentMutation,
   useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import {cn} from '#/lib/utils.ts'
-import {m} from '#/paraglide/messages'
-import {useBodyScrollLock} from '#/shared/libs/hooks/scroll-lock.ts'
-import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
-import type {TablePermissions} from '#/shared/libs/hooks/use-table-permissions.ts'
-import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
-import {LazyImage} from '#/shared/ui/lazy-image.tsx' // ── Types ──────────────────────────────────────────────────────────────────────
+import { cn } from '#/lib/utils.ts'
+import { m } from '#/paraglide/messages'
+import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
+import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import type { TablePermissions } from '#/shared/libs/hooks/use-table-permissions.ts'
+import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { LazyImage } from '#/shared/ui/lazy-image.tsx' // ── Types ──────────────────────────────────────────────────────────────────────
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
