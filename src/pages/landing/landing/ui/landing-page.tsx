@@ -1,19 +1,19 @@
-import type { CSSProperties, ElementType, ReactNode } from 'react'
-import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import type {CSSProperties, ElementType, ReactNode} from 'react'
+import {useEffect, useRef, useState} from 'react'
+import {createPortal} from 'react-dom'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
 import './landing.css'
-import { useNavigate } from '@tanstack/react-router'
-import { LanguageSwitcher } from '#/components/language-switcher.tsx'
-import { ContactForm } from '#/features/contact/ui/contact-form.tsx'
-import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
-import { cn } from '#/lib/utils.ts'
-import { m } from '#/paraglide/messages'
-import { getLocale } from '#/paraglide/runtime'
-import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
-import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
-import { Icons } from './icons'
-import { DashboardMock, FloatBadge, PhoneMock, QrCode } from './mockups'
+import {useNavigate} from '@tanstack/react-router'
+import {LanguageSwitcher} from '#/components/language-switcher.tsx'
+import {ContactForm} from '#/features/contact/ui/contact-form.tsx'
+import {PaletteSwitcher} from '#/features/palette/ui/PaletteSwitcher.tsx'
+import {cn} from '#/lib/utils.ts'
+import {m} from '#/paraglide/messages'
+import {getLocale} from '#/paraglide/runtime'
+import {useBodyScrollLock} from '#/shared/libs/hooks/scroll-lock.ts'
+import {LogoSvg} from '#/shared/ui/logo-svg.tsx'
+import {Icons} from './icons'
+import {DashboardMock, FloatBadge, PhoneMock, QrCode} from './mockups'
 
 interface RevealProps {
   as?: ElementType
@@ -80,6 +80,8 @@ export function Nav() {
 
   const close = () => setMenuOpen(false)
 
+  const storyUrl = locale === 'hy' ? 'https://story.serve-os.net/hy' : 'https://story.serve-os.net/'
+
   return (
     <>
       <header className={`nav${scrolled ? ' scrolled' : ''}`}>
@@ -129,7 +131,7 @@ export function Nav() {
               className={cn('nav-links-item', {
                 'small-font': isArmenian,
               })}
-              href='https://story.serve-os.net/'
+              href={storyUrl}
             >
               {m.landing_nav_story()}
             </a>
@@ -219,7 +221,8 @@ export function Nav() {
           type='button'
           className='mob-link'
           onClick={() => {
-            window.location.href = 'https://story.serve-os.net'
+            const language = getLocale()
+            window.location.href = `https://story.serve-os.net${language === 'hy' ? '/hy' : ''}`
             close()
           }}
         >
