@@ -80,6 +80,8 @@ export function Nav() {
 
   const close = () => setMenuOpen(false)
 
+  const storyUrl = locale === 'hy' ? 'https://story.serve-os.net/hy' : 'https://story.serve-os.net/'
+
   return (
     <>
       <header className={`nav${scrolled ? ' scrolled' : ''}`}>
@@ -129,7 +131,7 @@ export function Nav() {
               className={cn('nav-links-item', {
                 'small-font': isArmenian,
               })}
-              href='https://story.serve-os.net/'
+              href={storyUrl}
             >
               {m.landing_nav_story()}
             </a>
@@ -219,7 +221,8 @@ export function Nav() {
           type='button'
           className='mob-link'
           onClick={() => {
-            window.location.href = 'https://story.serve-os.net'
+            const language = getLocale()
+            window.location.href = `https://story.serve-os.net${language === 'hy' ? '/hy' : ''}`
             close()
           }}
         >
