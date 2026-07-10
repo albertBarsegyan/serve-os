@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { sessionQueryOptions } from '#/entities/session/lib/session-query-options'
 import type { CartModifier } from '#/features/cart/model/cart.store'
 import { cartItemTotal, useCartStore } from '#/features/cart/model/cart.store'
+import { useOrderNotifications, useSelfMutationSuppression } from '#/features/notification'
 import type { CustomerPaymentMethod } from '#/features/platform/api/platform.types'
 import { m } from '#/paraglide/messages'
 import { fetchCustomerMenu } from '#/shared/api/customer/customer-api'
@@ -14,10 +16,53 @@ import type { OrderRecord } from './views/order-view'
 import { OrderView } from './views/order-view'
 import { PaymentView } from './views/payment-view'
 import { ProductView } from './views/product-view'
+import { SessionClosedView } from './views/session-closed-view'
 import './styles.css'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type AppView = 'menu' | 'product' | 'cart' | 'payment' | 'order'
+
+export interface SharedOrderBanner {
+  orderId: string
+  label: string
+}
+
+type SharedOrderEvent =
+  | 'created'
+  | 'confirmed'
+  | 'preparing'
+  | 'ready'
+  | 'served'
+  | 'cancelled'
+  | 'paid'
+  | 'payment-failed'
+  | 'refunded'
+
+/** Events past which there's nothing left for another device to be notified about. */
+const TERMINAL_SHARED_ORDER_EVENTS = new Set<SharedOrderEvent>([
+  'served',
+  'cancelled',
+  'paid',
+  'payment-failed',
+  'refunded',
+])
+
+/**
+ * Pure state transition for the "someone else at this table placed/updated an order"
+ * banner — pulled out of the component so it's unit-testable without rendering the
+ * full customer app shell (menu query, cart store, theme, etc.).
+ */
+export function nextSharedOrderBanner(
+  current: SharedOrderBanner | null,
+  event: SharedOrderEvent,
+  orderId: string,
+  label: string,
+): SharedOrderBanner | null {
+  if (TERMINAL_SHARED_ORDER_EVENTS.has(event)) {
+    return current?.orderId === orderId ? null : current
+  }
+  return { orderId, label }
+}
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 interface CustomerMenuContentProps {
@@ -64,8 +109,63 @@ export function CustomerMenuContent({
   const [view, setView] = useState<AppView>('menu')
   const [selectedProduct, setSelectedProduct] = useState<CustomerProduct | null>(null)
   const [orderRecord, setOrderRecord] = useState<OrderRecord | null>(null)
+  const [sharedOrder, setSharedOrder] = useState<SharedOrderBanner | null>(null)
 
   const { items, addItem, updateQuantity, removeItem, clearCart } = useCartStore()
+
+  // Suppresses the generic "New order received" toast for the device that placed the
+  // order itself — see handleOrderSuccess, which marks its own order right after checkout.
+  const { markSelfMutated, isSelfMutated } = useSelfMutationSuppression()
+
+  // Mounted here (not just inside OrderView) so a guest still browsing the menu/cart on
+  // their own phone learns live that someone else at the table just placed an order —
+  // the whole point of everyone at a table sharing one sessionToken/room.
+  useOrderNotifications({
+    room: 'session',
+    id: sessionToken,
+    isSelfMutated,
+    handlers: {
+      'order:created': (p) => {
+        if (isSelfMutated(p.orderId)) return
+        setSharedOrder((prev) =>
+          nextSharedOrderBanner(prev, 'created', p.orderId, m.customer_step_order_placed()),
+        )
+      },
+      'order:confirmed': (p) => {
+        if (isSelfMutated(p.orderId)) return
+        setSharedOrder((prev) =>
+          nextSharedOrderBanner(prev, 'confirmed', p.orderId, m.customer_step_confirmed()),
+        )
+      },
+      'order:preparing': (p) => {
+        if (isSelfMutated(p.orderId)) return
+        setSharedOrder((prev) =>
+          nextSharedOrderBanner(prev, 'preparing', p.orderId, m.customer_step_preparing()),
+        )
+      },
+      'order:ready': (p) => {
+        if (isSelfMutated(p.orderId)) return
+        setSharedOrder((prev) =>
+          nextSharedOrderBanner(prev, 'ready', p.orderId, m.customer_step_ready()),
+        )
+      },
+      'order:served': (p) => {
+        setSharedOrder((prev) => nextSharedOrderBanner(prev, 'served', p.orderId, ''))
+      },
+      'order:cancelled': (p) => {
+        setSharedOrder((prev) => nextSharedOrderBanner(prev, 'cancelled', p.orderId, ''))
+      },
+      'order:paid': (p) => {
+        setSharedOrder((prev) => nextSharedOrderBanner(prev, 'paid', p.orderId, ''))
+      },
+      'order:payment-failed': (p) => {
+        setSharedOrder((prev) => nextSharedOrderBanner(prev, 'payment-failed', p.orderId, ''))
+      },
+      'order:refunded': (p) => {
+        setSharedOrder((prev) => nextSharedOrderBanner(prev, 'refunded', p.orderId, ''))
+      },
+    },
+  })
 
   const menuQuery = useQuery({
     queryKey: ['customer-menu', businessId],
@@ -73,6 +173,11 @@ export function CustomerMenuContent({
     staleTime: 5 * 60 * 1000,
     enabled: Boolean(businessId),
   })
+
+  // Seeded by the route loader; only refetches when useSessionRealtime invalidates it
+  // on a `session-closed` broadcast, so this stays cheap until the table actually closes.
+  const sessionStatusQuery = useQuery(sessionQueryOptions(sessionToken))
+  const isSessionClosed = sessionStatusQuery.data?.session === null
 
   const categories = menuQuery.data ?? []
   const allProducts = categories.flatMap((c) => c.products)
@@ -137,6 +242,7 @@ export function CustomerMenuContent({
       paymentMethod: 'ONLINE',
     }
     sessionStorage.setItem(ssKey, JSON.stringify(record))
+    markSelfMutated(orderId)
     setOrderRecord(record)
     clearCart()
     setView('order')
@@ -170,6 +276,20 @@ export function CustomerMenuContent({
   }
 
   const theme = isDark ? 'dark' : 'light'
+
+  // ── Session closed ──────────────────────────────────────────────────────────
+  // Only pre-empts the browsing views — 'payment' and 'order' already resolve their own
+  // terminal states from more specific order-lifecycle events (paid/cancelled/refunded).
+  if (isSessionClosed && (view === 'menu' || view === 'product' || view === 'cart')) {
+    return (
+      <div className='c-app' data-theme={theme}>
+        <SessionClosedView
+          tableName={tableName}
+          onRetry={() => globalThis.window.location.reload()}
+        />
+      </div>
+    )
+  }
 
   // ── Loading / error ─────────────────────────────────────────────────────────
   if (menuQuery.isPending && view !== 'order') {
@@ -272,6 +392,45 @@ export function CustomerMenuContent({
   // ── App shell ───────────────────────────────────────────────────────────────
   return (
     <div className='c-app' data-theme={theme} style={{ background: C.bg }}>
+      {sharedOrder && (view === 'menu' || view === 'product' || view === 'cart') && (
+        <div
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            padding: '10px 16px',
+            background: 'rgba(249,115,22,0.14)',
+            borderBottom: `1px solid ${C.amber}`,
+            color: C.white,
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          <span>{m.customer_shared_order_notice({ status: sharedOrder.label })}</span>
+          <button
+            type='button'
+            onClick={() => setSharedOrder(null)}
+            aria-label={m.customer_dismiss()}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: C.white,
+              fontSize: 16,
+              lineHeight: 1,
+              cursor: 'pointer',
+              padding: 4,
+              flexShrink: 0,
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {view === 'menu' && (
         <MenuView
           businessName={businessName}

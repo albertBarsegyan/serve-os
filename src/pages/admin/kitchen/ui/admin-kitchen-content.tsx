@@ -80,10 +80,6 @@ export function AdminKitchenContent() {
     refetch,
   } = useQuery(kitchenActiveOrdersQueryOptions())
 
-  // While a drag is in flight we freeze the rendered board in `displayOrders` so a
-  // background refetch (socket-triggered invalidate or the 15s poll) can't reflow
-  // cards under the user's cursor. `isDraggingRef` is a ref (not state) so pointer
-  // movement itself never causes a re-render — only drag start/end do.
   const isDraggingRef = useRef(false)
   const [displayOrders, setDisplayOrders] = useState<Order[]>(queryOrders)
 
@@ -97,6 +93,8 @@ export function AdminKitchenContent() {
 
   const advance = useCallback(
     (orderId: string, status: AdvanceStatus) => {
+      console.log('status', status)
+
       mutate(
         { orderId, data: { status } },
         { onError: (err) => showError(getResponseErrorMessage(err)) },
@@ -150,7 +148,7 @@ export function AdminKitchenContent() {
 
       // Only forward, adjacent-column transitions are valid — anything else snaps back.
       const transition = FORWARD_TRANSITIONS[sourceColumn]
-      if (!transition || transition.to !== targetColumn) return
+      if (transition?.to !== targetColumn) return
 
       advance(String(active.id), transition.status)
     },

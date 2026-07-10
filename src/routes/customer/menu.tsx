@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { menuQueryOptions } from '#/entities/menu/lib/menu-query-options'
+import { sessionQueryOptions } from '#/entities/session/lib/session-query-options'
 import { createSessionServerFn } from '#/features/guest-session/api/create-session.fns'
 import type { ScanSessionResponse } from '#/features/platform/api/platform.types'
 import { CustomerMenuPage } from '#/pages/customer/menu/ui/customer-menu-page'
@@ -45,6 +46,12 @@ export const Route = createFileRoute('/customer/menu')({
     // SSR the menu so the component gets it from cache without a second fetch
     if (session?.businessId) {
       await context.queryClient.ensureQueryData(menuQueryOptions(session?.businessId))
+    }
+
+    // Seed the session-status cache so useSessionRealtime's invalidation on
+    // `session-closed` has something to refetch into a real "session ended" state.
+    if (session?.sessionToken) {
+      await context.queryClient.ensureQueryData(sessionQueryOptions(session.sessionToken))
     }
 
     return session

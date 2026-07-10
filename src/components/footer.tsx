@@ -66,7 +66,7 @@ export default function Footer() {
               href='https://neolabsagency.com'
               target='_blank'
               rel='noreferrer'
-              className='font-medium transition hover:text-[var(--primary)]'
+              className='font-medium underline transition hover:text-[var(--primary)]'
             >
               {m.footer_made_by_name()}
             </a>

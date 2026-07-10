@@ -1,13 +1,13 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowRight, CheckCircle2, Clock, GripVertical } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Clock, GripVertical, StickyNote, User } from 'lucide-react'
 import { memo } from 'react'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import type { Order } from '#/features/platform/api/platform.types.ts'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
-import { type AdvanceStatus, formatItemLines, orderColumn } from '../lib/kanban.ts'
+import { type AdvanceStatus, COLUMN_THEME, getOrderLines, orderColumn } from '../lib/kanban.ts'
 
 interface OrderCardProps {
   order: Order
@@ -23,6 +23,8 @@ export const OrderCard = memo(function OrderCard({
   overlay = false,
 }: OrderCardProps) {
   const column = orderColumn(order.status)
+  const theme = COLUMN_THEME[column]
+  const lines = getOrderLines(order)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: order.id,
     data: { column },
@@ -41,7 +43,8 @@ export const OrderCard = memo(function OrderCard({
       ref={overlay ? undefined : setNodeRef}
       style={style}
       className={cn(
-        'border transition-shadow hover:shadow-lg',
+        'border border-l-4 transition-shadow hover:shadow-lg',
+        theme.cardAccent,
         isDragging && 'opacity-40',
         overlay && 'shadow-xl',
       )}
@@ -64,6 +67,12 @@ export const OrderCard = memo(function OrderCard({
                 ? m.admin_kitchen_table_number({ number: order.table.number })
                 : order.type}
             </span>
+            {order.customerName && (
+              <span className='mt-0.5 flex items-center gap-1 text-xs font-medium text-muted-foreground'>
+                <User className='h-3 w-3 shrink-0' aria-hidden='true' />
+                <span className='truncate'>{order.customerName}</span>
+              </span>
+            )}
           </div>
         </div>
         <div className='flex items-center gap-1.5 text-xs font-medium text-muted-foreground'>
@@ -72,13 +81,40 @@ export const OrderCard = memo(function OrderCard({
         </div>
       </CardHeader>
       <CardContent className='space-y-4'>
-        <ul className='space-y-2'>
-          {formatItemLines(order).map((line) => (
-            <li key={`${order.id}-${line}`} className='flex items-center gap-2 font-medium'>
-              <div className='h-1.5 w-1.5 rounded-full bg-primary' />
-              {line}
-            </li>
-          ))}
+        {order.notes && (
+          <div
+            className={cn(
+              'flex items-start gap-2 rounded-xl px-3 py-2 text-sm font-medium',
+              theme.noteBg,
+              theme.noteText,
+            )}
+          >
+            <StickyNote className='mt-0.5 h-4 w-4 shrink-0' aria-hidden='true' />
+            <span>{order.notes}</span>
+          </div>
+        )}
+
+        <ul className='space-y-3'>
+          {lines.length === 0 ? (
+            <li className='text-sm text-muted-foreground'>(no line items)</li>
+          ) : (
+            lines.map((line) => (
+              <li key={line.key} className='space-y-1'>
+                <div className='flex items-center gap-2 font-medium'>
+                  <div className='h-1.5 w-1.5 shrink-0 rounded-full bg-primary' />
+                  <span>
+                    {line.name} <span className='text-muted-foreground'>x{line.quantity}</span>
+                  </span>
+                </div>
+                {line.notes && (
+                  <p className='ml-3.5 flex items-start gap-1.5 text-xs italic text-muted-foreground'>
+                    <StickyNote className='mt-0.5 h-3 w-3 shrink-0' aria-hidden='true' />
+                    <span>{line.notes}</span>
+                  </p>
+                )}
+              </li>
+            ))
+          )}
         </ul>
 
         <div className='pt-2'>
@@ -102,7 +138,7 @@ export const OrderCard = memo(function OrderCard({
               {m.admin_kitchen_mark_ready()} <CheckCircle2 className='ml-2 h-4 w-4' />
             </Button>
           )}
-          {column === 'ready' && (
+          {column === 'ready' && order.type === 'DINE_IN' && (
             <Button
               type='button'
               variant='outline'
@@ -112,6 +148,11 @@ export const OrderCard = memo(function OrderCard({
             >
               {m.admin_kitchen_served()}
             </Button>
+          )}
+          {column === 'ready' && order.type !== 'DINE_IN' && (
+            <p className='text-center text-xs font-medium text-muted-foreground'>
+              {m.admin_kitchen_awaiting_handoff()}
+            </p>
           )}
         </div>
       </CardContent>
