@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react'
-import { m } from '#/paraglide/messages'
+import type {ReactNode} from 'react'
+import {m} from '#/paraglide/messages'
 import qrCode from '#/shared/assets/illustrations/qrcode.png'
-import { LazyImage } from '#/shared/ui/lazy-image.tsx'
-import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
-import { Icons } from './icons'
+import {LazyImage} from '#/shared/ui/lazy-image.tsx'
+import {LogoSvg} from '#/shared/ui/logo-svg.tsx'
+import {Icons} from './icons'
 
 interface FloatBadgeProps {
   pos: string
@@ -22,9 +22,9 @@ export function DashboardMock() {
     { icon: <Icons.Monitor />, label: m.landing_mockup_nav_kitchen() },
   ]
   const kpis = [
-    { lbl: m.landing_mockup_kpi_total_orders(), val: '256', delta: '+12%' },
-    { lbl: m.landing_mockup_kpi_revenue(), val: '$4,325', delta: '+13%' },
-    { lbl: m.landing_mockup_kpi_active_tables(), val: '18', delta: '/40' },
+    { lbl: m.landing_mockup_kpi_total_orders(), val: '256' },
+    { lbl: m.landing_mockup_kpi_revenue(), val: '$999' },
+    { lbl: m.landing_mockup_kpi_active_tables(), val: '18' },
     { lbl: m.landing_mockup_kpi_pending(), val: '7' },
   ]
   const top: [string, number][] = [
@@ -59,9 +59,7 @@ export function DashboardMock() {
             {kpis.map((k) => (
               <div className='kpi' key={k.lbl}>
                 <div className='lbl'>{k.lbl}</div>
-                <div className='val'>
-                  {k.val} {k.delta && <small>{k.delta}</small>}
-                </div>
+                <div className='val'>{k.val}</div>
               </div>
             ))}
           </div>
