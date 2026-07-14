@@ -1,9 +1,9 @@
-import type {ReactNode} from 'react'
-import {m} from '#/paraglide/messages'
+import type { ReactNode } from 'react'
+import { m } from '#/paraglide/messages'
 import qrCode from '#/shared/assets/illustrations/qrcode.png'
-import {LazyImage} from '#/shared/ui/lazy-image.tsx'
-import {LogoSvg} from '#/shared/ui/logo-svg.tsx'
-import {Icons} from './icons'
+import { LazyImage } from '#/shared/ui/lazy-image.tsx'
+import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
+import { Icons } from './icons'
 
 interface FloatBadgeProps {
   pos: string
