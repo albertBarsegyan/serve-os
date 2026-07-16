@@ -270,16 +270,14 @@ function DemoVideoModal({ onClose }: Readonly<{ onClose: () => void }>) {
       >
         <Icons.X />
       </button>
-      <video
+      <iframe
         className='demo-modal-video'
-        src='/media/menu-demo.mp4'
-        preload='metadata'
-        autoPlay
-        controls
-        playsInline
-      >
-        <track kind='captions' />
-      </video>
+        src='https://www.youtube.com/embed/Xe1RRVb5d18?autoplay=1'
+        title={m.landing_hero_cta_demo()}
+        allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+        allowFullScreen
+        frameBorder={0}
+      />
     </div>,
     document.body,
   )
