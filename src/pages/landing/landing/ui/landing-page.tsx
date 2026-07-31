@@ -4,12 +4,12 @@ import { createPortal } from 'react-dom'
 import useThemeStore from '#/shared/store/use-theme.store.ts'
 import './landing.css'
 import { useNavigate } from '@tanstack/react-router'
-import { LanguageSwitcher } from '#/components/language-switcher.tsx'
+import { LanguageSwitcher, LOCALE_META } from '#/components/language-switcher.tsx'
 import { ContactForm } from '#/features/contact/ui/contact-form.tsx'
 import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
 import { cn } from '#/lib/utils.ts'
 import { m } from '#/paraglide/messages'
-import { getLocale } from '#/paraglide/runtime'
+import { getLocale, locales, setLocale } from '#/paraglide/runtime'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
 import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
 import { Icons } from './icons'
@@ -138,7 +138,7 @@ export function Nav() {
           </nav>
           <div className='nav-right'>
             <PaletteSwitcher triggerClassName='palette-toggle h-[40px] w-[40px] rounded-[11px]' />
-            <LanguageSwitcher triggerClassName='h-[40px] w-auto gap-1.5 rounded-[11px] border border-[var(--line)] bg-[var(--panel)] px-3 text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--panel)] hover:text-[var(--accent)]' />
+            <LanguageSwitcher triggerClassName='hide-mobile h-[40px] w-auto gap-1.5 rounded-[11px] border border-[var(--line)] bg-[var(--panel)] px-3 text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--panel)] hover:text-[var(--accent)]' />
             <button
               type='button'
               className='theme-toggle'
@@ -228,6 +228,24 @@ export function Nav() {
         >
           {m.landing_nav_story()}
         </button>
+        <div className='mob-lang'>
+          {locales.map((l) => {
+            const meta = LOCALE_META[l]
+            const isActive = l === locale
+            return (
+              <button
+                key={l}
+                type='button'
+                className={cn('mob-lang-btn', { active: isActive })}
+                aria-pressed={isActive}
+                onClick={() => setLocale(l)}
+              >
+                <span aria-hidden='true'>{meta.flag}</span>
+                {meta.label}
+              </button>
+            )
+          })}
+        </div>
         <div className='mob-ctas'>
           <a className='btn ghost' href='/auth/sign-in' onClick={close}>
             {m.landing_nav_login()}
