@@ -5,7 +5,7 @@ import { m } from '#/paraglide/messages'
 import { getLocale, type Locale, locales, setLocale } from '#/paraglide/runtime'
 
 // Locale names are endonyms (shown in their own script) and intentionally not translated.
-const LOCALE_META: Record<Locale, { label: string; code: string; flag: string }> = {
+export const LOCALE_META: Record<Locale, { label: string; code: string; flag: string }> = {
   en: { label: 'English', code: 'EN', flag: '🇬🇧' },
   hy: { label: 'Հայերեն', code: 'AM', flag: '🇦🇲' },
 }
