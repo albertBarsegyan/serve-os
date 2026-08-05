@@ -21,9 +21,6 @@ services:
       NITRO_PORT: 3000
       API_BASE_URL: ${API_BASE_URL}
 
-    ports:
-      - "3000:3000"
-
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 30s
