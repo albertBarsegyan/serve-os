@@ -10,7 +10,7 @@ import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { authQueryKey } from '#/features/auth/lib/constants/auth-query-keys.ts'
-import { businessTypeLabels, FEATURE_PRESETS } from '#/features/business/api/business-domain.ts'
+import { businessTypeOptions, FEATURE_PRESETS } from '#/features/business/api/business-domain.ts'
 import {
   type CreateBusinessFormValues,
   createBusinessFormSchema,
@@ -27,6 +27,7 @@ import {
   useCreateBusinessMutation,
   useUpdateBusinessMutation,
 } from '#/features/business/model/business-hooks.ts'
+import { m } from '#/paraglide/messages'
 import { selectBusinessServerFn } from '#/shared/api/business/business.fns.ts'
 import { ImageEntityType } from '#/shared/api/images/images.api.ts'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
@@ -142,7 +143,7 @@ function AdminSetupRoute() {
         }
       })
 
-      showSuccess('Business created successfully')
+      showSuccess(m.setup_created_success())
       await navigate({ to: '/dashboard' })
     } catch (error) {
       showError(getResponseErrorMessage(error))
@@ -156,16 +157,15 @@ function AdminSetupRoute() {
           <div className='max-w-2xl space-y-4 rise-in'>
             <div className='inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground'>
               <span aria-hidden='true' className='h-2 w-2 rounded-full bg-primary animate-pulse' />
-              <span>First-time onboarding</span>
+              <span>{m.setup_badge_onboarding()}</span>
             </div>
             <div className='space-y-2'>
-              <p className='text-sm font-medium text-muted-foreground'>Hi, nice to see you.</p>
+              <p className='text-sm font-medium text-muted-foreground'>{m.setup_greeting()}</p>
               <h1 className='display-title text-4xl font-semibold tracking-tight text-foreground sm:text-5xl'>
-                Let&apos;s create your business.
+                {m.setup_title()}
               </h1>
               <p className='max-w-xl text-sm leading-7 text-muted-foreground sm:text-base'>
-                This setup flow helps you create the venue profile, choose your business type, and
-                enable the right modules before you enter the dashboard.
+                {m.setup_subtitle()}
               </p>
             </div>
           </div>
@@ -180,14 +180,11 @@ function AdminSetupRoute() {
 
       <section>
         <div className='island-shell rounded-2xl p-6 sm:p-8'>
-          <p className='island-kicker mb-2'>Business Creation</p>
+          <p className='island-kicker mb-2'>{m.setup_section_kicker()}</p>
           <h2 className='mb-3 text-3xl font-semibold tracking-tight text-foreground'>
-            Create your first business
+            {m.setup_section_title()}
           </h2>
-          <p className='mb-6 text-sm text-muted-foreground'>
-            Add the venue profile first. If you skip feature selection, ServeOS will apply the
-            backend preset for the selected business type.
-          </p>
+          <p className='mb-6 text-sm text-muted-foreground'>{m.setup_section_subtitle()}</p>
 
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
             <div className='grid gap-5 sm:grid-cols-2'>
@@ -196,7 +193,7 @@ function AdminSetupRoute() {
                   htmlFor='imageUpload'
                   className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  Business logo
+                  {m.setup_logo_label()}
                 </Label>
                 <div className='mt-2'>
                   <ImageUpload
@@ -208,9 +205,7 @@ function AdminSetupRoute() {
                     enableEditor
                   />
                 </div>
-                <p className='mt-1 text-xs text-muted-foreground'>
-                  Optional. PNG, JPG, WebP or SVG — max 3 MB.
-                </p>
+                <p className='mt-1 text-xs text-muted-foreground'>{m.setup_logo_hint()}</p>
               </div>
 
               <div className='space-y-2 sm:col-span-2'>
@@ -219,14 +214,14 @@ function AdminSetupRoute() {
                     htmlFor={nameId}
                     className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                   >
-                    Business name
+                    {m.setup_name_label()}
                   </Label>
                   <div className='relative'>
                     <Building2 className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
                     <Input
                       id={nameId}
                       type='text'
-                      placeholder='Sunset Bistro'
+                      placeholder={m.setup_name_placeholder()}
                       className={`h-14 rounded-xl pl-12 pr-4 ${
                         errors.name ? 'border-red-400 ring-2 ring-red-100' : ''
                       }`}
@@ -238,7 +233,7 @@ function AdminSetupRoute() {
 
                 <div>
                   <span className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-                    Generated slug
+                    {m.setup_slug_label()}
                   </span>
 
                   <div className='mt-1 flex items-center gap-2 rounded-xl border bg-muted/40 px-4 py-3 text-sm'>
@@ -252,7 +247,7 @@ function AdminSetupRoute() {
                   htmlFor={typeId}
                   className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  Business type
+                  {m.setup_type_label()}
                 </Label>
                 <Controller
                   name='type'
@@ -262,11 +257,8 @@ function AdminSetupRoute() {
                       id={typeId}
                       value={field.value}
                       onChange={field.onChange}
-                      options={Object.entries(businessTypeLabels).map(([value, label]) => ({
-                        value,
-                        label,
-                      }))}
-                      placeholder='Select type'
+                      options={businessTypeOptions()}
+                      placeholder={m.shared_select_type_placeholder()}
                       className='h-14 rounded-xl'
                     />
                   )}
@@ -278,7 +270,7 @@ function AdminSetupRoute() {
                   htmlFor={currencyId}
                   className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  Currency
+                  {m.setup_currency_label()}
                 </Label>
                 <Controller
                   name='currency'
@@ -289,7 +281,7 @@ function AdminSetupRoute() {
                       value={field.value}
                       onChange={(v) => field.onChange(v.toUpperCase())}
                       options={currencyOptions}
-                      placeholder='Select currency'
+                      placeholder={m.admin_businesses_select_currency_placeholder()}
                       className={`h-14 rounded-xl ${errors.currency ? 'border-red-400 ring-2 ring-red-100' : ''}`}
                     />
                   )}
@@ -304,7 +296,7 @@ function AdminSetupRoute() {
                   htmlFor={countryId}
                   className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  Location
+                  {m.setup_location_label()}
                 </Label>
 
                 <div className='grid gap-4 sm:grid-cols-2'>
@@ -313,7 +305,7 @@ function AdminSetupRoute() {
                       htmlFor={countryId}
                       className='text-xs font-medium text-muted-foreground'
                     >
-                      Country
+                      {m.setup_country_label()}
                     </Label>
                     <Controller
                       name='locationCountry'
@@ -324,7 +316,7 @@ function AdminSetupRoute() {
                           value={field.value}
                           onChange={field.onChange}
                           options={countryOptions}
-                          placeholder='Select country'
+                          placeholder={m.admin_businesses_select_country_placeholder()}
                           className={`h-14 rounded-xl ${errors.locationCountry ? 'border-red-400 ring-2 ring-red-100' : ''}`}
                           startIcon={<MapPin className='h-5 w-5' />}
                         />
@@ -337,7 +329,7 @@ function AdminSetupRoute() {
 
                   <div className='space-y-2'>
                     <Label htmlFor={cityId} className='text-xs font-medium text-muted-foreground'>
-                      City
+                      {m.setup_city_label()}
                     </Label>
                     <Controller
                       name='locationCity'
@@ -348,7 +340,11 @@ function AdminSetupRoute() {
                           value={field.value}
                           onChange={field.onChange}
                           options={cityOptions}
-                          placeholder={selectedCountry ? 'Select city' : 'Select a country first'}
+                          placeholder={
+                            selectedCountry
+                              ? m.admin_businesses_select_city_placeholder()
+                              : m.setup_city_placeholder_no_country()
+                          }
                           disabled={!selectedCountry}
                           className={`h-14 rounded-xl ${errors.locationCity ? 'border-red-400 ring-2 ring-red-100' : ''}`}
                         />
@@ -366,7 +362,7 @@ function AdminSetupRoute() {
                   htmlFor='working-hours'
                   className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  Working hours
+                  {m.setup_working_hours_label()}
                 </Label>
                 <Controller
                   name='workingHoursJson'
@@ -375,9 +371,7 @@ function AdminSetupRoute() {
                     <WorkingHoursPicker value={field.value || ''} onChange={field.onChange} />
                   )}
                 />
-                <p className='text-xs text-muted-foreground'>
-                  Optional. Select the days and hours your business operates. Leave empty to skip.
-                </p>
+                <p className='text-xs text-muted-foreground'>{m.setup_working_hours_hint()}</p>
                 {errors.workingHoursJson && (
                   <p className='text-xs text-red-500'>{errors.workingHoursJson.message}</p>
                 )}
@@ -404,8 +398,8 @@ function AdminSetupRoute() {
               className='h-14 w-full rounded-xl'
             >
               {createBusinessMutation.isPending || updateBusinessMutation.isPending
-                ? 'Creating business…'
-                : 'Create business'}
+                ? m.setup_submit_creating()
+                : m.setup_submit_create()}
             </Button>
           </form>
         </div>

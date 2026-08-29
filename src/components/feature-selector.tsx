@@ -5,10 +5,12 @@ import { Label } from '#/components/ui/label'
 import type { BusinessFeature, BusinessType } from '#/features/business/api/business-domain'
 import {
   businessFeature,
-  businessFeatureLabels,
+  businessFeatureLabel,
   businessFeaturePresets,
-  businessTypeLabels,
+  businessTypeLabel,
 } from '#/features/business/api/business-domain'
+import { m } from '#/paraglide/messages'
+import { pluralMessage } from '#/shared/libs/utils/plural.utils'
 
 interface FeatureSelectorProps {
   selectedFeatures: BusinessFeature[]
@@ -39,9 +41,14 @@ export function FeatureSelector({
     <div className='space-y-3'>
       <div className='flex items-center justify-between gap-3'>
         <p className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-          Features
+          {m.shared_feature_selector_heading()}
         </p>
-        <span className='text-xs text-muted-foreground'>{selectedFeatures.length} selected</span>
+        <span className='text-xs text-muted-foreground'>
+          {pluralMessage(selectedFeatures.length, {
+            one: m.shared_feature_selector_selected_count_one,
+            other: m.shared_feature_selector_selected_count_other,
+          })}
+        </span>
       </div>
 
       <div className='grid gap-3 sm:grid-cols-2'>
@@ -64,12 +71,14 @@ export function FeatureSelector({
               <Label htmlFor={featureId} className={readonly ? '' : 'cursor-pointer'}>
                 <span>
                   <span className='block font-semibold text-foreground'>
-                    {businessFeatureLabels[feature]}
+                    {businessFeatureLabel(feature)}
                   </span>
                   <span className='block text-xs text-muted-foreground'>
                     {presetFeatures.includes(feature)
-                      ? `Default for ${businessTypeLabels[selectedType]}`
-                      : 'Optional feature'}
+                      ? m.shared_feature_selector_default_for({
+                          type: businessTypeLabel(selectedType),
+                        })
+                      : m.shared_feature_selector_optional_feature()}
                   </span>
                 </span>
               </Label>
@@ -84,10 +93,12 @@ export function FeatureSelector({
             <Sparkles className='mt-0.5 h-5 w-5 text-primary' />
             <div>
               <p className='text-sm font-semibold text-foreground'>
-                Default preset for {businessTypeLabels[selectedType]}
+                {m.shared_feature_selector_default_preset_for({
+                  type: businessTypeLabel(selectedType),
+                })}
               </p>
               <p className='text-xs text-muted-foreground'>
-                If you do not select features, backend defaults will be applied.
+                {m.shared_feature_selector_default_preset_hint()}
               </p>
             </div>
           </div>
@@ -98,7 +109,7 @@ export function FeatureSelector({
                 key={feature}
                 className='rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground'
               >
-                {businessFeatureLabels[feature]}
+                {businessFeatureLabel(feature)}
               </span>
             ))}
           </div>

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/com
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { useAcceptStaffInviteMutation } from '#/features/platform/model/platform-hooks'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
@@ -19,11 +20,15 @@ type SearchParams = { token: string }
 
 const acceptInviteFormSchema = z
   .object({
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    newPassword: z
+      .string()
+      .min(8, { error: () => m.staff_accept_invite_validation_password_min() }),
+    confirmPassword: z
+      .string()
+      .min(1, { error: () => m.staff_accept_invite_validation_confirm_required() }),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {
-    message: 'Passwords do not match',
+    error: () => m.staff_accept_invite_validation_passwords_mismatch(),
     path: ['confirmPassword'],
   })
 
@@ -57,10 +62,10 @@ function StaffAcceptInvitePage() {
   })
 
   const onSubmit = async (values: FormValues) => {
-    if (!token) return showError('Invalid invite link — token is missing.')
+    if (!token) return showError(m.staff_accept_invite_error_missing_token())
     try {
       await acceptMutation.mutateAsync({ token, newPassword: values.newPassword })
-      showSuccess('Password set — you can now log in.')
+      showSuccess(m.staff_accept_invite_success())
 
       await navigate({ to: `/b/${activeBusiness?.slug}/staff-login` })
     } catch (err) {
@@ -80,21 +85,20 @@ function StaffAcceptInvitePage() {
         {!token ? (
           <Card className='rounded-2xl'>
             <CardHeader className='pt-10 text-center'>
-              <CardTitle className='text-xl font-semibold'>Invalid invite link</CardTitle>
-              <CardDescription>
-                The link you followed is missing the invite token. Please use the original link from
-                your invitation email.
-              </CardDescription>
+              <CardTitle className='text-xl font-semibold'>
+                {m.staff_accept_invite_invalid_title()}
+              </CardTitle>
+              <CardDescription>{m.staff_accept_invite_invalid_body()}</CardDescription>
             </CardHeader>
           </Card>
         ) : (
           <Card className='rounded-2xl'>
             <CardHeader className='pb-2 pt-10 text-center'>
               <CardTitle className='text-2xl font-semibold tracking-tight'>
-                Accept Invitation
+                {m.staff_accept_invite_title()}
               </CardTitle>
               <CardDescription className='text-sm text-muted-foreground'>
-                Set a password to activate your staff account.
+                {m.staff_accept_invite_subtitle()}
               </CardDescription>
             </CardHeader>
             <CardContent className='px-8 pb-10'>
@@ -104,7 +108,7 @@ function StaffAcceptInvitePage() {
                     htmlFor={newPasswordId}
                     className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                   >
-                    New Password
+                    {m.staff_accept_invite_new_password_label()}
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -112,7 +116,7 @@ function StaffAcceptInvitePage() {
                       id={newPasswordId}
                       type='password'
                       autoComplete='new-password'
-                      placeholder='At least 8 characters'
+                      placeholder={m.staff_accept_invite_password_placeholder()}
                       className='h-14 rounded-xl pl-12'
                       {...register('newPassword')}
                     />
@@ -127,7 +131,7 @@ function StaffAcceptInvitePage() {
                     htmlFor={confirmPasswordId}
                     className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                   >
-                    Confirm Password
+                    {m.staff_accept_invite_confirm_password_label()}
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -135,7 +139,7 @@ function StaffAcceptInvitePage() {
                       id={confirmPasswordId}
                       type='password'
                       autoComplete='new-password'
-                      placeholder='••••••••'
+                      placeholder={m.staff_accept_invite_password_mask_placeholder()}
                       className='h-14 rounded-xl pl-12'
                       {...register('confirmPassword')}
                     />
@@ -150,7 +154,9 @@ function StaffAcceptInvitePage() {
                   disabled={acceptMutation.isPending}
                   className='mt-4 h-14 w-full rounded-xl'
                 >
-                  {acceptMutation.isPending ? 'Activating account…' : 'Activate Account'}
+                  {acceptMutation.isPending
+                    ? m.staff_accept_invite_activating()
+                    : m.staff_accept_invite_activate()}
                 </Button>
               </form>
             </CardContent>
@@ -159,7 +165,7 @@ function StaffAcceptInvitePage() {
       </div>
 
       <div className='mt-8 text-center text-sm text-muted-foreground'>
-        <p>&copy; {new Date().getFullYear()} ServeOS. All rights reserved.</p>
+        <p>{m.staff_auth_footer_copyright({ year: new Date().getFullYear() })}</p>
       </div>
     </div>
   )

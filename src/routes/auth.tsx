@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Outlet, redirect, useLocation } from '@tanstack/react-router'
+import { m } from '#/paraglide/messages'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import { noIndexMeta } from '#/shared/libs/seo/meta.ts'
@@ -51,7 +52,7 @@ function AuthLayout() {
       </div>
 
       <div className='mt-8 text-center text-sm text-muted-foreground'>
-        <p>&copy; {new Date().getFullYear()} ServeOS. All rights reserved.</p>
+        <p>{m.staff_auth_footer_copyright({ year: new Date().getFullYear() })}</p>
       </div>
     </div>
   )

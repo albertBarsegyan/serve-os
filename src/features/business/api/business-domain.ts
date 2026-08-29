@@ -1,3 +1,5 @@
+import { m } from '#/paraglide/messages'
+
 export enum BusinessType {
   RESTAURANT = 'RESTAURANT',
   CAFE = 'CAFE',
@@ -28,29 +30,44 @@ export enum BusinessFeature {
   SPLIT_BILL = 'split_bill',
 }
 
-export const businessTypeLabels: Record<BusinessType, string> = {
-  RESTAURANT: 'Restaurant',
-  CAFE: 'Cafe',
-  BAR: 'Bar',
-  FAST_FOOD: 'Fast Food',
-  FOOD_TRUCK: 'Food Truck',
-  HOTEL: 'Hotel',
-  EVENT_VENUE: 'Event Venue',
-  OTHER: 'Other',
+// Resolved per-call (not module scope) so the label reflects the locale active at render/SSR
+// time rather than whatever locale happened to be active the first time this module was loaded.
+export function businessTypeLabel(type: BusinessType | keyof typeof BusinessType): string {
+  const labels: Record<BusinessType, string> = {
+    RESTAURANT: m.business_type_restaurant(),
+    CAFE: m.business_type_cafe(),
+    BAR: m.business_type_bar(),
+    FAST_FOOD: m.business_type_fast_food(),
+    FOOD_TRUCK: m.business_type_food_truck(),
+    HOTEL: m.business_type_hotel(),
+    EVENT_VENUE: m.business_type_event_venue(),
+    OTHER: m.business_type_other(),
+  }
+  return labels[type]
 }
 
-export const businessFeatureLabels: Record<BusinessFeature, string> = {
-  [BusinessFeature.ORDER_DINE_IN]: 'Dine-In Orders',
-  [BusinessFeature.ORDER_TAKEAWAY]: 'Takeaway Orders',
-  [BusinessFeature.ORDER_DELIVERY]: 'Delivery Orders',
-  [BusinessFeature.TABLES]: 'Table Management',
-  [BusinessFeature.QR_ORDERING]: 'QR Code Ordering',
-  [BusinessFeature.KITCHEN]: 'Kitchen Operations',
-  [BusinessFeature.KDS]: 'Kitchen Display System (KDS)',
-  [BusinessFeature.ALLERGEN_LABELS]: 'Allergen Information',
-  [BusinessFeature.HAPPY_HOUR]: 'Happy Hour Management',
-  [BusinessFeature.TIPS]: 'Tips & Gratuity',
-  [BusinessFeature.SPLIT_BILL]: 'Split Bill',
+export function businessTypeOptions(): Array<{ value: BusinessType; label: string }> {
+  return Object.values(BusinessType).map((type) => ({
+    value: type,
+    label: businessTypeLabel(type),
+  }))
+}
+
+export function businessFeatureLabel(feature: BusinessFeature): string {
+  const labels: Record<BusinessFeature, string> = {
+    [BusinessFeature.ORDER_DINE_IN]: m.business_feature_order_dine_in(),
+    [BusinessFeature.ORDER_TAKEAWAY]: m.business_feature_order_takeaway(),
+    [BusinessFeature.ORDER_DELIVERY]: m.business_feature_order_delivery(),
+    [BusinessFeature.TABLES]: m.business_feature_tables(),
+    [BusinessFeature.QR_ORDERING]: m.business_feature_qr_ordering(),
+    [BusinessFeature.KITCHEN]: m.business_feature_kitchen(),
+    [BusinessFeature.KDS]: m.business_feature_kds(),
+    [BusinessFeature.ALLERGEN_LABELS]: m.business_feature_allergen_labels(),
+    [BusinessFeature.HAPPY_HOUR]: m.business_feature_happy_hour(),
+    [BusinessFeature.TIPS]: m.business_feature_tips(),
+    [BusinessFeature.SPLIT_BILL]: m.business_feature_split_bill(),
+  }
+  return labels[feature]
 }
 
 export const FEATURE_PRESETS: Record<BusinessType, BusinessFeature[]> = {

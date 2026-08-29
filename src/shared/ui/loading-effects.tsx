@@ -1,4 +1,5 @@
 import { Loader } from 'lucide-react'
+import { m } from '#/paraglide/messages'
 
 interface LoadingSpinnerProps {
   fullScreen?: boolean
@@ -7,7 +8,7 @@ interface LoadingSpinnerProps {
 
 export function LoadingSpinner({
   fullScreen = false,
-  message = 'Loading...',
+  message = m.shared_loading(),
 }: Readonly<LoadingSpinnerProps>) {
   const content = (
     <div className='flex flex-col items-center justify-center gap-4'>

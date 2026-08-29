@@ -4,6 +4,7 @@ import type {
   OrderStatus,
   UpdateOrderStatusRequest,
 } from '#/features/platform/api/platform.types.ts'
+import { m } from '#/paraglide/messages'
 
 export type Column = 'queue' | 'preparing' | 'ready'
 
@@ -84,13 +85,15 @@ export const COLUMN_THEME: Record<
   },
 }
 
-export const columns: { title: string; key: Column }[] = [
-  { title: 'Queue', key: 'queue' },
-  { title: 'Preparing', key: 'preparing' },
-  { title: 'Ready', key: 'ready' },
-]
+export function getColumns(): { title: string; key: Column }[] {
+  return [
+    { title: m.admin_kitchen_column_queue(), key: 'queue' },
+    { title: m.admin_kitchen_column_preparing(), key: 'preparing' },
+    { title: m.admin_kitchen_column_ready(), key: 'ready' },
+  ]
+}
 
-export const COLUMN_KEYS = new Set<Column>(columns.map((col) => col.key))
+export const COLUMN_KEYS = new Set<Column>(['queue', 'preparing', 'ready'])
 
 // Forward-only transitions the board allows via drag-and-drop, mirroring the action buttons.
 // `ready` has no target column because "Served" (DELIVERED) removes the order from the

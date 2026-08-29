@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ThemeSwitcher } from '#/components/theme-switcher.tsx'
 import { PaletteSwitcher } from '#/features/palette/ui/PaletteSwitcher.tsx'
 import { cn } from '#/lib/utils.ts'
+import { m } from '#/paraglide/messages'
 import { displaySnapshotQueryOptions } from '#/shared/api/display/public-display-api'
 import { useAutoCycleScroll } from '#/shared/libs/hooks/use-auto-cycle-scroll'
 import type { DisplayOrderPayload } from '#/shared/realtime/events'
@@ -15,7 +16,9 @@ function OrderTicket({ order }: Readonly<{ order: DisplayOrderPayload }>) {
   return (
     <div className='rounded-2xl border border-border bg-card p-5 shadow-sm'>
       <p className='mb-3 text-lg font-bold text-foreground'>
-        {order.tableNumber !== null ? `Table ${order.tableNumber}` : 'Takeaway'}
+        {order.tableNumber !== null
+          ? m.customer_table({ name: String(order.tableNumber) })
+          : m.staff_order_takeaway_label()}
       </p>
       <ul className='space-y-1.5'>
         {order.items.map((item, i) => (
@@ -63,7 +66,7 @@ function DisplayColumn({
         className='grid flex-1 auto-rows-min grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2 xl:grid-cols-3'
       >
         {orders.length === 0 ? (
-          <p className='text-muted-foreground'>Nothing here right now.</p>
+          <p className='text-muted-foreground'>{m.display_no_orders_yet()}</p>
         ) : (
           orders.map((order) => <OrderTicket key={order.orderId} order={order} />)
         )}
@@ -117,11 +120,8 @@ export function VenueDisplayPage({ token }: Readonly<{ token: string }>) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center gap-3 bg-background p-8 text-center'>
         <WifiOff className='h-10 w-10 text-muted-foreground' />
-        <h1 className='text-2xl font-bold'>This display link isn't valid</h1>
-        <p className='max-w-md text-muted-foreground'>
-          It may have been regenerated or revoked. Ask your manager for a fresh link from Settings →
-          TV Displays.
-        </p>
+        <h1 className='text-2xl font-bold'>{m.display_invalid_link_title()}</h1>
+        <p className='max-w-md text-muted-foreground'>{m.display_invalid_link_body()}</p>
       </div>
     )
   }
@@ -147,7 +147,7 @@ export function VenueDisplayPage({ token }: Readonly<{ token: string }>) {
               <span className='text-lg font-semibold text-foreground'>{data.businessName}</span>
             )}
           </div>
-          <h1 className='text-3xl font-bold tracking-tight'>Orders</h1>
+          <h1 className='text-3xl font-bold tracking-tight'>{m.display_orders_heading()}</h1>
         </div>
         {!isFullscreen && (
           <div id='controllers' className='flex items-center gap-1.5 text-sm text-muted-foreground'>
@@ -156,7 +156,7 @@ export function VenueDisplayPage({ token }: Readonly<{ token: string }>) {
             <button
               type='button'
               onClick={toggleFullscreen}
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              aria-label={isFullscreen ? m.display_exit_fullscreen() : m.display_enter_fullscreen()}
               className='rounded-md p-1.5 hover:bg-muted'
             >
               {isFullscreen ? <Minimize className='h-4 w-4' /> : <Maximize className='h-4 w-4' />}
@@ -167,29 +167,29 @@ export function VenueDisplayPage({ token }: Readonly<{ token: string }>) {
             ) : (
               <WifiOff className='h-4 w-4 text-amber-500' />
             )}
-            <span>{isConnected ? 'Live' : 'Reconnecting…'}</span>
+            <span>{isConnected ? m.admin_kitchen_live() : m.display_reconnecting()}</span>
           </div>
         )}
       </header>
 
       {isPending ? (
         <div className='flex flex-1 items-center justify-center text-muted-foreground'>
-          Loading…
+          {m.shared_loading()}
         </div>
       ) : isError ? (
         <div className='flex flex-1 items-center justify-center text-muted-foreground'>
-          Couldn't load orders — retrying automatically.
+          {m.display_load_error()}
         </div>
       ) : (
         <div className='grid min-h-0 flex-1 grid-cols-2'>
           <DisplayColumn
-            title='Preparing'
+            title={m.admin_kitchen_column_preparing()}
             icon={<ChefHat className='h-6 w-6 text-amber-500' />}
             orders={data?.preparing ?? []}
             className='pr-6'
           />
           <DisplayColumn
-            title='Ready'
+            title={m.admin_kitchen_column_ready()}
             icon={<Utensils className='h-6 w-6 text-emerald-500' />}
             orders={data?.ready ?? []}
             className='border-l border-border pl-6'

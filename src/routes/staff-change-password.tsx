@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/com
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { useChangePasswordMutation } from '#/features/platform/model/platform-hooks'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
@@ -16,12 +17,16 @@ import { Logo } from '#/shared/ui/logo.tsx'
 
 const changePasswordFormSchema = z
   .object({
-    oldPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(8, 'New password must be at least 8 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your new password'),
+    oldPassword: z
+      .string()
+      .min(1, { error: () => m.staff_change_password_validation_current_required() }),
+    newPassword: z.string().min(8, { error: () => m.staff_change_password_validation_new_min() }),
+    confirmPassword: z
+      .string()
+      .min(1, { error: () => m.staff_change_password_validation_confirm_required() }),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {
-    message: 'Passwords do not match',
+    error: () => m.staff_change_password_validation_passwords_mismatch(),
     path: ['confirmPassword'],
   })
 
@@ -60,7 +65,7 @@ function StaffChangePasswordPage() {
         newPassword: values.newPassword,
       })
 
-      showSuccess('Password changed. Please log in again.')
+      showSuccess(m.staff_change_password_success())
       await navigate({ to: '/b/$slug/staff-login', params: { slug } })
     } catch (err) {
       showError(getResponseErrorMessage(err))
@@ -78,9 +83,11 @@ function StaffChangePasswordPage() {
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
         <Card className='rounded-2xl'>
           <CardHeader className='pb-2 pt-10 text-center'>
-            <CardTitle className='text-2xl font-semibold tracking-tight'>Change Password</CardTitle>
+            <CardTitle className='text-2xl font-semibold tracking-tight'>
+              {m.staff_change_password_title()}
+            </CardTitle>
             <CardDescription className='text-sm text-muted-foreground'>
-              Update your staff account password.
+              {m.staff_change_password_subtitle()}
             </CardDescription>
           </CardHeader>
           <CardContent className='px-8 pb-10'>
@@ -90,7 +97,7 @@ function StaffChangePasswordPage() {
                   htmlFor={oldPasswordId}
                   className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  Current Password
+                  {m.staff_change_password_current_label()}
                 </Label>
                 <div className='relative'>
                   <Lock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -98,7 +105,7 @@ function StaffChangePasswordPage() {
                     id={oldPasswordId}
                     type='password'
                     autoComplete='current-password'
-                    placeholder='••••••••'
+                    placeholder={m.staff_change_password_mask_placeholder()}
                     className='h-14 rounded-xl pl-12'
                     {...register('oldPassword')}
                   />
@@ -113,7 +120,7 @@ function StaffChangePasswordPage() {
                   htmlFor={newPasswordId}
                   className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  New Password
+                  {m.staff_change_password_new_label()}
                 </Label>
                 <div className='relative'>
                   <Lock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -121,7 +128,7 @@ function StaffChangePasswordPage() {
                     id={newPasswordId}
                     type='password'
                     autoComplete='new-password'
-                    placeholder='At least 8 characters'
+                    placeholder={m.staff_change_password_new_placeholder()}
                     className='h-14 rounded-xl pl-12'
                     {...register('newPassword')}
                   />
@@ -136,7 +143,7 @@ function StaffChangePasswordPage() {
                   htmlFor={confirmPasswordId}
                   className='ml-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground'
                 >
-                  Confirm New Password
+                  {m.staff_change_password_confirm_label()}
                 </Label>
                 <div className='relative'>
                   <Lock className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
@@ -144,7 +151,7 @@ function StaffChangePasswordPage() {
                     id={confirmPasswordId}
                     type='password'
                     autoComplete='new-password'
-                    placeholder='••••••••'
+                    placeholder={m.staff_change_password_mask_placeholder()}
                     className='h-14 rounded-xl pl-12'
                     {...register('confirmPassword')}
                   />
@@ -159,7 +166,9 @@ function StaffChangePasswordPage() {
                 disabled={changeMutation.isPending}
                 className='mt-4 h-14 w-full rounded-xl'
               >
-                {changeMutation.isPending ? 'Updating…' : 'Update Password'}
+                {changeMutation.isPending
+                  ? m.staff_change_password_updating()
+                  : m.staff_change_password_update()}
               </Button>
             </form>
           </CardContent>
@@ -167,7 +176,7 @@ function StaffChangePasswordPage() {
       </div>
 
       <div className='mt-8 text-center text-sm text-muted-foreground'>
-        <p>&copy; {new Date().getFullYear()} ServeOS. All rights reserved.</p>
+        <p>{m.staff_auth_footer_copyright({ year: new Date().getFullYear() })}</p>
       </div>
     </div>
   )

@@ -21,6 +21,7 @@ import {
   useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
@@ -98,7 +99,7 @@ function WaiterWorkspace() {
       } else {
         await updateMutation.mutateAsync({ orderId, data: { status } })
       }
-      showSuccess('Order updated')
+      showSuccess(m.admin_waiter_order_updated())
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
@@ -108,10 +109,8 @@ function WaiterWorkspace() {
     <div className='space-y-8'>
       <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Waiter Workspace</h1>
-          <p className='text-muted-foreground'>
-            Live order handling — confirm, serve, and close orders.
-          </p>
+          <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_waiter_heading()}</h1>
+          <p className='text-muted-foreground'>{m.admin_waiter_subtitle()}</p>
         </div>
       </div>
 
@@ -123,7 +122,7 @@ function WaiterWorkspace() {
             className='ml-2 font-semibold underline'
             onClick={() => void refetch()}
           >
-            Retry
+            {m.admin_orders_retry()}
           </button>
         </div>
       )}
@@ -144,7 +143,7 @@ function WaiterWorkspace() {
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
-                  {status === 'all' ? 'All' : formatStatus(status)}
+                  {status === 'all' ? m.admin_orders_filter_all() : formatStatus(status)}
                 </button>
               ))}
             </div>
@@ -152,7 +151,7 @@ function WaiterWorkspace() {
               <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
               <input
                 type='text'
-                placeholder='Search orders…'
+                placeholder={m.admin_waiter_search_placeholder()}
                 className='h-10 w-full rounded-full border border-input bg-background pl-10 pr-4 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64'
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -164,26 +163,26 @@ function WaiterWorkspace() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className='pl-8'>Order</TableHead>
-                <TableHead>Table</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className='pr-8 text-right'>Action</TableHead>
+                <TableHead className='pl-8'>{m.admin_waiter_col_order()}</TableHead>
+                <TableHead>{m.admin_orders_table_head_table()}</TableHead>
+                <TableHead>{m.admin_orders_table_head_items()}</TableHead>
+                <TableHead>{m.admin_orders_table_head_total()}</TableHead>
+                <TableHead>{m.admin_orders_table_head_status()}</TableHead>
+                <TableHead className='pr-8 text-right'>{m.admin_waiter_col_action()}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isPending && (
                 <TableRow>
                   <TableCell colSpan={6} className='h-32 text-center text-muted-foreground'>
-                    Loading orders…
+                    {m.admin_orders_loading_orders()}
                   </TableCell>
                 </TableRow>
               )}
               {!isPending && filteredOrders.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className='h-32 text-center text-muted-foreground'>
-                    No orders found.
+                    {m.admin_waiter_empty()}
                   </TableCell>
                 </TableRow>
               )}
@@ -196,7 +195,7 @@ function WaiterWorkspace() {
                     </TableCell>
                     <TableCell>
                       {order.table
-                        ? `Table ${order.table.number}`
+                        ? m.admin_orders_table_number({ number: order.table.number })
                         : order.tableId
                           ? `#${order.tableId.slice(0, 6)}`
                           : '—'}

@@ -564,7 +564,7 @@ export function AdminStaffPage() {
             <input
               id={emailId}
               type='email'
-              placeholder='staff@example.com'
+              placeholder={m.admin_staff_email_example_placeholder()}
               className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm'
               {...inviteForm.register('email')}
             />

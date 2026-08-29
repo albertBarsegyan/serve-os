@@ -6,7 +6,7 @@ import { FeatureSelector } from '#/components/feature-selector'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
 import type { UpdateBusinessRequest } from '#/features/business/api/business.types'
-import { type BusinessType, businessTypeLabels } from '#/features/business/api/business-domain'
+import { type BusinessType, businessTypeOptions } from '#/features/business/api/business-domain'
 import {
   type UpdateBusinessFormValues,
   updateBusinessFormSchema,
@@ -234,10 +234,7 @@ export function AdminSettingsContent() {
                       id={typeId}
                       value={field.value}
                       onChange={field.onChange}
-                      options={Object.entries(businessTypeLabels).map(([value, label]) => ({
-                        value,
-                        label,
-                      }))}
+                      options={businessTypeOptions()}
                       placeholder={m.admin_settings_select_type_placeholder()}
                       className='rounded-xl'
                     />

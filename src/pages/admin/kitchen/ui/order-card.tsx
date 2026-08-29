@@ -96,7 +96,7 @@ export const OrderCard = memo(function OrderCard({
 
         <ul className='space-y-3'>
           {lines.length === 0 ? (
-            <li className='text-sm text-muted-foreground'>(no line items)</li>
+            <li className='text-sm text-muted-foreground'>{m.admin_kitchen_no_line_items()}</li>
           ) : (
             lines.map((line) => (
               <li key={line.key} className='space-y-1'>
