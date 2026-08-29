@@ -165,7 +165,7 @@ export function PhoneMock() {
 export function QrCode() {
   return (
     <div className='qr' style={{ background: '#fff', padding: '8px' }}>
-      <LazyImage src={qrCode} alt={'qr code'} />
+      <LazyImage src={qrCode} alt={m.landing_ordering_qr_alt()} />
     </div>
   )
 }

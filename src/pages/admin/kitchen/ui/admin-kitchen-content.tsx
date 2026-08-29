@@ -29,8 +29,8 @@ import {
   type AdvanceStatus,
   COLUMN_KEYS,
   type Column,
-  columns,
   FORWARD_TRANSITIONS,
+  getColumns,
   groupOrdersByColumn,
 } from '../lib/kanban.ts'
 import { KanbanColumn } from './kanban-column.tsx'
@@ -221,7 +221,7 @@ export function AdminKitchenContent() {
         onDragEnd={handleDragEnd}
       >
         <div className='grid flex-1 grid-cols-1 gap-6 overflow-hidden md:grid-cols-3'>
-          {columns.map((col) => (
+          {getColumns().map((col) => (
             <KanbanColumn
               key={col.key}
               column={col}

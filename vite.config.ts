@@ -88,7 +88,7 @@ const config = defineConfig({
     paraglideVitePlugin({
       project: './project.inlang',
       outdir: './src/paraglide',
-      strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
+      strategy: ['cookie', 'preferredLanguage', 'url', 'baseLocale'],
     }),
     tsconfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),

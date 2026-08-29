@@ -5,7 +5,7 @@ import { Badge } from '#/components/ui/badge'
 import type { Order } from '#/features/platform/api/platform.types.ts'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
-import { type AdvanceStatus, COLUMN_THEME, type columns } from '../lib/kanban.ts'
+import { type AdvanceStatus, COLUMN_THEME, type getColumns } from '../lib/kanban.ts'
 import { OrderCard } from './order-card.tsx'
 
 const EMPTY_STATE_COPY: Record<string, { title: () => string; hint: () => string }> = {
@@ -18,7 +18,7 @@ const EMPTY_STATE_COPY: Record<string, { title: () => string; hint: () => string
 }
 
 interface KanbanColumnProps {
-  column: (typeof columns)[number]
+  column: ReturnType<typeof getColumns>[number]
   orders: Order[]
   isLoading: boolean
   pendingOrderId: string | null

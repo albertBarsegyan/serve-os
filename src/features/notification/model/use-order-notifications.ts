@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import type { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
 import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys'
+import { m } from '#/paraglide/messages'
 import {
   type CallWaiterPayload,
   CLIENT_EVENTS,
@@ -48,18 +49,19 @@ export interface UseOrderNotificationsOptions {
   isSelfMutated?: (orderId: string) => boolean
 }
 
+// Client-only module (guarded by `typeof window` below) — safe to resolve messages eagerly here.
 const TOAST_MESSAGES: Record<string, string> = {
-  [SERVER_EVENTS.ORDER_CREATED]: 'New order received',
-  [SERVER_EVENTS.ORDER_CONFIRMED]: 'Order confirmed',
-  [SERVER_EVENTS.ORDER_PREPARING]: 'Kitchen is preparing the order',
-  [SERVER_EVENTS.ORDER_READY]: 'Order is ready!',
-  [SERVER_EVENTS.ORDER_SERVED]: 'Order served',
-  [SERVER_EVENTS.ORDER_CANCELLED]: 'Order was cancelled',
-  [SERVER_EVENTS.ORDER_CALL_WAITER]: 'Table needs a waiter',
-  [SERVER_EVENTS.ORDER_PAYMENT_OPEN]: 'Payment due',
-  [SERVER_EVENTS.ORDER_PAID]: 'Payment confirmed',
-  [SERVER_EVENTS.ORDER_PAYMENT_FAILED]: 'Payment failed',
-  [SERVER_EVENTS.ORDER_REFUNDED]: 'Order refunded',
+  [SERVER_EVENTS.ORDER_CREATED]: m.notification_order_created(),
+  [SERVER_EVENTS.ORDER_CONFIRMED]: m.notification_order_confirmed(),
+  [SERVER_EVENTS.ORDER_PREPARING]: m.notification_order_preparing(),
+  [SERVER_EVENTS.ORDER_READY]: m.notification_order_ready(),
+  [SERVER_EVENTS.ORDER_SERVED]: m.notification_order_served(),
+  [SERVER_EVENTS.ORDER_CANCELLED]: m.notification_order_cancelled(),
+  [SERVER_EVENTS.ORDER_CALL_WAITER]: m.notification_order_call_waiter(),
+  [SERVER_EVENTS.ORDER_PAYMENT_OPEN]: m.notification_order_payment_open(),
+  [SERVER_EVENTS.ORDER_PAID]: m.notification_order_paid(),
+  [SERVER_EVENTS.ORDER_PAYMENT_FAILED]: m.notification_order_payment_failed(),
+  [SERVER_EVENTS.ORDER_REFUNDED]: m.notification_order_refunded(),
 }
 
 /**

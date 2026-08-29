@@ -1,3 +1,5 @@
+import { m } from '#/paraglide/messages'
+
 function PendingSkeleton({
   w,
   h,
@@ -107,9 +109,11 @@ export function CustomerMenuPending() {
           </div>
           <div style={{ textAlign: 'center' }}>
             <p style={{ color: textPrimary, fontSize: 14, fontWeight: 700, margin: '0 0 3px' }}>
-              Setting up your table
+              {m.customer_pending_setting_up_table()}
             </p>
-            <p style={{ color: textMuted, fontSize: 12, margin: 0 }}>Starting your session…</p>
+            <p style={{ color: textMuted, fontSize: 12, margin: 0 }}>
+              {m.customer_pending_starting_session()}
+            </p>
           </div>
         </div>
       </div>

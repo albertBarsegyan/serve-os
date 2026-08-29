@@ -11,7 +11,7 @@ import type {
   CreateBusinessRequest,
   UpdateBusinessRequest,
 } from '#/features/business/api/business.types'
-import { businessTypeLabels } from '#/features/business/api/business-domain'
+import { businessTypeOptions } from '#/features/business/api/business-domain'
 import {
   type UpdateBusinessFormValues,
   updateBusinessFormSchema,
@@ -239,10 +239,7 @@ export function BusinessForm({ mode, businessId, onClose }: Readonly<BusinessFor
                 id={typeId}
                 value={field.value}
                 onChange={field.onChange}
-                options={Object.entries(businessTypeLabels).map(([value, label]) => ({
-                  value,
-                  label,
-                }))}
+                options={businessTypeOptions()}
                 placeholder={m.admin_businesses_select_type_placeholder()}
               />
             )}

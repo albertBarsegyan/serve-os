@@ -1,4 +1,5 @@
 import type { Product } from '#/entities/product/model/types'
+import { m } from '#/paraglide/messages'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 
 interface MenuListProps {
@@ -9,7 +10,7 @@ interface MenuListProps {
 
 export function MenuList({ products, onAddToCart, currency = 'USD' }: MenuListProps) {
   if (products.length === 0) {
-    return <p className='text-sm text-[var(--sea-ink-soft)]'>Menu is empty.</p>
+    return <p className='text-sm text-[var(--sea-ink-soft)]'>{m.widget_menu_list_empty()}</p>
   }
 
   return (
@@ -31,7 +32,7 @@ export function MenuList({ products, onAddToCart, currency = 'USD' }: MenuListPr
             onClick={() => onAddToCart(product.id)}
             disabled={!product.available}
           >
-            {product.available ? 'Add' : 'Unavailable'}
+            {product.available ? m.widget_menu_list_add() : m.customer_unavailable()}
           </button>
         </li>
       ))}

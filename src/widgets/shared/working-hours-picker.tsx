@@ -4,17 +4,22 @@ import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import { m } from '#/paraglide/messages'
+import { pluralMessage } from '#/shared/libs/utils/plural.utils'
 
 const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
-const DAY_LABELS: Record<string, string> = {
-  monday: 'Monday',
-  tuesday: 'Tuesday',
-  wednesday: 'Wednesday',
-  thursday: 'Thursday',
-  friday: 'Friday',
-  saturday: 'Saturday',
-  sunday: 'Sunday',
+function dayLabel(day: string): string {
+  const labels: Record<string, string> = {
+    monday: m.shared_day_monday(),
+    tuesday: m.shared_day_tuesday(),
+    wednesday: m.shared_day_wednesday(),
+    thursday: m.shared_day_thursday(),
+    friday: m.shared_day_friday(),
+    saturday: m.shared_day_saturday(),
+    sunday: m.shared_day_sunday(),
+  }
+  return labels[day] ?? day
 }
 
 interface WorkingHoursEntry {
@@ -105,11 +110,16 @@ export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps)
       <div className='flex items-center justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <Clock className='h-5 w-5 text-primary' />
-          <span className='text-sm font-semibold text-foreground'>Working Hours</span>
+          <span className='text-sm font-semibold text-foreground'>
+            {m.widget_working_hours_heading()}
+          </span>
         </div>
         <span className='text-xs text-muted-foreground'>
           {configuredDays > 0 &&
-            `${configuredDays} day${configuredDays === 1 ? '' : 's'} configured`}
+            pluralMessage(configuredDays, {
+              one: m.widget_working_hours_days_configured_one,
+              other: m.widget_working_hours_days_configured_other,
+            })}
         </span>
       </div>
 
@@ -122,7 +132,7 @@ export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps)
           onClick={() => setAllDays(true)}
           className={allConfigured ? 'bg-primary/10 text-primary' : ''}
         >
-          All days
+          {m.widget_working_hours_all_days()}
         </Button>
         <Button
           type='button'
@@ -131,7 +141,7 @@ export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps)
           onClick={() => setAllDays(false)}
           className={configuredDays === 0 ? 'bg-destructive/10 text-destructive' : ''}
         >
-          Clear all
+          {m.widget_working_hours_clear_all()}
         </Button>
       </div>
 
@@ -149,7 +159,7 @@ export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps)
               htmlFor={`${pickerId}-${entry.day}`}
               className='min-w-24 cursor-pointer text-sm font-medium text-foreground'
             >
-              {DAY_LABELS[entry.day]}
+              {dayLabel(entry.day)}
             </Label>
 
             {entry.enabled && (
@@ -161,7 +171,9 @@ export function WorkingHoursPicker({ value, onChange }: WorkingHoursPickerProps)
                     onChange={(e) => updateDay(index, { open: e.target.value })}
                     className='w-fit h-9 rounded-lg px-2 text-sm'
                   />
-                  <span className='text-xs text-muted-foreground'>to</span>
+                  <span className='text-xs text-muted-foreground'>
+                    {m.widget_working_hours_to()}
+                  </span>
                   <Input
                     type='time'
                     value={entry.close}

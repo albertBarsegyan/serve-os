@@ -1,3 +1,5 @@
+import { m } from '#/paraglide/messages'
+
 type UnknownRecord = Record<string, unknown>
 
 const isRecord = (value: unknown): value is UnknownRecord =>
@@ -100,5 +102,5 @@ export const getResponseErrorMessage = (error: unknown): string => {
     // ignore
   }
 
-  return 'An error occurred'
+  return m.shared_error_generic()
 }

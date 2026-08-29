@@ -6,6 +6,7 @@ import { sessionQueryOptions } from '#/entities/session/lib/session-query-option
 import { createSessionServerFn } from '#/features/guest-session/api/create-session.fns'
 import type { ScanSessionResponse } from '#/features/platform/api/platform.types'
 import { CustomerMenuPage } from '#/pages/customer/menu/ui/customer-menu-page'
+import { m } from '#/paraglide/messages'
 import { clientApiInstance } from '#/shared/api/client-instance'
 import { resumeSessionServerFn } from '#/shared/api/customer/session.fns'
 import { absoluteUrl, buildSeoMeta } from '#/shared/libs/seo/meta.ts'
@@ -59,9 +60,11 @@ export const Route = createFileRoute('/customer/menu')({
 
   head: ({ loaderData }) => ({
     meta: buildSeoMeta({
-      title: loaderData ? `Menu at ${loaderData.businessName}` : 'Customer Menu',
+      title: loaderData
+        ? m.customer_menu_seo_title({ businessName: loaderData.businessName })
+        : m.customer_menu_seo_title_fallback(),
       description: loaderData
-        ? `Browse the menu and order online at ${loaderData.businessName}.`
+        ? m.customer_menu_seo_description({ businessName: loaderData.businessName })
         : undefined,
       image: loaderData?.businessLogoUrl ?? undefined,
       path: '/customer/menu',

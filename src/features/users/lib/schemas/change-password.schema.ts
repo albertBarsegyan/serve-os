@@ -1,13 +1,16 @@
 import { z } from 'zod'
+import { m } from '#/paraglide/messages'
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(6, 'Password must be at least 6 characters'),
-    confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+    currentPassword: z
+      .string()
+      .min(1, { error: () => m.users_validation_current_password_required() }),
+    newPassword: z.string().min(6, { error: () => m.users_validation_password_min() }),
+    confirmPassword: z.string().min(6, { error: () => m.users_validation_password_min() }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords don't match",
+    error: () => m.users_validation_passwords_mismatch(),
     path: ['confirmPassword'],
   })
 

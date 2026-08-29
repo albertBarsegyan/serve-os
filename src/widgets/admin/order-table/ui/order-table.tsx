@@ -1,4 +1,5 @@
 import type { Order, OrderStatus } from '#/entities/order/model/types'
+import { m } from '#/paraglide/messages'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 
@@ -21,7 +22,7 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
   const currency = useActiveBusiness()?.currency ?? 'USD'
 
   if (orders.length === 0) {
-    return <p className='text-sm text-[var(--sea-ink-soft)]'>No active orders.</p>
+    return <p className='text-sm text-[var(--sea-ink-soft)]'>{m.widget_order_table_empty()}</p>
   }
 
   return (
@@ -29,11 +30,11 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
       <table className='min-w-full text-left text-sm'>
         <thead>
           <tr className='border-b border-[rgba(23,58,64,0.12)]'>
-            <th className='py-2'>Order</th>
-            <th className='py-2'>Table</th>
-            <th className='py-2'>Total</th>
-            <th className='py-2'>Status</th>
-            <th className='py-2'>Action</th>
+            <th className='py-2'>{m.admin_waiter_col_order()}</th>
+            <th className='py-2'>{m.admin_orders_table_head_table()}</th>
+            <th className='py-2'>{m.admin_orders_table_head_total()}</th>
+            <th className='py-2'>{m.admin_orders_table_head_status()}</th>
+            <th className='py-2'>{m.admin_waiter_col_action()}</th>
           </tr>
         </thead>
         <tbody>
@@ -55,7 +56,7 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
                     }
                   }}
                 >
-                  Advance
+                  {m.widget_order_table_advance()}
                 </button>
               </td>
             </tr>

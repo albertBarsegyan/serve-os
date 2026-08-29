@@ -5,6 +5,7 @@ import {
   useBusinessesQuery,
   useBusinessSwitcher,
 } from '#/features/business/model/business-hooks.ts'
+import { m } from '#/paraglide/messages'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
@@ -35,19 +36,19 @@ function SelectBusinessRoute() {
 
       <div className='relative z-10 w-full max-w-300'>
         <section className='mb-6'>
-          <h1 className='text-3xl font-semibold'>Select a business</h1>
-          <p className='text-sm text-muted-foreground mt-2'>
-            Choose which business workspace you want to operate in.
-          </p>
+          <h1 className='text-3xl font-semibold'>{m.select_business_heading()}</h1>
+          <p className='text-sm text-muted-foreground mt-2'>{m.select_business_subtitle()}</p>
         </section>
 
         <section>
-          {isLoading && <div>Loading businesses…</div>}
+          {isLoading && <div>{m.select_business_loading()}</div>}
 
           {!isLoading && businesses?.length === 0 && (
             <div className='space-y-4'>
-              <p>No businesses found on your account.</p>
-              <Button onClick={() => navigate({ to: '/setup' })}>Create a business</Button>
+              <p>{m.select_business_empty()}</p>
+              <Button onClick={() => navigate({ to: '/setup' })}>
+                {m.select_business_create()}
+              </Button>
             </div>
           )}
 
@@ -64,7 +65,7 @@ function SelectBusinessRoute() {
                     disabled={isSwitching}
                     onClick={() => switchBusiness(b.id)}
                   >
-                    Select
+                    {m.select_business_select()}
                   </Button>
                 </CardFooter>
               </Card>

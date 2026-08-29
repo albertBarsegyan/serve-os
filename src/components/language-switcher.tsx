@@ -8,6 +8,7 @@ import { getLocale, type Locale, locales, setLocale } from '#/paraglide/runtime'
 export const LOCALE_META: Record<Locale, { label: string; code: string; flag: string }> = {
   en: { label: 'English', code: 'EN', flag: '🇬🇧' },
   hy: { label: 'Հայերեն', code: 'AM', flag: '🇦🇲' },
+  lv: { label: 'Latviešu', code: 'LV', flag: '🇱🇻' },
 }
 
 type LanguageSwitcherProps = {
