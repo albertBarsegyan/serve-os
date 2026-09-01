@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { ClipboardList, Eye, Loader2, Plus, Search } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader } from '#/components/ui/card'
@@ -86,21 +86,21 @@ function matchesSearch(order: Order, needle: string) {
 // ── Order detail modal ────────────────────────────────────────────────────────
 
 function OrderDetailModal({
+  businessId,
   orderId,
   onClose,
   currency,
   markSelfMutated,
 }: Readonly<{
+  businessId: string
   orderId: string
   onClose: () => void
   currency: string
   markSelfMutated: (orderId: string) => void
 }>) {
-  const tipId = useId()
-  const [tipAmount, setTipAmount] = useState('')
   const { isOwner, hasPermission } = usePermissions()
 
-  const { data: order, isPending, isError } = useQuery(orderByIdQueryOptions(orderId))
+  const { data: order, isPending, isError } = useQuery(orderByIdQueryOptions(businessId, orderId))
 
   const cashMutation = useProcessCashPaymentMutation()
   const posMutation = useProcessPosPaymentMutation()
@@ -132,14 +132,12 @@ function OrderDetailModal({
     }
   }
 
-  const parsedTip = Number(tipAmount) || 0
-
   const pay = async (method: 'cash' | 'pos') => {
     try {
       if (method === 'cash') {
-        await cashMutation.mutateAsync({ orderId, data: { tipAmount: parsedTip || undefined } })
+        await cashMutation.mutateAsync({ orderId, data: {} })
       } else {
-        await posMutation.mutateAsync({ orderId, data: { tipAmount: parsedTip || undefined } })
+        await posMutation.mutateAsync({ orderId, data: {} })
       }
       markSelfMutated(orderId)
       showSuccess(
@@ -270,21 +268,6 @@ function OrderDetailModal({
               <p className='text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
                 {m.admin_orders_process_payment()}
               </p>
-              <div className='space-y-2'>
-                <label htmlFor={tipId} className='text-sm text-muted-foreground'>
-                  {m.admin_orders_tip_amount_label()}
-                </label>
-                <input
-                  id={tipId}
-                  type='number'
-                  min='0'
-                  step='0.01'
-                  placeholder='0.00'
-                  value={tipAmount}
-                  onChange={(e) => setTipAmount(e.target.value)}
-                  className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm font-mono'
-                />
-              </div>
               <div className='flex gap-3'>
                 <Button
                   className='flex-1 rounded-xl'
@@ -326,7 +309,11 @@ function OrderDetailModal({
                 disabled={isBusy}
                 onClick={async () => {
                   try {
-                    await cancelMutation.mutateAsync({ orderId, data: { status: 'CANCELLED' } })
+                    await cancelMutation.mutateAsync({
+                      orderId,
+                      data: { status: 'CANCELLED' },
+                      businessId,
+                    })
                     markSelfMutated(orderId)
                     showSuccess(m.admin_orders_order_cancelled())
                     onClose()
@@ -400,7 +387,12 @@ export function AdminOrdersContent() {
     error,
     refetch,
   } = useQuery(
-    pagedOrdersQueryOptions(page, limit, statusFilter ? { status: statusFilter } : undefined),
+    pagedOrdersQueryOptions(
+      businessId,
+      page,
+      limit,
+      statusFilter ? { status: statusFilter } : undefined,
+    ),
   )
 
   const orders = pagedOrders?.data ?? []
@@ -510,7 +502,7 @@ export function AdminOrdersContent() {
   ) => {
     markPending(orderId)
     try {
-      await updateMutation.mutateAsync({ orderId, data: { status } })
+      await updateMutation.mutateAsync({ orderId, data: { status }, businessId })
       markSelfMutated(orderId)
       showSuccess(m.admin_orders_status_updated())
     } catch (mutationError) {
@@ -663,7 +655,7 @@ export function AdminOrdersContent() {
                   <TableCell className='font-bold'>
                     {formatPrice(Number(order.totalAmount), currency)}
                   </TableCell>
-                  <TableCell className='pr-8 text-right'>
+                  <TableCell className='w-60 min-w-60 pr-8 text-right'>
                     <div className='flex justify-end gap-2'>
                       <Button
                         variant='ghost'
@@ -731,6 +723,7 @@ export function AdminOrdersContent() {
 
       {detailOrderId && (
         <OrderDetailModal
+          businessId={businessId}
           orderId={detailOrderId}
           onClose={() => setDetailOrderId(null)}
           currency={currency}

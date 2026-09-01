@@ -9,8 +9,6 @@ import { createCustomerOrder, createCustomerPayment } from '#/shared/api/custome
 import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { C } from '../customer-theme'
 
-const GST_RATE = 0.05
-
 type ApiPaymentMethod = 'CASH' | 'POS' | 'ONLINE'
 
 interface PaymentMethodConfig {
@@ -73,14 +71,13 @@ export function PaymentView({
       .filter((pm) => pm.isActive)
       .map((pm) => pm.method)
       .filter((pm): pm is ApiPaymentMethod => pm in paymentMethodConfigs)
-    return active.length > 0 ? active : (['CASH', 'POS', 'ONLINE'] as ApiPaymentMethod[])
+
+    return active.length > 0 ? active : ([] as ApiPaymentMethod[])
   }, [paymentMethods, paymentMethodConfigs])
 
   const [selected, setSelected] = useState<ApiPaymentMethod>(() => activeMethods[0] ?? 'CASH')
 
-  const subtotal = useMemo(() => items.reduce((s, i) => s + cartItemTotal(i), 0), [items])
-  const gst = subtotal * GST_RATE
-  const grandTotal = subtotal + gst
+  const total = useMemo(() => items.reduce((s, i) => s + cartItemTotal(i), 0), [items])
 
   const placeOrder = useMutation({
     mutationFn: async () => {
@@ -97,11 +94,11 @@ export function PaymentView({
           })),
         })),
       )
-      await createCustomerPayment(order.id, selected, grandTotal)
+      await createCustomerPayment(order.id, selected, total)
       return order
     },
     onSuccess: (order) => {
-      onSuccess(order.id, grandTotal)
+      onSuccess(order.id, total)
     },
   })
 
@@ -191,13 +188,7 @@ export function PaymentView({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 40 }}>
                 <span style={{ color: C.w40, fontSize: 12 }}>{m.customer_subtotal()}</span>
-                <span style={{ color: C.w60, fontSize: 12 }}>{formatPrice(subtotal)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 40 }}>
-                <span style={{ color: C.w40, fontSize: 12 }}>
-                  {m.customer_gst_percent({ percent: (GST_RATE * 100).toFixed(0) })}
-                </span>
-                <span style={{ color: C.w60, fontSize: 12 }}>{formatPrice(gst)}</span>
+                <span style={{ color: C.w60, fontSize: 12 }}>{formatPrice(total)}</span>
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -205,7 +196,7 @@ export function PaymentView({
                 {m.customer_total_caps()}
               </p>
               <span style={{ color: C.amber, fontSize: 18, fontWeight: 800 }}>
-                {formatPrice(grandTotal)}
+                {formatPrice(total)}
               </span>
             </div>
           </div>
@@ -278,7 +269,7 @@ export function PaymentView({
         >
           {placeOrder.isPending
             ? m.customer_placing_order()
-            : `${m.customer_proceed_to_pay()} · ${formatPrice(grandTotal)}`}
+            : `${m.customer_proceed_to_pay()} · ${formatPrice(total)}`}
         </button>
       </div>
     </div>

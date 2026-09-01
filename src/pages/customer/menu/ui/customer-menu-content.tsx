@@ -1,17 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { menuQueryOptions } from '#/entities/menu/lib/menu-query-options'
 import { sessionQueryOptions } from '#/entities/session/lib/session-query-options'
 import type { CartModifier } from '#/features/cart/model/cart.store'
 import { cartItemTotal, useCartStore } from '#/features/cart/model/cart.store'
 import { useOrderNotifications, useSelfMutationSuppression } from '#/features/notification'
 import type { CustomerPaymentMethod } from '#/features/platform/api/platform.types'
 import { m } from '#/paraglide/messages'
-import { fetchCustomerMenu } from '#/shared/api/customer/customer-api'
 import type { CustomerProduct } from '#/shared/api/customer/menu.types'
 import { showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { cartSubtotal } from '#/shared/libs/utils/pricing.utils'
+import {
+  getLocalStorageItem,
+  getSessionStorageItem,
+  removeSessionStorageItem,
+  setLocalStorageItem,
+  setSessionStorageItem,
+} from '#/shared/libs/utils/storage.utils'
 import { C } from './customer-theme'
 import { CartView } from './views/cart-view'
-import { BottomNav, MenuView } from './views/menu-view'
+import { MenuView } from './views/menu-view'
 import type { OrderRecord } from './views/order-view'
 import { OrderView } from './views/order-view'
 import { PaymentView } from './views/payment-view'
@@ -79,29 +87,30 @@ interface CustomerMenuContentProps {
 export function CustomerMenuContent({
   businessId,
   sessionToken,
+  sessionId,
   tableName,
   businessName,
   businessLogoUrl,
   paymentMethods,
 }: Readonly<CustomerMenuContentProps>) {
-  // Persist sessionToken client-side so the WebSocket hook and session-resume
-  // flow can access it even when the HttpOnly cookie has been cleared.
-  useEffect(() => {
-    if (sessionToken) {
-      localStorage.setItem('customer_session_token', sessionToken)
-    }
-  }, [sessionToken])
+  // Deterministic initial value on both server and first client render — the real
+  // preference (saved or system) is only known client-side, so it's resolved after
+  // mount instead of inside the initializer to avoid a hydration mismatch.
+  const [isDark, setIsDark] = useState(true)
 
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('c-theme')
-    if (saved) return saved === 'dark'
-    return globalThis.matchMedia('(prefers-color-scheme: dark)').matches
-  })
+  useEffect(() => {
+    const saved = getLocalStorageItem('c-theme')
+    if (saved) {
+      setIsDark(saved === 'dark')
+      return
+    }
+    setIsDark(globalThis.matchMedia('(prefers-color-scheme: dark)').matches)
+  }, [])
 
   function toggleTheme() {
     setIsDark((prev) => {
       const next = !prev
-      globalThis.localStorage.setItem('c-theme', next ? 'dark' : 'light')
+      setLocalStorageItem('c-theme', next ? 'dark' : 'light')
       return next
     })
   }
@@ -167,35 +176,32 @@ export function CustomerMenuContent({
     },
   })
 
-  const menuQuery = useQuery({
-    queryKey: ['customer-menu', businessId],
-    queryFn: () => fetchCustomerMenu(businessId),
-    staleTime: 5 * 60 * 1000,
-    enabled: Boolean(businessId),
-  })
+  // Same query options the route loader preloads with, so SSR and the client share
+  // one cache entry (key/queryFn/staleTime) instead of racing a second fetch.
+  const menuQuery = useQuery(menuQueryOptions(businessId))
 
-  // Seeded by the route loader; only refetches when useSessionRealtime invalidates it
-  // on a `session-closed` broadcast, so this stays cheap until the table actually closes.
   const sessionStatusQuery = useQuery(sessionQueryOptions(sessionToken))
   const isSessionClosed = sessionStatusQuery.data?.session === null
 
   const categories = menuQuery.data ?? []
   const allProducts = categories.flatMap((c) => c.products)
   const cartCount = items.reduce((s, i) => s + i.quantity, 0)
-  const cartTotal = items.reduce((s, i) => s + cartItemTotal(i), 0)
+  const cartTotal = cartSubtotal(items)
 
-  // Restore order progress from sessionStorage across refreshes
-  const ssKey = `c-order-${sessionToken.slice(0, 12)}`
+  // Restore order progress from sessionStorage across refreshes. sessionId is the
+  // stable table-session identifier — unlike sessionToken it's not a bearer credential,
+  // so it's safe to use as a storage namespace without truncating it.
+  const ssKey = `c-order-${sessionId}`
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(ssKey)
+    const saved = getSessionStorageItem(ssKey)
     if (saved) {
       try {
         const record = JSON.parse(saved) as OrderRecord
         setOrderRecord(record)
         setView('order')
       } catch {
-        sessionStorage.removeItem(ssKey)
+        removeSessionStorageItem(ssKey)
       }
     }
   }, [ssKey])
@@ -241,7 +247,7 @@ export function CustomerMenuContent({
       placedAt: Date.now(),
       paymentMethod: 'ONLINE',
     }
-    sessionStorage.setItem(ssKey, JSON.stringify(record))
+    setSessionStorageItem(ssKey, JSON.stringify(record))
     markSelfMutated(orderId)
     setOrderRecord(record)
     clearCart()
@@ -269,14 +275,23 @@ export function CustomerMenuContent({
   }
 
   function handleBackToMenu() {
-    sessionStorage.removeItem(ssKey)
+    removeSessionStorageItem(ssKey)
     setOrderRecord(null)
     setView('menu')
-    globalThis.window.location.reload()
+  }
+
+  // Patches fields into orderRecord (state + sessionStorage) — OrderView has no query of
+  // its own to invalidate; see the TODO on OrderViewProps.onOrderUpdate.
+  function handleOrderUpdate(patch: Partial<OrderRecord>) {
+    setOrderRecord((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...patch }
+      setSessionStorageItem(ssKey, JSON.stringify(next))
+      return next
+    })
   }
 
   const theme = isDark ? 'dark' : 'light'
-
   // ── Session closed ──────────────────────────────────────────────────────────
   // Only pre-empts the browsing views — 'payment' and 'order' already resolve their own
   // terminal states from more specific order-lifecycle events (paid/cancelled/refunded).
@@ -339,9 +354,6 @@ export function CustomerMenuContent({
             <Skeleton key={k} w='100%' h={96} r={16} />
           ))}
         </div>
-        <div className='c-mobile-only'>
-          <BottomNav active='home' onCart={() => {}} cartCount={0} />
-        </div>
       </div>
     )
   }
@@ -389,7 +401,59 @@ export function CustomerMenuContent({
     )
   }
 
-  // ── App shell ───────────────────────────────────────────────────────────────
+  if (categories.length === 0 && view !== 'order') {
+    return (
+      <div
+        className='c-app'
+        data-theme={theme}
+        style={{
+          background: C.bg,
+          minHeight: '100dvh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 360,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 48 }}>🍽️</span>
+
+          <p
+            style={{
+              color: C.white,
+              fontSize: 18,
+              fontWeight: 700,
+              margin: 0,
+            }}
+          >
+            No menu available
+          </p>
+
+          <p
+            style={{
+              color: C.w40,
+              fontSize: 14,
+              lineHeight: 1.5,
+              margin: 0,
+            }}
+          >
+            This table doesn't have a menu available right now. Please check back later or ask a
+            staff member for assistance.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='c-app' data-theme={theme} style={{ background: C.bg }}>
       {sharedOrder && (view === 'menu' || view === 'product' || view === 'cart') && (
@@ -491,6 +555,7 @@ export function CustomerMenuContent({
               order={orderRecord}
               sessionToken={sessionToken}
               onBackToMenu={handleBackToMenu}
+              onOrderUpdate={handleOrderUpdate}
             />
           )}
         </div>

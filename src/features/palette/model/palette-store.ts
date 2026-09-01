@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getLocalStorageItem } from '#/shared/libs/utils/storage.utils'
 
 type PaletteStore = {
   palette: string
@@ -15,7 +16,7 @@ function applyPalette(palette: string) {
 export function initPalette() {
   if (typeof document === 'undefined') return
   try {
-    const stored = localStorage.getItem('color-palette')
+    const stored = getLocalStorageItem('color-palette')
     const palette = (stored && JSON.parse(stored)?.state?.palette) || 'ocean'
     applyPalette(palette)
   } catch {

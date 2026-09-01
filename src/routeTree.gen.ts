@@ -9,54 +9,42 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as StaffChangePasswordRouteImport } from './routes/staff-change-password'
-import { Route as StaffAcceptInviteRouteImport } from './routes/staff-accept-invite'
-import { Route as SetupRouteImport } from './routes/setup'
-import { Route as SelectBusinessRouteImport } from './routes/select-business'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as SiteRouteImport } from './routes/_site'
 import { Route as AdminRouteImport } from './routes/_admin'
-import { Route as SiteIndexRouteImport } from './routes/_site/index'
-import { Route as DisplayTokenRouteImport } from './routes/display/$token'
-import { Route as CustomerMenuRouteImport } from './routes/customer/menu'
-import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
-import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
-import { Route as SiteAboutRouteImport } from './routes/_site/about'
-import { Route as AdminUserSettingsRouteImport } from './routes/_admin/user-settings'
-import { Route as AdminTablesRouteImport } from './routes/_admin/tables'
-import { Route as AdminStaffRouteImport } from './routes/_admin/staff'
-import { Route as AdminSettingsRouteImport } from './routes/_admin/settings'
-import { Route as AdminPaymentsRouteImport } from './routes/_admin/payments'
-import { Route as AdminPaymentMethodsRouteImport } from './routes/_admin/payment-methods'
-import { Route as AdminOrdersRouteImport } from './routes/_admin/orders'
-import { Route as AdminModifiersRouteImport } from './routes/_admin/modifiers'
-import { Route as AdminMenuRouteImport } from './routes/_admin/menu'
-import { Route as AdminKitchenRouteImport } from './routes/_admin/kitchen'
-import { Route as AdminDisplaysRouteImport } from './routes/_admin/displays'
-import { Route as AdminDashboardRouteImport } from './routes/_admin/dashboard'
+import { Route as SiteRouteImport } from './routes/_site'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as SelectBusinessRouteImport } from './routes/select-business'
+import { Route as SetupRouteImport } from './routes/setup'
+import { Route as StaffAcceptInviteRouteImport } from './routes/staff-accept-invite'
+import { Route as StaffChangePasswordRouteImport } from './routes/staff-change-password'
 import { Route as AdminBusinessesRouteImport } from './routes/_admin/businesses'
+import { Route as AdminDashboardRouteImport } from './routes/_admin/dashboard'
+import { Route as AdminDisplaysRouteImport } from './routes/_admin/displays'
+import { Route as AdminKitchenRouteImport } from './routes/_admin/kitchen'
+import { Route as AdminMenuRouteImport } from './routes/_admin/menu'
+import { Route as AdminModifiersRouteImport } from './routes/_admin/modifiers'
+import { Route as AdminOrdersRouteImport } from './routes/_admin/orders'
+import { Route as AdminPaymentMethodsRouteImport } from './routes/_admin/payment-methods'
+import { Route as AdminPaymentsRouteImport } from './routes/_admin/payments'
+import { Route as AdminSettingsRouteImport } from './routes/_admin/settings'
+import { Route as AdminStaffRouteImport } from './routes/_admin/staff'
+import { Route as AdminTablesRouteImport } from './routes/_admin/tables'
+import { Route as AdminUserSettingsRouteImport } from './routes/_admin/user-settings'
+import { Route as SiteIndexRouteImport } from './routes/_site/index'
+import { Route as SiteAboutRouteImport } from './routes/_site/about'
+import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
+import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
+import { Route as CustomerMenuRouteImport } from './routes/customer/menu'
+import { Route as DisplayTokenRouteImport } from './routes/display/$token'
 import { Route as AdminStaffIndexRouteImport } from './routes/_admin/staff/index'
-import { Route as BSlugStaffLoginRouteImport } from './routes/b/$slug/staff-login'
 import { Route as AdminStaffKitchenRouteImport } from './routes/_admin/staff/kitchen'
+import { Route as BSlugStaffLoginRouteImport } from './routes/b/$slug/staff-login'
 
-const StaffChangePasswordRoute = StaffChangePasswordRouteImport.update({
-  id: '/staff-change-password',
-  path: '/staff-change-password',
+const AdminRoute = AdminRouteImport.update({
+  id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffAcceptInviteRoute = StaffAcceptInviteRouteImport.update({
-  id: '/staff-accept-invite',
-  path: '/staff-accept-invite',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SetupRoute = SetupRouteImport.update({
-  id: '/setup',
-  path: '/setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SelectBusinessRoute = SelectBusinessRouteImport.update({
-  id: '/select-business',
-  path: '/select-business',
+const SiteRoute = SiteRouteImport.update({
+  id: '/_site',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -64,97 +52,29 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SiteRoute = SiteRouteImport.update({
-  id: '/_site',
+const SelectBusinessRoute = SelectBusinessRouteImport.update({
+  id: '/select-business',
+  path: '/select-business',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/_admin',
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SiteIndexRoute = SiteIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SiteRoute,
-} as any)
-const DisplayTokenRoute = DisplayTokenRouteImport.update({
-  id: '/display/$token',
-  path: '/display/$token',
+const StaffAcceptInviteRoute = StaffAcceptInviteRouteImport.update({
+  id: '/staff-accept-invite',
+  path: '/staff-accept-invite',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CustomerMenuRoute = CustomerMenuRouteImport.update({
-  id: '/customer/menu',
-  path: '/customer/menu',
+const StaffChangePasswordRoute = StaffChangePasswordRouteImport.update({
+  id: '/staff-change-password',
+  path: '/staff-change-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthSignUpRoute = AuthSignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthSignInRoute = AuthSignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => AuthRoute,
-} as any)
-const SiteAboutRoute = SiteAboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => SiteRoute,
-} as any)
-const AdminUserSettingsRoute = AdminUserSettingsRouteImport.update({
-  id: '/user-settings',
-  path: '/user-settings',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminTablesRoute = AdminTablesRouteImport.update({
-  id: '/tables',
-  path: '/tables',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminStaffRoute = AdminStaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSettingsRoute = AdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPaymentMethodsRoute = AdminPaymentMethodsRouteImport.update({
-  id: '/payment-methods',
-  path: '/payment-methods',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminOrdersRoute = AdminOrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminModifiersRoute = AdminModifiersRouteImport.update({
-  id: '/modifiers',
-  path: '/modifiers',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminMenuRoute = AdminMenuRouteImport.update({
-  id: '/menu',
-  path: '/menu',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKitchenRoute = AdminKitchenRouteImport.update({
-  id: '/kitchen',
-  path: '/kitchen',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDisplaysRoute = AdminDisplaysRouteImport.update({
-  id: '/displays',
-  path: '/displays',
+const AdminBusinessesRoute = AdminBusinessesRouteImport.update({
+  id: '/businesses',
+  path: '/businesses',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
@@ -162,25 +82,105 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminBusinessesRoute = AdminBusinessesRouteImport.update({
-  id: '/businesses',
-  path: '/businesses',
+const AdminDisplaysRoute = AdminDisplaysRouteImport.update({
+  id: '/displays',
+  path: '/displays',
   getParentRoute: () => AdminRoute,
+} as any)
+const AdminKitchenRoute = AdminKitchenRouteImport.update({
+  id: '/kitchen',
+  path: '/kitchen',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMenuRoute = AdminMenuRouteImport.update({
+  id: '/menu',
+  path: '/menu',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminModifiersRoute = AdminModifiersRouteImport.update({
+  id: '/modifiers',
+  path: '/modifiers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOrdersRoute = AdminOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPaymentMethodsRoute = AdminPaymentMethodsRouteImport.update({
+  id: '/payment-methods',
+  path: '/payment-methods',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStaffRoute = AdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTablesRoute = AdminTablesRouteImport.update({
+  id: '/tables',
+  path: '/tables',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUserSettingsRoute = AdminUserSettingsRouteImport.update({
+  id: '/user-settings',
+  path: '/user-settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const SiteIndexRoute = SiteIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteAboutRoute = SiteAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => SiteRoute,
+} as any)
+const AuthSignInRoute = AuthSignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AuthRoute,
+} as any)
+const CustomerMenuRoute = CustomerMenuRouteImport.update({
+  id: '/customer/menu',
+  path: '/customer/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisplayTokenRoute = DisplayTokenRouteImport.update({
+  id: '/display/$token',
+  path: '/display/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminStaffIndexRoute = AdminStaffIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminStaffRoute,
 } as any)
-const BSlugStaffLoginRoute = BSlugStaffLoginRouteImport.update({
-  id: '/b/$slug/staff-login',
-  path: '/b/$slug/staff-login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminStaffKitchenRoute = AdminStaffKitchenRouteImport.update({
   id: '/kitchen',
   path: '/kitchen',
   getParentRoute: () => AdminStaffRoute,
+} as any)
+const BSlugStaffLoginRoute = BSlugStaffLoginRouteImport.update({
+  id: '/b/$slug/staff-login',
+  path: '/b/$slug/staff-login',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -378,39 +378,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/staff-change-password': {
-      id: '/staff-change-password'
-      path: '/staff-change-password'
-      fullPath: '/staff-change-password'
-      preLoaderRoute: typeof StaffChangePasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/staff-accept-invite': {
-      id: '/staff-accept-invite'
-      path: '/staff-accept-invite'
-      fullPath: '/staff-accept-invite'
-      preLoaderRoute: typeof StaffAcceptInviteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/setup': {
-      id: '/setup'
-      path: '/setup'
-      fullPath: '/setup'
-      preLoaderRoute: typeof SetupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/select-business': {
-      id: '/select-business'
-      path: '/select-business'
-      fullPath: '/select-business'
-      preLoaderRoute: typeof SelectBusinessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_site': {
@@ -420,130 +392,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_admin': {
-      id: '/_admin'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AdminRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_site/': {
-      id: '/_site/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof SiteIndexRouteImport
-      parentRoute: typeof SiteRoute
-    }
-    '/display/$token': {
-      id: '/display/$token'
-      path: '/display/$token'
-      fullPath: '/display/$token'
-      preLoaderRoute: typeof DisplayTokenRouteImport
+    '/select-business': {
+      id: '/select-business'
+      path: '/select-business'
+      fullPath: '/select-business'
+      preLoaderRoute: typeof SelectBusinessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/customer/menu': {
-      id: '/customer/menu'
-      path: '/customer/menu'
-      fullPath: '/customer/menu'
-      preLoaderRoute: typeof CustomerMenuRouteImport
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/sign-up': {
-      id: '/auth/sign-up'
-      path: '/sign-up'
-      fullPath: '/auth/sign-up'
-      preLoaderRoute: typeof AuthSignUpRouteImport
-      parentRoute: typeof AuthRoute
+    '/staff-accept-invite': {
+      id: '/staff-accept-invite'
+      path: '/staff-accept-invite'
+      fullPath: '/staff-accept-invite'
+      preLoaderRoute: typeof StaffAcceptInviteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/auth/sign-in': {
-      id: '/auth/sign-in'
-      path: '/sign-in'
-      fullPath: '/auth/sign-in'
-      preLoaderRoute: typeof AuthSignInRouteImport
-      parentRoute: typeof AuthRoute
+    '/staff-change-password': {
+      id: '/staff-change-password'
+      path: '/staff-change-password'
+      fullPath: '/staff-change-password'
+      preLoaderRoute: typeof StaffChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_site/about': {
-      id: '/_site/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof SiteAboutRouteImport
-      parentRoute: typeof SiteRoute
-    }
-    '/_admin/user-settings': {
-      id: '/_admin/user-settings'
-      path: '/user-settings'
-      fullPath: '/user-settings'
-      preLoaderRoute: typeof AdminUserSettingsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/tables': {
-      id: '/_admin/tables'
-      path: '/tables'
-      fullPath: '/tables'
-      preLoaderRoute: typeof AdminTablesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/staff': {
-      id: '/_admin/staff'
-      path: '/staff'
-      fullPath: '/staff'
-      preLoaderRoute: typeof AdminStaffRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/settings': {
-      id: '/_admin/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AdminSettingsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/payments': {
-      id: '/_admin/payments'
-      path: '/payments'
-      fullPath: '/payments'
-      preLoaderRoute: typeof AdminPaymentsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/payment-methods': {
-      id: '/_admin/payment-methods'
-      path: '/payment-methods'
-      fullPath: '/payment-methods'
-      preLoaderRoute: typeof AdminPaymentMethodsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/orders': {
-      id: '/_admin/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof AdminOrdersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/modifiers': {
-      id: '/_admin/modifiers'
-      path: '/modifiers'
-      fullPath: '/modifiers'
-      preLoaderRoute: typeof AdminModifiersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/menu': {
-      id: '/_admin/menu'
-      path: '/menu'
-      fullPath: '/menu'
-      preLoaderRoute: typeof AdminMenuRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/kitchen': {
-      id: '/_admin/kitchen'
-      path: '/kitchen'
-      fullPath: '/kitchen'
-      preLoaderRoute: typeof AdminKitchenRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/displays': {
-      id: '/_admin/displays'
-      path: '/displays'
-      fullPath: '/displays'
-      preLoaderRoute: typeof AdminDisplaysRouteImport
+    '/_admin/businesses': {
+      id: '/_admin/businesses'
+      path: '/businesses'
+      fullPath: '/businesses'
+      preLoaderRoute: typeof AdminBusinessesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/dashboard': {
@@ -553,12 +441,124 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_admin/businesses': {
-      id: '/_admin/businesses'
-      path: '/businesses'
-      fullPath: '/businesses'
-      preLoaderRoute: typeof AdminBusinessesRouteImport
+    '/_admin/displays': {
+      id: '/_admin/displays'
+      path: '/displays'
+      fullPath: '/displays'
+      preLoaderRoute: typeof AdminDisplaysRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_admin/kitchen': {
+      id: '/_admin/kitchen'
+      path: '/kitchen'
+      fullPath: '/kitchen'
+      preLoaderRoute: typeof AdminKitchenRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/menu': {
+      id: '/_admin/menu'
+      path: '/menu'
+      fullPath: '/menu'
+      preLoaderRoute: typeof AdminMenuRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/modifiers': {
+      id: '/_admin/modifiers'
+      path: '/modifiers'
+      fullPath: '/modifiers'
+      preLoaderRoute: typeof AdminModifiersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/orders': {
+      id: '/_admin/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AdminOrdersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/payment-methods': {
+      id: '/_admin/payment-methods'
+      path: '/payment-methods'
+      fullPath: '/payment-methods'
+      preLoaderRoute: typeof AdminPaymentMethodsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/payments': {
+      id: '/_admin/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof AdminPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/settings': {
+      id: '/_admin/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/staff': {
+      id: '/_admin/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof AdminStaffRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/tables': {
+      id: '/_admin/tables'
+      path: '/tables'
+      fullPath: '/tables'
+      preLoaderRoute: typeof AdminTablesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/user-settings': {
+      id: '/_admin/user-settings'
+      path: '/user-settings'
+      fullPath: '/user-settings'
+      preLoaderRoute: typeof AdminUserSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_site/': {
+      id: '/_site/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof SiteIndexRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/about': {
+      id: '/_site/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof SiteAboutRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/auth/sign-in': {
+      id: '/auth/sign-in'
+      path: '/sign-in'
+      fullPath: '/auth/sign-in'
+      preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/sign-up': {
+      id: '/auth/sign-up'
+      path: '/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/customer/menu': {
+      id: '/customer/menu'
+      path: '/customer/menu'
+      fullPath: '/customer/menu'
+      preLoaderRoute: typeof CustomerMenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/display/$token': {
+      id: '/display/$token'
+      path: '/display/$token'
+      fullPath: '/display/$token'
+      preLoaderRoute: typeof DisplayTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_admin/staff/': {
       id: '/_admin/staff/'
@@ -567,19 +567,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminStaffIndexRouteImport
       parentRoute: typeof AdminStaffRoute
     }
-    '/b/$slug/staff-login': {
-      id: '/b/$slug/staff-login'
-      path: '/b/$slug/staff-login'
-      fullPath: '/b/$slug/staff-login'
-      preLoaderRoute: typeof BSlugStaffLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_admin/staff/kitchen': {
       id: '/_admin/staff/kitchen'
       path: '/kitchen'
       fullPath: '/staff/kitchen'
       preLoaderRoute: typeof AdminStaffKitchenRouteImport
       parentRoute: typeof AdminStaffRoute
+    }
+    '/b/$slug/staff-login': {
+      id: '/b/$slug/staff-login'
+      path: '/b/$slug/staff-login'
+      fullPath: '/b/$slug/staff-login'
+      preLoaderRoute: typeof BSlugStaffLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }

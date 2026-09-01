@@ -1,8 +1,8 @@
 import {
-  getCountries as _getCountries,
-  getCountryNameByCode as _getCountryNameByCode,
   configure,
   getAllCitiesOfCountry,
+  getCountries as _getCountries,
+  getCountryNameByCode as _getCountryNameByCode,
 } from '@countrystatecity/countries-browser'
 
 // Use locally-served data instead of the default jsDelivr CDN.
@@ -35,9 +35,24 @@ const loadCountryOpts = (): Promise<LocationOption[]> => {
 const loadCurrencyOpts = (): Promise<CurrencyOption[]> => {
   currencyOptsPromise ??= _getCountries().then((countries) =>
     Array.from(new Set(countries.filter((c) => c.currency).map((c) => c.currency.toUpperCase())))
-      .sort((a, b) => a.localeCompare(b))
+      .sort((a, b) => {
+        const priority: Record<string, number> = {
+          USD: 0,
+          EUR: 1,
+        }
+
+        const priorityA = priority[a] ?? 2
+        const priorityB = priority[b] ?? 2
+
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB
+        }
+
+        return a.localeCompare(b)
+      })
       .map((value) => ({ value, label: value })),
   )
+
   return currencyOptsPromise
 }
 

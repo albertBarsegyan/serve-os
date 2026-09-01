@@ -81,8 +81,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register a new user */
+        /** Register a new user — sends an email verification link */
         post: operations["AuthController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify account email via the token sent on registration */
+        post: operations["AuthController_verifyEmail"];
         delete?: never;
         options?: never;
         head?: never;
@@ -242,6 +259,264 @@ export interface paths {
         post?: never;
         /** Remove a payment method configuration */
         delete: operations["BusinessController_deletePaymentMethod"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create staff member and send invite email */
+        post: operations["StaffController_createWithInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create staff member with PIN authentication */
+        post: operations["StaffController_createWithPin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create staff member with password authentication */
+        post: operations["StaffController_createWithPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/accept-invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept staff invite and set password */
+        post: operations["StaffController_acceptInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff/login/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Staff login with PIN */
+        post: operations["StaffController_loginWithPin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Staff login with email and password */
+        post: operations["StaffController_loginWithPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Staff logout — clears staff_access_token cookie */
+        post: operations["StaffController_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change staff password */
+        post: operations["StaffController_changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get paginated staff for a business */
+        get: operations["StaffController_findAll"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff/{staffId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a specific staff member */
+        get: operations["StaffController_findOne"];
+        put?: never;
+        post?: never;
+        /** Delete a staff member */
+        delete: operations["StaffController_remove"];
+        options?: never;
+        head?: never;
+        /** Update staff details */
+        patch: operations["StaffController_update"];
+        trace?: never;
+    };
+    "/api/businesses/{businessId}/staff/{staffId}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unlock a PIN-locked staff member (owner or manager only) */
+        post: operations["StaffController_unlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/business/{businessId}/displays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List displays for a business */
+        get: operations["DisplayController_findAll"];
+        put?: never;
+        /** Create a venue TV display and return its one-time access URL */
+        post: operations["DisplayController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/business/{businessId}/displays/{id}/regenerate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate a display token, returning a new one-time access URL */
+        post: operations["DisplayController_regenerate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/business/{businessId}/displays/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a display */
+        delete: operations["DisplayController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/display/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a sanitized live kitchen order snapshot for a venue TV display */
+        get: operations["PublicDisplayController_getSnapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -672,6 +947,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orders/{id}/payment/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry payment for a PAYMENT_FAILED order (OWNER/MANAGER/CASHIER) */
+        post: operations["OrdersController_retryPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{id}/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refund a closed order (OWNER/MANAGER/CASHIER — matches PAYMENT_REFUND) */
+        post: operations["OrdersController_refundOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions": {
         parameters: {
             query?: never;
@@ -734,6 +1043,23 @@ export interface paths {
         get: operations["TableSessionsController_resume"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{sessionToken}/tip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Guest adds a tip to their session order */
+        post: operations["TableSessionsController_createTip"];
         delete?: never;
         options?: never;
         head?: never;
@@ -820,195 +1146,6 @@ export interface paths {
         put?: never;
         /** Provider payment callback — re-verifies server-side before confirming */
         post: operations["WebhooksController_handleCallback"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff/invite": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create staff member and send invite email */
-        post: operations["StaffController_createWithInvite"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff/pin": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create staff member with PIN authentication */
-        post: operations["StaffController_createWithPin"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff/password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create staff member with password authentication */
-        post: operations["StaffController_createWithPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/staff/accept-invite": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Accept staff invite and set password */
-        post: operations["StaffController_acceptInvite"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff/login/pin": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Staff login with PIN */
-        post: operations["StaffController_loginWithPin"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Staff login with email and password */
-        post: operations["StaffController_loginWithPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Staff logout — clears staff_access_token cookie */
-        post: operations["StaffController_logout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/staff/change-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Change staff password */
-        post: operations["StaffController_changePassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get paginated staff for a business */
-        get: operations["StaffController_findAll"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff/{staffId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a specific staff member */
-        get: operations["StaffController_findOne"];
-        put?: never;
-        post?: never;
-        /** Delete a staff member */
-        delete: operations["StaffController_remove"];
-        options?: never;
-        head?: never;
-        /** Update staff details */
-        patch: operations["StaffController_update"];
-        trace?: never;
-    };
-    "/api/businesses/{businessId}/staff/{staffId}/unlock": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Unlock a PIN-locked staff member (owner or manager only) */
-        post: operations["StaffController_unlock"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1282,6 +1419,13 @@ export interface components {
              */
             errors?: string[];
         };
+        VerifyEmailDto: {
+            /**
+             * @description Email verification token
+             * @example a1b2c3...
+             */
+            token: string;
+        };
         LoginDto: {
             /** @example admin@restaurant.com */
             email: string;
@@ -1354,6 +1498,91 @@ export interface components {
              *     }
              */
             config?: Record<string, never>;
+        };
+        CreateStaffWithInviteDto: {
+            /** @example John Doe */
+            displayName: string;
+            /** @enum {string} */
+            role: "MANAGER" | "WAITER" | "CASHIER" | "KITCHEN";
+            /** @example john@example.com */
+            email: string;
+        };
+        CreateStaffWithPinDto: {
+            /**
+             * @description Staff display name
+             * @example John Doe
+             */
+            displayName: string;
+            /**
+             * @example WAITER
+             * @enum {string}
+             */
+            role: "MANAGER" | "WAITER" | "CASHIER" | "KITCHEN";
+            /**
+             * @description Exactly 4 digits
+             * @example 1234
+             */
+            pin: string;
+        };
+        CreateStaffWithPasswordDto: {
+            /** @example John Doe */
+            displayName: string;
+            /** @enum {string} */
+            role: "MANAGER" | "WAITER" | "CASHIER" | "KITCHEN";
+            /** @example john@example.com */
+            email?: string;
+            /**
+             * @description Minimum 8 characters
+             * @example TempPassword123!
+             */
+            temporaryPassword: string;
+        };
+        AcceptInviteDto: {
+            /**
+             * @description Invite token from email
+             * @example uuid-token
+             */
+            token: string;
+            /**
+             * @description Minimum 8 characters
+             * @example NewPassword123!
+             */
+            newPassword: string;
+        };
+        LoginWithPinDto: {
+            /** @example uuid-staff-id */
+            staffId: string;
+            /**
+             * @description Exactly 4 digits
+             * @example 1234
+             */
+            pin: string;
+        };
+        LoginWithPasswordDto: {
+            /** @example john@example.com */
+            email: string;
+            /** @example Password123! */
+            password: string;
+        };
+        ChangePasswordDto: {
+            /** @example oldpassword123 */
+            currentPassword: string;
+            /** @example newpassword123 */
+            newPassword: string;
+        };
+        UpdateStaffDto: {
+            /** @example https://example.com/avatar.webp */
+            avatarUrl?: Record<string, never> | null;
+            /** @example Jane Doe */
+            displayName?: string;
+            /** @enum {string} */
+            role?: "MANAGER" | "WAITER" | "CASHIER" | "KITCHEN";
+            /** @example true */
+            isActive?: boolean;
+        };
+        CreateDisplayDto: {
+            /** @example Kitchen TV */
+            name: string;
         };
         CreateCategoryDto: {
             /** @example Main Dishes */
@@ -1512,12 +1741,46 @@ export interface components {
             /** @example 3.5 */
             tipAmount?: number;
         };
+        RefundOrderDto: {
+            /** @description External refund reference (e.g. bank transfer ID). Generated if omitted. */
+            refundId?: string;
+        };
         ScanSessionDto: {
             /**
              * @description The qrCode value from the table entity
              * @example uuid-qr-code
              */
             qrCode: string;
+        };
+        CreateTipDto: {
+            /**
+             * @description Flat tip amount in minor units (cents). Exactly one of amount/percentage.
+             * @example 500
+             */
+            amount?: number;
+            /**
+             * @description Tip as a percentage of the order subtotal. Exactly one of amount/percentage.
+             * @example 18
+             */
+            percentage?: number;
+            /**
+             * @example SUBTOTAL
+             * @enum {string}
+             */
+            basis: "SUBTOTAL";
+            /**
+             * @description Client-generated key; a replayed key returns the original result unchanged.
+             * @example a2f6e2d0-6b7a-4c3e-9e8a-1c2d3e4f5a6b
+             */
+            idempotencyKey: string;
+        };
+        TipResponseDto: {
+            /** @example a2f6e2d0-6b7a-4c3e-9e8a-1c2d3e4f5a6b */
+            orderId: string;
+            /** @example 5 */
+            tipAmount: number;
+            /** @example b3f7e2d0-6b7a-4c3e-9e8a-1c2d3e4f5a6c */
+            paymentId: string;
         };
         CreatePaymentDto: {
             /** @example uuid-v4-order-id */
@@ -1535,87 +1798,6 @@ export interface components {
             providerRef: string;
             /** @description Raw provider payload (ignored for verification) */
             payload?: Record<string, never>;
-        };
-        CreateStaffWithInviteDto: {
-            /** @example John Doe */
-            displayName: string;
-            /** @enum {string} */
-            role: "MANAGER" | "WAITER" | "CASHIER" | "KITCHEN";
-            /** @example john@example.com */
-            email: string;
-        };
-        CreateStaffWithPinDto: {
-            /**
-             * @description Staff display name
-             * @example John Doe
-             */
-            displayName: string;
-            /**
-             * @example WAITER
-             * @enum {string}
-             */
-            role: "MANAGER" | "WAITER" | "CASHIER" | "KITCHEN";
-            /**
-             * @description Exactly 4 digits
-             * @example 1234
-             */
-            pin: string;
-        };
-        CreateStaffWithPasswordDto: {
-            /** @example John Doe */
-            displayName: string;
-            /** @enum {string} */
-            role: "MANAGER" | "WAITER" | "CASHIER" | "KITCHEN";
-            /** @example john@example.com */
-            email?: string;
-            /**
-             * @description Minimum 8 characters
-             * @example TempPassword123!
-             */
-            temporaryPassword: string;
-        };
-        AcceptInviteDto: {
-            /**
-             * @description Invite token from email
-             * @example uuid-token
-             */
-            token: string;
-            /**
-             * @description Minimum 8 characters
-             * @example NewPassword123!
-             */
-            newPassword: string;
-        };
-        LoginWithPinDto: {
-            /** @example uuid-staff-id */
-            staffId: string;
-            /**
-             * @description Exactly 4 digits
-             * @example 1234
-             */
-            pin: string;
-        };
-        LoginWithPasswordDto: {
-            /** @example john@example.com */
-            email: string;
-            /** @example Password123! */
-            password: string;
-        };
-        ChangePasswordDto: {
-            /** @example oldpassword123 */
-            currentPassword: string;
-            /** @example newpassword123 */
-            newPassword: string;
-        };
-        UpdateStaffDto: {
-            /** @example https://example.com/avatar.webp */
-            avatarUrl?: Record<string, never> | null;
-            /** @example Jane Doe */
-            displayName?: string;
-            /** @enum {string} */
-            role?: "MANAGER" | "WAITER" | "CASHIER" | "KITCHEN";
-            /** @example true */
-            isActive?: boolean;
         };
         CreateTableDto: {
             /** @example 1 */
@@ -1809,6 +1991,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
+            };
+        };
+    };
+    AuthController_verifyEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailDto"];
+            };
+        };
+        responses: {
+            /** @description Email verified */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid or expired verification token */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2117,6 +2328,393 @@ export interface operations {
             path: {
                 id: string;
                 methodId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_createWithInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStaffWithInviteDto"];
+            };
+        };
+        responses: {
+            /** @description Invite sent successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_createWithPin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStaffWithPinDto"];
+            };
+        };
+        responses: {
+            /** @description Staff created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_createWithPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStaffWithPasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Staff created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_acceptInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptInviteDto"];
+            };
+        };
+        responses: {
+            /** @description Invite accepted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_loginWithPin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginWithPinDto"];
+            };
+        };
+        responses: {
+            /** @description Login successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_loginWithPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginWithPasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Login successful or password change required */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Password changed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_findAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+                staffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+                staffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+                staffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStaffDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffController_unlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+                staffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DisplayController_findAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DisplayController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDisplayDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DisplayController_regenerate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DisplayController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                businessId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PublicDisplayController_getSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
             };
             cookie?: never;
         };
@@ -2940,6 +3538,64 @@ export interface operations {
             };
         };
     };
+    OrdersController_retryPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Order returned to DELIVERED; payment queue reopened */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order is not PAYMENT_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrdersController_refundOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefundOrderDto"];
+            };
+        };
+        responses: {
+            /** @description Order refunded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order is not CLOSED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     TableSessionsController_create: {
         parameters: {
             query?: never;
@@ -3013,6 +3669,47 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TableSessionsController_createTip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The guest session token (path, not body) */
+                sessionToken: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTipDto"];
+            };
+        };
+        responses: {
+            /** @description Tip recorded */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TipResponseDto"];
+                };
+            };
+            /** @description Session does not own this order, or TIPS disabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order is no longer eligible for a tip */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3133,292 +3830,6 @@ export interface operations {
         };
         responses: {
             201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_createWithInvite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateStaffWithInviteDto"];
-            };
-        };
-        responses: {
-            /** @description Invite sent successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_createWithPin: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateStaffWithPinDto"];
-            };
-        };
-        responses: {
-            /** @description Staff created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_createWithPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateStaffWithPasswordDto"];
-            };
-        };
-        responses: {
-            /** @description Staff created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_acceptInvite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AcceptInviteDto"];
-            };
-        };
-        responses: {
-            /** @description Invite accepted successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_loginWithPin: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginWithPinDto"];
-            };
-        };
-        responses: {
-            /** @description Login successful */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_loginWithPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginWithPasswordDto"];
-            };
-        };
-        responses: {
-            /** @description Login successful or password change required */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_logout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_changePassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangePasswordDto"];
-            };
-        };
-        responses: {
-            /** @description Password changed successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-                staffId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-                staffId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-                staffId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateStaffDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    StaffController_unlock: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-                staffId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
                 headers: {
                     [name: string]: unknown;
                 };

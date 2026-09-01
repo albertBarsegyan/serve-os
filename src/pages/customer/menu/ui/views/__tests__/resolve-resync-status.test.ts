@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { OrderStatusChangedPayload } from '#/shared/realtime/events'
-import { resolveResyncStatus } from '../order-view'
+import { resolveResyncStatus, shouldReconcileTip } from '../order-view'
 
 function basePayload(overrides: Partial<OrderStatusChangedPayload>): OrderStatusChangedPayload {
   return {
@@ -14,6 +14,7 @@ function basePayload(overrides: Partial<OrderStatusChangedPayload>): OrderStatus
     sessionToken: 'session-1',
     updatedAt: new Date().toISOString(),
     actor: { type: 'system', id: 'system' },
+    tipAmount: 0,
     ...overrides,
   }
 }
@@ -77,5 +78,36 @@ describe('resolveResyncStatus', () => {
 
   it('returns null for an unrecognized customerStatus rather than crashing the UI', () => {
     expect(resolveResyncStatus(basePayload({ customerStatus: 'made-up' }))).toBeNull()
+  })
+})
+
+describe('shouldReconcileTip', () => {
+  const t0 = '2026-01-01T00:00:00.000Z'
+  const t1 = '2026-01-01T00:01:00.000Z'
+
+  it('does not patch a never-asked tip on the very first resync (mount-time zero)', () => {
+    // Regression: this exact case hid the tip picker permanently — the first
+    // order:status-changed fires right after mount, before the guest touches anything,
+    // and the backend always reports a real number (0) even when no tip was ever given.
+    expect(shouldReconcileTip(undefined, undefined, { tipAmount: 0, updatedAt: t0 })).toBe(false)
+  })
+
+  it('reconciles a never-asked tip when the incoming payload reports a real tip', () => {
+    // e.g. added from another device/tab, or by staff, before this device ever asked.
+    expect(shouldReconcileTip(undefined, undefined, { tipAmount: 15, updatedAt: t0 })).toBe(true)
+  })
+
+  it('keeps syncing an already-recorded tip even when the incoming value is zero', () => {
+    // Once a tip has been locally recorded (including an explicit 0), later resyncs must
+    // still be allowed to keep it in sync — e.g. a refund zeroing it back out.
+    expect(shouldReconcileTip(0, t0, { tipAmount: 0, updatedAt: t1 })).toBe(true)
+  })
+
+  it('rejects a stale payload older than what is already applied', () => {
+    expect(shouldReconcileTip(20, t1, { tipAmount: 20, updatedAt: t0 })).toBe(false)
+  })
+
+  it('accepts a payload with no prior recorded updatedAt regardless of freshness', () => {
+    expect(shouldReconcileTip(undefined, undefined, { tipAmount: 5, updatedAt: t0 })).toBe(true)
   })
 })

@@ -11,6 +11,8 @@ export function useSignInMutation() {
       queryClient.setQueryData(authUserQueryOptions().queryKey, data)
 
       await initializeAudio()
+
+      return data
     },
   })
 }

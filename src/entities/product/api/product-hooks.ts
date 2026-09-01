@@ -14,7 +14,7 @@ import {
 
 export function useGetProduct(businessId: string, productId: string) {
   return useQuery({
-    queryKey: platformQueryKeys.productById(productId),
+    queryKey: platformQueryKeys.productById(businessId, productId),
     queryFn: () => getProductServerFn({ data: { productId } }),
     enabled: !!businessId && !!productId,
   })
@@ -27,8 +27,10 @@ export function useCreateProduct() {
     mutationFn: ({ businessId, payload }: { businessId: string; payload: CreateProductRequest }) =>
       createProductServerFn({ data: { businessId, payload } }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot(data.businessId) })
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.menuCategoriesRoot(data.businessId),
+      })
       queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
     },
   })
@@ -48,8 +50,10 @@ export function useUpdateProduct() {
       payload: UpdateProductRequest
     }) => updateProductServerFn({ data: { businessId, productId, payload } }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot(data.businessId) })
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.menuCategoriesRoot(data.businessId),
+      })
       queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
     },
   })
@@ -74,8 +78,10 @@ export function useReorderProductImages() {
       imageUrls: string[]
     }) => reorderProductImagesApi(productId, imageUrls),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot(data.businessId) })
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.menuCategoriesRoot(data.businessId),
+      })
       queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
     },
   })

@@ -72,12 +72,14 @@ export function AdminMenuContent() {
   const editDescriptionId = useId()
   const editSortOrderId = useId()
 
-  const currency = useActiveBusiness()?.currency ?? 'USD'
+  const activeBusiness = useActiveBusiness()
+  const businessId = activeBusiness?.id ?? ''
+  const currency = activeBusiness?.currency ?? 'USD'
   const { isOwner, hasPermission } = usePermissions()
   const canEditMenu = isOwner() || hasPermission(StaffPermission.MENU_EDIT)
   const canToggleAvailability = isOwner() || hasPermission(StaffPermission.MENU_AVAILABILITY)
 
-  const categoriesQuery = useQuery(menuCategoriesQueryOptions(true))
+  const categoriesQuery = useQuery(menuCategoriesQueryOptions(businessId, true))
 
   const activeCategoryData = useMemo(() => {
     if (activeCategory === 'All') return undefined
@@ -87,7 +89,7 @@ export function AdminMenuContent() {
   // Categories are fetched with their products already included, so selecting a
   // category filters that data in memory instead of firing another request.
   const productsQuery = useQuery({
-    ...pagedProductsQueryOptions(page, limit),
+    ...pagedProductsQueryOptions(businessId, page, limit),
     enabled: activeCategory === 'All',
   })
 

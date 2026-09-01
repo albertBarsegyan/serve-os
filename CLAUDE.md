@@ -19,7 +19,7 @@ Docker (dev):
 pnpm docker:dev   # build + run via docker compose with .env.local
 pnpm docker:stop  # stop containers
 ```
-
+tab
 Docker (prod):
 ```bash
 pnpm docker:prod:build  # build prod image using docker-compose.prod.yml + .env.production

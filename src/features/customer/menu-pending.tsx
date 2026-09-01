@@ -1,4 +1,5 @@
 import { m } from '#/paraglide/messages'
+import { getLocalStorageItem } from '#/shared/libs/utils/storage.utils'
 
 function PendingSkeleton({
   w,
@@ -31,7 +32,7 @@ function PendingSkeleton({
 export function CustomerMenuPending() {
   const isDark = (() => {
     try {
-      const saved = localStorage.getItem('c-theme')
+      const saved = getLocalStorageItem('c-theme')
       if (saved) return saved === 'dark'
       return window.matchMedia('(prefers-color-scheme: dark)').matches
     } catch {
@@ -45,7 +46,6 @@ export function CustomerMenuPending() {
   const textPrimary = isDark ? '#ffffff' : '#1a1a1a'
   const textMuted = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
   const border = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'
-  const navBg = isDark ? '#1a1a1a' : '#ffffff'
 
   return (
     <main
@@ -189,37 +189,6 @@ export function CustomerMenuPending() {
           </div>
         ))}
       </div>
-
-      {/* Bottom nav placeholder */}
-      <nav
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: navBg,
-          borderTop: `1px solid ${border}`,
-          display: 'flex',
-          padding: '8px 0 20px',
-          zIndex: 50,
-        }}
-      >
-        {['🏠', '🛒', '👤'].map((icon) => (
-          <div
-            key={icon}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            <span style={{ fontSize: 22, opacity: 0.35 }}>{icon}</span>
-            <PendingSkeleton w={28} h={8} r={4} card={card} card2={card2} />
-          </div>
-        ))}
-      </nav>
     </main>
   )
 }

@@ -1,10 +1,12 @@
 import { create } from 'zustand'
+import { lineTotal, unitPrice } from '#/shared/libs/utils/pricing.utils'
 
 export interface CartModifier {
   groupId: string
   modifierId: string
   name: string
   priceAdjustment: number
+  priceType: 'fixed' | 'adjustment'
 }
 
 export interface CartItem {
@@ -18,11 +20,11 @@ export interface CartItem {
 }
 
 export function cartItemUnitPrice(item: CartItem): number {
-  return item.basePrice + item.selectedModifiers.reduce((s, m) => s + Number(m.priceAdjustment), 0)
+  return unitPrice(item.basePrice, item.selectedModifiers)
 }
 
 export function cartItemTotal(item: CartItem): number {
-  return cartItemUnitPrice(item) * item.quantity
+  return lineTotal(item)
 }
 
 interface CartState {

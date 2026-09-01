@@ -12,6 +12,7 @@ interface ModalProps {
   children: React.ReactNode
   footer?: React.ReactNode
   className?: string
+  contentClassName?: string
 }
 
 export function Modal({
@@ -21,6 +22,7 @@ export function Modal({
   children,
   footer,
   className,
+  contentClassName,
 }: Readonly<ModalProps>) {
   useBodyScrollLock(isOpen)
 
@@ -37,7 +39,12 @@ export function Modal({
         onClick={onClose}
       />
 
-      <div className='relative w-full max-w-2xl animate-in fade-in zoom-in duration-200 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg sm:p-8'>
+      <div
+        className={cn(
+          'relative w-full max-w-2xl animate-in fade-in zoom-in duration-200 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg sm:p-8',
+          contentClassName,
+        )}
+      >
         <div className='mb-6 flex items-center justify-between'>
           <h2 className='text-xl font-bold'>{title}</h2>
           <Button variant='ghost' size='icon' onClick={onClose} className='rounded-full'>

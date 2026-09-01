@@ -11,10 +11,12 @@ export const CLIENT_EVENTS = {
   JOIN_BUSINESS: 'join-business',
   JOIN_KITCHEN: 'join-kitchen',
   JOIN_DISPLAY: 'join-display',
+  JOIN_MENU: 'join-menu',
   LEAVE_SESSION: 'leave-session',
   LEAVE_BUSINESS: 'leave-business',
   LEAVE_KITCHEN: 'leave-kitchen',
   LEAVE_DISPLAY: 'leave-display',
+  LEAVE_MENU: 'leave-menu',
   CALL_WAITER: 'call-waiter',
 } as const
 
@@ -24,8 +26,6 @@ export const SERVER_EVENTS = {
   // Legacy reconnect-sync event (join-session handler only)
   ORDER_STATUS_CHANGED: 'order:status-changed',
   ORDER_PENDING_CONFIRMATION: 'order-pending-confirmation',
-  PAYMENT_RECORDED: 'payment-recorded',
-  SPLIT_UPDATED: 'split-updated',
   SESSION_CLOSED: 'session-closed',
   // Per-transition lifecycle events (Parts 2-3)
   ORDER_CREATED: 'order:created',
@@ -42,6 +42,8 @@ export const SERVER_EVENTS = {
   // Venue TV display feed (sanitized — no PII/payment fields, see DisplayOrderPayload)
   DISPLAY_ORDER_UPDATED: 'display:order-updated',
   DISPLAY_ORDER_REMOVED: 'display:order-removed',
+  // Menu feed — lightweight "refetch" signal, not a full product payload
+  MENU_AVAILABILITY_CHANGED: 'menu:availability-changed',
 } as const
 
 // ── Payload types ─────────────────────────────────────────────────────────────
@@ -59,6 +61,7 @@ export interface OrderStatusChangedPayload {
   sessionToken: string | null
   updatedAt: string
   actor: { type: string; id: string; role?: string }
+  tipAmount: number
 }
 
 export interface OrderPendingConfirmationPayload {
@@ -71,22 +74,6 @@ export interface OrderPendingConfirmationPayload {
     quantity: number
     unitPrice: number
   }>
-}
-
-export interface PaymentRecordedPayload {
-  orderId: string
-  paymentId: string
-  method: string
-  amount: number
-  status: string
-}
-
-export interface SplitUpdatedPayload {
-  orderId: string
-  totalAmount: number
-  paidAmount: number
-  remaining: number
-  allocations: Array<{ orderItemId: string; quantity: number; amount: number }>
 }
 
 export interface SessionClosedPayload {
@@ -110,6 +97,7 @@ export interface OrderEventPayload {
 export interface CallWaiterPayload {
   businessId: string
   tableId: string | null
+  tableNumber: number | null
   sessionToken: string
   at: string
 }
@@ -164,7 +152,17 @@ export interface DisplayOrderRemovedPayload {
   orderId: string
 }
 
-/** Ack shape returned by the join-display/join-session/join-kitchen/join-business handlers. */
+/**
+ * A product's isAvailable flag changed — lightweight signal, not a full product payload,
+ * so the client just refetches the public menu rather than patching a single cached item.
+ */
+export interface MenuAvailabilityChangedPayload {
+  businessId: string
+  productId: string
+  isAvailable: boolean
+}
+
+/** Ack shape returned by the join-display/join-session/join-kitchen/join-business/join-menu handlers. */
 export interface JoinAck {
   event: 'joined' | 'error'
   data: string

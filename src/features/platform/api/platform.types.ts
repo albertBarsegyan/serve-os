@@ -234,7 +234,7 @@ export interface OrderItem {
   notes?: string
   selectedModifiers: OrderItemSelectedModifier[]
   // Populated when orders are fetched with product relations (e.g. kitchen endpoint)
-  product?: { id: string; name: string; price: number } | null
+  product?: { id: string; name: string; price: number; imageUrl: string | null } | null
 }
 
 export interface Order {
@@ -246,10 +246,14 @@ export interface Order {
   type: OrderType
   paymentStatus: 'UNPAID' | 'PAID'
   totalAmount: string
+  // Cached SUM of tipAmount across the order's CONFIRMED payments — see
+  // serve-os-backend recomputeOrderTipAmount. Authoritative for guest + staff tips combined.
+  tipAmount: string
   customerName?: string | null
   notes?: string | null
   items: OrderItem[]
   createdAt: string
+  updatedAt: string
   // Populated when orders are fetched with table relation (e.g. kitchen endpoint)
   table?: { id: string; number: number } | null
 }

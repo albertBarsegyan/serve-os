@@ -15,7 +15,7 @@ import {
   Utensils,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -36,10 +36,19 @@ import {
 } from '#/features/platform/model/platform-hooks.ts'
 import { cn } from '#/lib/utils.ts'
 import { m } from '#/paraglide/messages'
+import defaultTableImage from '#/shared/assets/table/default-table-image.webp'
 import { useBodyScrollLock } from '#/shared/libs/hooks/scroll-lock.ts'
 import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
+import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import type { TablePermissions } from '#/shared/libs/hooks/use-table-permissions.ts'
+import { StaffPermission } from '#/shared/libs/permissions/index.ts'
+import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
+import {
+  isValidTwoDecimalAmount,
+  normalizeDecimalInput,
+} from '#/shared/libs/utils/decimal-input.utils'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { formatPrice } from '#/shared/libs/utils/price.utils'
 import { LazyImage } from '#/shared/ui/lazy-image.tsx' // ── Types ──────────────────────────────────────────────────────────────────────
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -235,6 +244,16 @@ const LIFECYCLE: TableStatus[] = [
   'paid',
 ]
 
+// ── Tip config ─────────────────────────────────────────────────────────────────
+// Mirrors serve-os-backend/src/common/constants/tip.constants.ts —
+// STAFF_TIP_ABSOLUTE_MAX_MAJOR_UNITS and STAFF_TIP_LOG_THRESHOLD_MAJOR_UNITS. Keep these
+// numerically identical to the backend; no way to share the literal across the two repos.
+// No subtotal-relative cap here on purpose — staff have legitimate over-cap cases (cash
+// tips on comped bills, split-remainder corrections). Above the threshold we just ask for
+// an extra confirmation tap instead of blocking the entry.
+const STAFF_TIP_ABSOLUTE_MAX_MAJOR_UNITS = 10_000
+const STAFF_TIP_SOFT_THRESHOLD_MAJOR_UNITS = 50
+
 // ── Status derivation ──────────────────────────────────────────────────────────
 
 const ACTIVE_ORDER_STATUSES = new Set<OrderStatus>([
@@ -271,6 +290,16 @@ function deriveStatus(
     default:
       return 'free'
   }
+}
+
+/** Freshness label for activeOrder.updatedAt — a guest may tip from their own device while
+ * this table's detail view is open, so staff need a cue that the tip total could be stale
+ * before they close out the bill. */
+function formatUpdatedAgo(updatedAt: string, now: number): string {
+  const seconds = Math.max(0, Math.floor((now - new Date(updatedAt).getTime()) / 1000))
+  if (seconds < 10) return m.admin_tables_updated_just_now()
+  if (seconds < 60) return m.admin_tables_updated_seconds_ago({ seconds })
+  return m.admin_tables_updated_minutes_ago({ minutes: Math.floor(seconds / 60) })
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -365,6 +394,13 @@ export function AdminTable({
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false)
   const [showPaymentChoice, setShowPaymentChoice] = useState(false)
   const [localWaiterCalled, setLocalWaiterCalled] = useState(false)
+  const [tipInput, setTipInput] = useState('')
+  const [tipError, setTipError] = useState<string | null>(null)
+  const [pendingLargeTip, setPendingLargeTip] = useState<{
+    method: 'cash' | 'pos'
+    amount: number
+  } | null>(null)
+  const tipInputId = useId()
 
   const status = deriveStatus(activeOrder, pendingPayment, table.currentSessionId)
   const config = getStatusConfig(status)
@@ -385,8 +421,16 @@ export function AdminTable({
     confirmPaymentMutation.isPending ||
     closeSessionMutation.isPending
 
+  const activeBusiness = useActiveBusiness()
+  const currency = activeBusiness?.currency ?? 'USD'
+  const businessId = activeBusiness?.id ?? ''
+
+  const { isOwner, hasPermission } = usePermissions()
+  const canManageTips = isOwner() || hasPermission(StaffPermission.TIPS_MANAGE)
+
   const effectiveWaiterCalled = waiterCalled || localWaiterCalled
   const hasActiveOrder = activeOrder !== null && status !== 'free'
+  const currentTip = activeOrder ? Number(activeOrder.tipAmount) : 0
 
   useBodyScrollLock(isOpen)
 
@@ -397,6 +441,16 @@ export function AdminTable({
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
+  }, [isOpen])
+
+  // Ticks the "updated Xs ago" label while the dialog is open — a guest can tip from
+  // their own device at any time, so this is the only cue staff have that the total
+  // might have moved since they opened this table.
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!isOpen) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
   }, [isOpen])
 
   const handlePrimaryAction = async () => {
@@ -415,6 +469,7 @@ export function AdminTable({
           await updateStatusMutation.mutateAsync({
             orderId: activeOrder.id,
             data: { status: 'IN_KITCHEN' },
+            businessId,
           })
           showSuccess(m.admin_tables_kitchen_preparing())
           break
@@ -422,6 +477,7 @@ export function AdminTable({
           await updateStatusMutation.mutateAsync({
             orderId: activeOrder.id,
             data: { status: 'READY' },
+            businessId,
           })
           showSuccess(m.admin_tables_order_ready())
           break
@@ -429,6 +485,7 @@ export function AdminTable({
           await updateStatusMutation.mutateAsync({
             orderId: activeOrder.id,
             data: { status: 'DELIVERED' },
+            businessId,
           })
           showSuccess(m.admin_tables_order_served())
           break
@@ -458,6 +515,7 @@ export function AdminTable({
       await updateStatusMutation.mutateAsync({
         orderId: activeOrder.id,
         data: { status: 'CANCELLED' },
+        businessId,
       })
       showSuccess(m.admin_tables_order_cancelled())
     } catch (err) {
@@ -465,19 +523,56 @@ export function AdminTable({
     }
   }
 
-  const handlePayment = async (method: 'cash' | 'pos') => {
+  const submitPayment = async (method: 'cash' | 'pos', tipAmount?: number) => {
     if (!activeOrder) return
     try {
       if (method === 'cash') {
-        await cashMutation.mutateAsync({ orderId: activeOrder.id, data: {} })
+        await cashMutation.mutateAsync({ orderId: activeOrder.id, data: { tipAmount } })
       } else {
-        await posMutation.mutateAsync({ orderId: activeOrder.id, data: {} })
+        await posMutation.mutateAsync({ orderId: activeOrder.id, data: { tipAmount } })
       }
       showSuccess(m.admin_tables_payment_due_toast())
       setShowPaymentChoice(false)
+      setTipInput('')
+      setTipError(null)
+      setPendingLargeTip(null)
     } catch (err) {
       showError(getResponseErrorMessage(err))
     }
+  }
+
+  const confirmLargeTipAndPay = async () => {
+    if (!pendingLargeTip) return
+    await submitPayment(pendingLargeTip.method, pendingLargeTip.amount)
+  }
+
+  const handlePayment = async (method: 'cash' | 'pos') => {
+    if (!activeOrder) return
+
+    let amount: number | undefined
+    if (canManageTips && tipInput.trim()) {
+      const normalized = normalizeDecimalInput(tipInput)
+      if (!isValidTwoDecimalAmount(normalized)) {
+        setTipError(m.admin_tables_tip_invalid_amount())
+        return
+      }
+      amount = Number(normalized)
+      // Typo guard only — see the tip config comment above. Staff have legitimate
+      // over-cap cases, so this is intentionally far looser than the guest cap, and the
+      // backend enforces the real bound regardless of what the client checks here.
+      if (amount < 0 || amount > STAFF_TIP_ABSOLUTE_MAX_MAJOR_UNITS) {
+        setTipError(m.admin_tables_tip_out_of_range())
+        return
+      }
+    }
+    setTipError(null)
+
+    if (amount !== undefined && amount >= STAFF_TIP_SOFT_THRESHOLD_MAJOR_UNITS) {
+      setPendingLargeTip({ method, amount })
+      return
+    }
+
+    await submitPayment(method, amount)
   }
 
   const handleAcknowledge = () => {
@@ -492,28 +587,18 @@ export function AdminTable({
         type='button'
         onClick={() => setIsOpen(true)}
         className={cn(
-          'group w-full overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'group w-full overflow-hidden cursor-pointer rounded-2xl border border-border bg-card text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           !table.isActive && 'opacity-60 grayscale',
         )}
       >
         {/* Banner */}
         <div className='relative aspect-video w-full bg-muted'>
-          {table.imageUrl ? (
-            <LazyImage
-              src={table.imageUrl}
-              alt={m.admin_tables_table_label({ number: table.number })}
-              className='absolute inset-0'
-              imgClassName='h-full w-full object-contain'
-            />
-          ) : (
-            <div
-              className={cn('flex h-full w-full items-center justify-center', TONE_HERO[status])}
-            >
-              <span className={cn('text-4xl font-black opacity-30', TONE_ICON[status])}>
-                {table.number}
-              </span>
-            </div>
-          )}
+          <LazyImage
+            src={table.imageUrl || defaultTableImage}
+            alt={m.admin_tables_table_label({ number: table.number })}
+            className='absolute inset-0'
+            imgClassName='h-full w-full object-contain'
+          />
 
           <div className='absolute bottom-2 left-2'>
             <StatusPill status={status} />
@@ -570,14 +655,14 @@ export function AdminTable({
               role='dialog'
               aria-modal
               aria-label={m.admin_tables_detail_aria_label({ number: table.number })}
-              className='relative flex h-[92vh] max-h-[920px] w-[96vw] max-w-3xl animate-in fade-in zoom-in flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl duration-200'
+              className='relative flex h-[92vh] max-h-[920px] w-[96vw] max-w-[1440px] animate-in fade-in zoom-in flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl duration-200'
             >
               {/* Close button */}
               <button
                 type='button'
                 aria-label={m.admin_tables_close_dialog_aria()}
                 onClick={() => setIsOpen(false)}
-                className='absolute right-4 top-4 z-10 bg-red-600 flex h-11 w-11 items-center justify-center rounded-xl border border-border text-white shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                className='absolute cursor-pointer right-4 top-4 z-10 bg-red-600 flex h-11 w-11 items-center justify-center rounded-xl border border-border text-white shadow-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
               >
                 <X className='h-6 w-6' />
               </button>
@@ -640,36 +725,174 @@ export function AdminTable({
                   <StatusStepper status={status} />
                 </div>
 
+                {/* Order items */}
+                {hasActiveOrder && activeOrder && (
+                  <div>
+                    <p className='mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
+                      {m.admin_orders_items_heading()}
+                    </p>
+                    <div className='divide-y divide-border rounded-xl border border-border'>
+                      {activeOrder.items.length === 0 && (
+                        <p className='px-4 py-3 text-sm text-muted-foreground'>
+                          {m.admin_orders_no_items()}
+                        </p>
+                      )}
+                      {activeOrder.items.map((item) => (
+                        <div key={item.id} className='flex items-center justify-between px-4 py-3'>
+                          {item.product?.imageUrl && (
+                            <div className='flex items-center gap-2'>
+                              <LazyImage
+                                width={60}
+                                src={item.product?.imageUrl}
+                                alt={item.product.name}
+                              />
+
+                              <div>
+                                <p className='text-lg font-medium'>
+                                  {item.product?.name ?? item.productId.slice(0, 8)}
+                                </p>
+                                {item.notes && (
+                                  <p className='text-xs text-muted-foreground'>
+                                    {m.admin_orders_note({ notes: item.notes })}
+                                  </p>
+                                )}
+                                {item.selectedModifiers?.length > 0 && (
+                                  <p className='text-xs text-muted-foreground'>
+                                    +{item.selectedModifiers.map((mod) => mod.name).join(', ')}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className='text-right'>
+                            <p className='text-md font-mono'>×{item.quantity}</p>
+                            <p className='text-lg text-muted-foreground font-mono'>
+                              {m.admin_orders_unit_price({
+                                price: formatPrice(Number(item.unitPrice), currency),
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className='mt-3 flex items-center justify-between rounded-xl bg-muted px-4 py-3'>
+                      <span className='text-sm font-semibold'>{m.admin_orders_total_label()}</span>
+                      <span className='font-mono font-bold'>
+                        {formatPrice(Number(activeOrder.totalAmount), currency)}
+                      </span>
+                    </div>
+                    {currentTip > 0 && (
+                      <div className='mt-1.5 flex items-center justify-between px-4'>
+                        <span className='text-xs text-muted-foreground'>
+                          {m.admin_tables_current_tip_label()} ·{' '}
+                          {formatUpdatedAgo(activeOrder.updatedAt, now)}
+                        </span>
+                        <span className='font-mono text-sm font-medium'>
+                          {formatPrice(currentTip, currency)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Primary action */}
                 {showPaymentChoice ? (
                   <div className='space-y-3 rounded-xl border border-border p-4'>
                     <p className='text-sm font-medium text-muted-foreground'>
                       {m.admin_tables_choose_payment_method()}
                     </p>
-                    <div className='flex gap-3'>
-                      <Button
-                        variant='outline'
-                        className='h-12 flex-1 rounded-xl'
-                        disabled={cashMutation.isPending || posMutation.isPending}
-                        onClick={() => void handlePayment('cash')}
-                      >
-                        {cashMutation.isPending
-                          ? m.admin_tables_processing()
-                          : m.admin_tables_cash()}
-                      </Button>
-                      <Button
-                        className='h-12 flex-1 rounded-xl'
-                        disabled={cashMutation.isPending || posMutation.isPending}
-                        onClick={() => void handlePayment('pos')}
-                      >
-                        {posMutation.isPending ? m.admin_tables_processing() : m.admin_tables_pos()}
-                      </Button>
-                    </div>
+
+                    {activeOrder && (
+                      <p className='text-xs text-muted-foreground'>
+                        {m.admin_tables_current_tip_label()} · {formatPrice(currentTip, currency)} ·{' '}
+                        {formatUpdatedAgo(activeOrder.updatedAt, now)}
+                      </p>
+                    )}
+
+                    {canManageTips && !pendingLargeTip && (
+                      <div className='space-y-1.5'>
+                        <label htmlFor={tipInputId} className='text-sm text-muted-foreground'>
+                          {m.admin_tables_tip_amount_label()}
+                        </label>
+                        <input
+                          id={tipInputId}
+                          type='text'
+                          inputMode='decimal'
+                          placeholder='0.00'
+                          value={tipInput}
+                          onChange={(e) => {
+                            setTipInput(e.target.value)
+                            setTipError(null)
+                          }}
+                          className='h-10 w-full rounded-xl border border-input bg-background px-3 text-sm font-mono'
+                        />
+                        {tipError && <p className='text-xs text-destructive'>{tipError}</p>}
+                      </div>
+                    )}
+
+                    {pendingLargeTip && (
+                      <div className='space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3'>
+                        <p className='text-sm font-medium text-amber-600 dark:text-amber-400'>
+                          {m.admin_tables_large_tip_confirm({
+                            amount: formatPrice(pendingLargeTip.amount, currency),
+                          })}
+                        </p>
+                        <div className='flex gap-2'>
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            className='flex-1 rounded-lg'
+                            onClick={() => setPendingLargeTip(null)}
+                          >
+                            {m.admin_tables_cancel()}
+                          </Button>
+                          <Button
+                            size='sm'
+                            className='flex-1 rounded-lg'
+                            disabled={cashMutation.isPending || posMutation.isPending}
+                            onClick={() => void confirmLargeTipAndPay()}
+                          >
+                            {m.admin_tables_large_tip_confirm_button()}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!pendingLargeTip && (
+                      <div className='flex gap-3'>
+                        <Button
+                          variant='outline'
+                          className='h-12 flex-1 rounded-xl'
+                          disabled={cashMutation.isPending || posMutation.isPending}
+                          onClick={() => void handlePayment('cash')}
+                        >
+                          {cashMutation.isPending
+                            ? m.admin_tables_processing()
+                            : m.admin_tables_cash()}
+                        </Button>
+                        <Button
+                          className='h-12 flex-1 rounded-xl'
+                          disabled={cashMutation.isPending || posMutation.isPending}
+                          onClick={() => void handlePayment('pos')}
+                        >
+                          {posMutation.isPending
+                            ? m.admin_tables_processing()
+                            : m.admin_tables_pos()}
+                        </Button>
+                      </div>
+                    )}
+
                     <Button
                       variant='ghost'
                       size='sm'
                       className='w-full'
-                      onClick={() => setShowPaymentChoice(false)}
+                      onClick={() => {
+                        setShowPaymentChoice(false)
+                        setTipInput('')
+                        setTipError(null)
+                        setPendingLargeTip(null)
+                      }}
                     >
                       {m.admin_tables_cancel()}
                     </Button>

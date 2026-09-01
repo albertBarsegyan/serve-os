@@ -5,6 +5,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { Toaster } from 'sonner'
 import type { AuthenticatedUser } from '#/features/auth/api/auth.types.ts'
 import { authUserQueryOptions } from '#/features/auth/lib/query-options.ts'
+import { businessesQueryOptions } from '#/features/business/model/business-hooks.ts'
 import { getLocale } from '#/paraglide/runtime'
 import { activeBusinessIdQueryOptions } from '#/shared/libs/hooks/use-active-business.ts'
 import { buildHreflangLinks, buildSeoMeta } from '#/shared/libs/seo/meta.ts'
@@ -36,7 +37,21 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     if (user?.type === 'staff') {
       selectedBusinessId = user.businessId
     } else if (user?.type === 'owner') {
-      selectedBusinessId = await context.queryClient.ensureQueryData(activeBusinessIdQueryOptions())
+      const activeBusinessId = await context.queryClient.ensureQueryData(
+        activeBusinessIdQueryOptions(),
+      )
+      // The cookie can outlive its business (deleted, or belongs to another account
+      // that reused this browser) — validate it against what this owner actually has
+      // before trusting it, so a stale id doesn't fall through as a silent, empty
+      // "selected" business (see AdminDashboardPage and friends).
+      if (activeBusinessId && user.hasBusiness) {
+        const businesses = await context.queryClient.ensureQueryData(businessesQueryOptions())
+        selectedBusinessId = businesses.some((b) => b.id === activeBusinessId)
+          ? activeBusinessId
+          : null
+      } else {
+        selectedBusinessId = activeBusinessId
+      }
     }
 
     return { authUser: user, selectedBusinessId }

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { Edit2, Plus, Trash2 } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Controller, type UseFormReturn, useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { Badge } from '#/components/ui/badge'
@@ -442,7 +442,12 @@ export function AdminModifiersPage() {
           </>
         }
       >
-        <ModifierGroupForm form={updateGroupForm as UseFormReturn<UpdateGroupValues>} />
+        <ModifierGroupForm
+          form={updateGroupForm as UseFormReturn<UpdateGroupValues>}
+          disableMultipleSelection={
+            editingGroup?.modifiers?.some((modifier) => modifier.priceType === 'fixed') ?? false
+          }
+        />
       </Modal>
 
       {/* Add Modifier Modal */}
@@ -466,7 +471,10 @@ export function AdminModifiersPage() {
           </>
         }
       >
-        <ModifierForm form={addModifierForm as UseFormReturn<UpdateModifierValues>} />
+        <ModifierForm
+          form={addModifierForm as UseFormReturn<UpdateModifierValues>}
+          allowFixedPrice={selectedGroup?.selectionType !== 'MULTIPLE'}
+        />
       </Modal>
 
       {/* Edit Modifier Modal */}
@@ -490,13 +498,22 @@ export function AdminModifiersPage() {
           </>
         }
       >
-        <ModifierForm form={updateModifierForm as UseFormReturn<UpdateModifierValues>} />
+        <ModifierForm
+          form={updateModifierForm as UseFormReturn<UpdateModifierValues>}
+          allowFixedPrice={selectedGroup?.selectionType !== 'MULTIPLE'}
+        />
       </Modal>
     </div>
   )
 }
 
-function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupValues> }>) {
+function ModifierGroupForm({
+  form,
+  disableMultipleSelection = false,
+}: Readonly<{
+  form: UseFormReturn<UpdateGroupValues>
+  disableMultipleSelection?: boolean
+}>) {
   const nameId = useId()
   const selectionTypeId = useId()
   const minSelectionsId = useId()
@@ -538,12 +555,19 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
               onChange={field.onChange}
               options={[
                 { value: 'SINGLE', label: m.admin_modifiers_single_choice() },
-                { value: 'MULTIPLE', label: m.admin_modifiers_multiple_choice() },
+                ...(disableMultipleSelection
+                  ? []
+                  : [{ value: 'MULTIPLE', label: m.admin_modifiers_multiple_choice() }]),
               ]}
               className='rounded-xl'
             />
           )}
         />
+        {disableMultipleSelection && (
+          <p className='text-xs text-muted-foreground'>
+            {m.admin_modifiers_multiple_disabled_hint()}
+          </p>
+        )}
       </div>
 
       <div className='grid grid-cols-2 gap-4'>
@@ -601,8 +625,10 @@ function ModifierGroupForm({ form }: Readonly<{ form: UseFormReturn<UpdateGroupV
 
 function ModifierForm({
   form,
+  allowFixedPrice = true,
 }: Readonly<{
   form: UseFormReturn<UpdateModifierValues>
+  allowFixedPrice?: boolean
 }>) {
   const nameId = useId()
   const priceTypeId = useId()
@@ -612,6 +638,12 @@ function ModifierForm({
   const currency = useActiveBusiness()?.currency ?? 'USD'
 
   const priceType = form.watch('priceType') ?? 'adjustment'
+
+  useEffect(() => {
+    if (!allowFixedPrice && priceType === 'fixed') {
+      form.setValue('priceType', 'adjustment')
+    }
+  }, [allowFixedPrice, priceType, form])
 
   return (
     <form className='space-y-4'>
@@ -647,12 +679,19 @@ function ModifierForm({
               onChange={(v) => field.onChange(v as ModifierPriceType)}
               options={[
                 { value: 'adjustment', label: m.admin_modifiers_price_adjustment_option() },
-                { value: 'fixed', label: m.admin_modifiers_fixed_price_option() },
+                ...(allowFixedPrice
+                  ? [{ value: 'fixed', label: m.admin_modifiers_fixed_price_option() }]
+                  : []),
               ]}
               className='rounded-xl'
             />
           )}
         />
+        {!allowFixedPrice && (
+          <p className='text-xs text-muted-foreground'>
+            {m.admin_modifiers_fixed_price_single_only_hint()}
+          </p>
+        )}
       </div>
 
       <div className='space-y-1'>

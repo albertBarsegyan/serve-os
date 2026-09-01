@@ -144,6 +144,7 @@ export function AdminTablesContent() {
   const skeletonCards = useMemo(() => ['sk-a', 'sk-b', 'sk-c', 'sk-d', 'sk-e', 'sk-f'], [])
 
   const perms = useTablePermissions()
+  const businessId = useSelectedBusinessId() ?? ''
 
   const [activeTab, setActiveTab] = useState<FilterTab>('all')
   const [search, setSearch] = useState('')
@@ -163,7 +164,13 @@ export function AdminTablesContent() {
   const editCapacityId = useId()
   const editActiveId = useId()
 
-  const { data: tables = [], isPending, isError, error, refetch } = useQuery(tablesQueryOptions())
+  const {
+    data: tables = [],
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery(tablesQueryOptions(businessId))
   const visibleTables = filterTables(tables, activeTab, search)
 
   const createTableMutation = useCreateTableMutation()
@@ -277,9 +284,8 @@ export function AdminTablesContent() {
     setReservationMutation.isPending ||
     uploadImageMutation.isPending
 
-  const businessId = useSelectedBusinessId() ?? ''
-  const { data: allOrders = [] } = useQuery(ordersQueryOptions())
-  const { data: allPayments = [] } = useQuery(paymentsQueryOptions())
+  const { data: allOrders = [] } = useQuery(ordersQueryOptions(businessId))
+  const { data: allPayments = [] } = useQuery(paymentsQueryOptions(businessId))
 
   const [waiterCalledTableIds, setWaiterCalledTableIds] = useState<Set<string>>(new Set())
 
