@@ -6,6 +6,7 @@ import {
   useBusinessSwitcher,
 } from '#/features/business/model/business-hooks.ts'
 import { m } from '#/paraglide/messages'
+import { localizeHref } from '#/paraglide/runtime'
 import { adminRoutePathname } from '#/shared/libs/constants/route-pathname/admin.ts'
 import { sharedRoutePathname } from '#/shared/libs/constants/route-pathname/shared.ts'
 import { LogoSvg } from '#/shared/ui/logo-svg.tsx'
@@ -21,7 +22,13 @@ export const Route = createFileRoute('/select-business')({
 function SelectBusinessRoute() {
   const navigate = useNavigate()
   const { switchBusiness, isLoading: isSwitching } = useBusinessSwitcher({
-    navigate: () => navigate({ to: adminRoutePathname.DASHBOARD }),
+    // A hard navigation here — a plain client-side `navigate()` landed on this
+    // route's own `beforeLoad` reading a router-cached `selectedBusinessId` that
+    // hadn't been refreshed yet, so it bounced right back instead of reaching the
+    // dashboard. A full navigation always re-resolves it fresh from the cookie.
+    navigate: () => {
+      window.location.href = localizeHref(adminRoutePathname.DASHBOARD)
+    },
   })
 
   const { isLoading, data: businesses } = useBusinessesQuery({ enabled: true })

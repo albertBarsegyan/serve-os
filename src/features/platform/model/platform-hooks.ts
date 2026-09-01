@@ -81,7 +81,7 @@ export function useCreateTableMutation() {
   return useMutation({
     mutationFn: (data: CreateTableRequest) => createTable(data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
     },
   })
 }
@@ -92,11 +92,9 @@ export function useUpdateTableMutation() {
   return useMutation({
     mutationFn: ({ tableId, data }: { tableId: string; data: UpdateTableRequest }) =>
       updateTable(tableId, data),
-    onSuccess: (_, variables) => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
-      void queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.tableById(variables.tableId),
-      })
+    onSuccess: () => {
+      // Covers both the list and the per-table detail key underneath it.
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
     },
   })
 }
@@ -107,7 +105,7 @@ export function useDeleteTableMutation() {
   return useMutation({
     mutationFn: (tableId: string) => deleteTable(tableId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
     },
   })
 }
@@ -119,7 +117,7 @@ export function useToggleTableStatusMutation() {
     mutationFn: ({ tableId, data }: { tableId: string; data: ToggleTableStatusRequest }) =>
       toggleTableStatus(tableId, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
     },
   })
 }
@@ -131,7 +129,7 @@ export function useSetTableReservationMutation() {
     mutationFn: ({ tableId, data }: { tableId: string; data: SetTableReservationRequest }) =>
       setTableReservation(tableId, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
     },
   })
 }
@@ -143,7 +141,7 @@ export function useUploadTableImageMutation() {
     mutationFn: ({ tableId, file }: { tableId: string; file: File }) =>
       uploadTableImage(tableId, file),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
     },
   })
 }
@@ -166,7 +164,7 @@ export function useCloseSessionMutation() {
     mutationFn: (sessionId: string) => closeSession(sessionId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.sessions() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
     },
   })
@@ -218,7 +216,7 @@ export function useDeleteProductMutation() {
     mutationFn: (productId: string) => deleteProduct(productId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategoriesRoot() })
       // Deleted product's businessId isn't returned by the API — invalidate broadly.
       void queryClient.invalidateQueries({ queryKey: ['customer-menu'] })
     },
@@ -233,7 +231,7 @@ export function useSetProductAvailabilityMutation() {
       setProductAvailability(productId, isAvailable),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategoriesRoot() })
       void queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
     },
   })
@@ -247,7 +245,7 @@ export function useSyncProductModifierGroupsMutation() {
       syncProductModifierGroups(productId, groupIds),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.productsRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategories(true) })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.menuCategoriesRoot() })
       void queryClient.invalidateQueries({ queryKey: ['customer-menu', data.businessId] })
     },
   })
@@ -430,26 +428,37 @@ export function useUpdateOrderStatusMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ orderId, data }: { orderId: string; data: UpdateOrderStatusRequest }) =>
-      updateOrderStatus(orderId, data),
-    onMutate: async ({ orderId, data }) => {
-      await queryClient.cancelQueries({ queryKey: platformQueryKeys.kitchenOrders() })
+    mutationFn: ({
+      orderId,
+      data,
+    }: {
+      orderId: string
+      data: UpdateOrderStatusRequest
+      businessId: string
+    }) => updateOrderStatus(orderId, data),
+    onMutate: async ({ orderId, data, businessId }) => {
+      await queryClient.cancelQueries({ queryKey: platformQueryKeys.kitchenOrders(businessId) })
       const previousKitchenOrders = queryClient.getQueryData<Order[]>(
-        platformQueryKeys.kitchenOrders(),
+        platformQueryKeys.kitchenOrders(businessId),
       )
-      queryClient.setQueryData<Order[]>(platformQueryKeys.kitchenOrders(), (current) =>
+      queryClient.setQueryData<Order[]>(platformQueryKeys.kitchenOrders(businessId), (current) =>
         current?.map((order) => (order.id === orderId ? { ...order, status: data.status } : order)),
       )
       return { previousKitchenOrders }
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, variables, context) => {
       if (context?.previousKitchenOrders) {
-        queryClient.setQueryData(platformQueryKeys.kitchenOrders(), context.previousKitchenOrders)
+        queryClient.setQueryData(
+          platformQueryKeys.kitchenOrders(variables.businessId),
+          context.previousKitchenOrders,
+        )
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.kitchenOrders() })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.kitchenOrders(variables.businessId),
+      })
     },
   })
 }

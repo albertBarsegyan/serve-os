@@ -22,18 +22,19 @@ import {
   listTables,
 } from '#/shared/api/platform/platform-api.ts'
 
-export function tablesQueryOptions() {
+export function tablesQueryOptions(businessId: string) {
   return queryOptions({
-    queryKey: platformQueryKeys.tables(),
+    queryKey: platformQueryKeys.tables(businessId),
     queryFn: listTables,
+    enabled: Boolean(businessId),
   })
 }
 
-export function tableByIdQueryOptions(tableId: string) {
+export function tableByIdQueryOptions(businessId: string, tableId: string) {
   return queryOptions({
-    queryKey: platformQueryKeys.tableById(tableId),
+    queryKey: platformQueryKeys.tableById(businessId, tableId),
     queryFn: () => getTableById(tableId),
-    enabled: Boolean(tableId),
+    enabled: Boolean(businessId) && Boolean(tableId),
   })
 }
 
@@ -45,17 +46,22 @@ export function sessionBillQueryOptions(sessionId: string) {
   })
 }
 
-export function menuCategoriesQueryOptions(includeProducts = false) {
+export function menuCategoriesQueryOptions(businessId: string, includeProducts = false) {
   return queryOptions({
-    queryKey: platformQueryKeys.menuCategories(includeProducts),
+    queryKey: platformQueryKeys.menuCategories(businessId, includeProducts),
     queryFn: () => listMenuCategories(includeProducts),
+    enabled: Boolean(businessId),
   })
 }
 
-export function productsQueryOptions(filters?: { categoryId?: string; availableOnly?: boolean }) {
+export function productsQueryOptions(
+  businessId: string,
+  filters?: { categoryId?: string; availableOnly?: boolean },
+) {
   return queryOptions({
-    queryKey: platformQueryKeys.products(filters),
+    queryKey: platformQueryKeys.products(businessId, filters),
     queryFn: () => listProducts(filters),
+    enabled: Boolean(businessId),
   })
 }
 
@@ -83,38 +89,44 @@ export function modifiersQueryOptions(businessId: string, groupId: string) {
   })
 }
 
-export function ordersQueryOptions(filters?: {
-  status?: OrderStatus
-  tableId?: string
-  limit?: number
-  offset?: number
-}) {
+export function ordersQueryOptions(
+  businessId: string,
+  filters?: {
+    status?: OrderStatus
+    tableId?: string
+    limit?: number
+    offset?: number
+  },
+) {
   return queryOptions({
-    queryKey: platformQueryKeys.orders(filters),
+    queryKey: platformQueryKeys.orders(businessId, filters),
     queryFn: () => listOrders(filters),
+    enabled: Boolean(businessId),
   })
 }
 
-export function orderByIdQueryOptions(orderId: string) {
+export function orderByIdQueryOptions(businessId: string, orderId: string) {
   return queryOptions({
-    queryKey: platformQueryKeys.orderById(orderId),
+    queryKey: platformQueryKeys.orderById(businessId, orderId),
     queryFn: () => getOrderById(orderId),
-    enabled: Boolean(orderId),
+    enabled: Boolean(businessId) && Boolean(orderId),
   })
 }
 
-export function kitchenActiveOrdersQueryOptions() {
+export function kitchenActiveOrdersQueryOptions(businessId: string) {
   return queryOptions({
-    queryKey: platformQueryKeys.kitchenOrders(),
+    queryKey: platformQueryKeys.kitchenOrders(businessId),
     queryFn: fetchActiveKitchenOrders,
+    enabled: Boolean(businessId),
     refetchInterval: 15000,
   })
 }
 
-export function paymentsQueryOptions() {
+export function paymentsQueryOptions(businessId: string) {
   return queryOptions({
-    queryKey: platformQueryKeys.payments(),
+    queryKey: platformQueryKeys.payments(businessId),
     queryFn: listPayments,
+    enabled: Boolean(businessId),
   })
 }
 
@@ -137,31 +149,36 @@ export function staffByIdQueryOptions(businessId: string, staffId: string) {
 // ── Paginated variants ────────────────────────────────────────────────────────
 
 export function pagedOrdersQueryOptions(
+  businessId: string,
   page: number,
   limit: number,
   filters?: { status?: OrderStatus; tableId?: string },
 ) {
   return queryOptions({
-    queryKey: platformQueryKeys.ordersPaged(page, limit, filters),
+    queryKey: platformQueryKeys.ordersPaged(businessId, page, limit, filters),
     queryFn: () => listOrdersPaged({ page, limit, ...filters }),
+    enabled: Boolean(businessId),
   })
 }
 
-export function pagedPaymentsQueryOptions(page: number, limit: number) {
+export function pagedPaymentsQueryOptions(businessId: string, page: number, limit: number) {
   return queryOptions({
-    queryKey: platformQueryKeys.paymentsPaged(page, limit),
+    queryKey: platformQueryKeys.paymentsPaged(businessId, page, limit),
     queryFn: () => listPaymentsPaged({ page, limit }),
+    enabled: Boolean(businessId),
   })
 }
 
 export function pagedProductsQueryOptions(
+  businessId: string,
   page: number,
   limit: number,
   filters?: { categoryId?: string; availableOnly?: boolean },
 ) {
   return queryOptions({
-    queryKey: platformQueryKeys.productsPaged(page, limit, filters),
+    queryKey: platformQueryKeys.productsPaged(businessId, page, limit, filters),
     queryFn: () => listProductsPaged({ page, limit, ...filters }),
+    enabled: Boolean(businessId),
   })
 }
 

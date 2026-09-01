@@ -1,4 +1,4 @@
-import { Languages, Moon, Plus, Search, ShoppingCart, Sun } from 'lucide-react'
+import { Languages, Moon, Plus, ShoppingCart, Sun } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { m } from '#/paraglide/messages'
 import { getLocale, locales, setLocale } from '#/paraglide/runtime'
@@ -153,13 +153,7 @@ export function MenuView({
           </button>
         </div>
 
-        {/* Right – search + cart */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <TopIconBtn onClick={() => {}}>
-            <Search size={18} color={C.dim} />
-          </TopIconBtn>
-          <CartBtn count={cartCount} onClick={onCartOpen} />
-        </div>
+        <CartBtn count={cartCount} onClick={onCartOpen} />
       </div>
 
       {/* ── Hero ── */}
@@ -388,31 +382,6 @@ export function MenuView({
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function TopIconBtn({
-  onClick,
-  children,
-}: Readonly<{ onClick: () => void; children: React.ReactNode }>) {
-  return (
-    <button
-      type='button'
-      onClick={onClick}
-      style={{
-        width: 38,
-        height: 38,
-        borderRadius: '50%',
-        border: `1px solid ${C.hairline}`,
-        background: C.surface2,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
 function CartBtn({ count, onClick }: Readonly<{ count: number; onClick: () => void }>) {
   return (
     <button
@@ -617,93 +586,4 @@ function dietaryShort(flag: string): string {
     default:
       return flag
   }
-}
-
-// Kept for use in the loading skeleton inside customer-menu-content
-export function BottomNav({
-  active,
-  onCart,
-  cartCount,
-}: Readonly<{
-  active: 'home' | 'cart' | 'profile'
-  onCart: () => void
-  cartCount: number
-}>) {
-  const tabs = [
-    { key: 'home' as const, label: m.customer_nav_home(), icon: '🏠', action: undefined },
-    {
-      key: 'cart' as const,
-      label: m.customer_nav_cart(),
-      icon: '🛒',
-      action: onCart,
-      badge: cartCount,
-    },
-  ]
-  return (
-    <nav
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: C.surface,
-        borderTop: `1px solid ${C.hairline}`,
-        display: 'flex',
-        padding: '8px 0 20px',
-        zIndex: 50,
-      }}
-    >
-      {tabs.map((tab) => (
-        <button
-          key={tab.key}
-          type='button'
-          onClick={tab.action}
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            background: 'none',
-            border: 'none',
-            cursor: tab.action ? 'pointer' : 'default',
-            position: 'relative',
-          }}
-        >
-          <span style={{ fontSize: 22 }}>{tab.icon}</span>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: tab.key === active ? C.accent : C.faint,
-            }}
-          >
-            {tab.label}
-          </span>
-          {tab.badge != null && tab.badge > 0 && (
-            <span
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: '50%',
-                transform: 'translate(80%,-30%)',
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                background: C.accent,
-                color: '#fff',
-                fontSize: 9,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-              }}
-            >
-              {tab.badge}
-            </span>
-          )}
-        </button>
-      ))}
-    </nav>
-  )
 }

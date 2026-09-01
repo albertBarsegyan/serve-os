@@ -10,6 +10,7 @@ import {
   CLIENT_EVENTS,
   type OrderEventPayload,
   type OrderPaidPayload,
+  type OrderPendingConfirmationPayload,
   type OrderRefundedPayload,
   type OrderStatusChangedPayload,
   type PaymentFailedPayload,
@@ -33,6 +34,8 @@ export type OrderNotificationHandlers = Partial<{
   'order:refunded': (p: OrderRefundedPayload) => void
   /** Resync-only: fired once right after join (incl. reconnect) with the session's active order. */
   'order:status-changed': (p: OrderStatusChangedPayload) => void
+  /** ON_PREMISE guest order sitting in CREATED, awaiting staff confirmation before it can be cooked. */
+  'order-pending-confirmation': (p: OrderPendingConfirmationPayload) => void
 }>
 
 export interface UseOrderNotificationsOptions {
@@ -62,6 +65,7 @@ const TOAST_MESSAGES: Record<string, string> = {
   [SERVER_EVENTS.ORDER_PAID]: m.notification_order_paid(),
   [SERVER_EVENTS.ORDER_PAYMENT_FAILED]: m.notification_order_payment_failed(),
   [SERVER_EVENTS.ORDER_REFUNDED]: m.notification_order_refunded(),
+  [SERVER_EVENTS.ORDER_PENDING_CONFIRMATION]: m.notification_order_pending_confirmation(),
 }
 
 /**
@@ -147,7 +151,7 @@ export function subscribeOrderNotifications(
   }
   const onCallWaiter = (p: CallWaiterPayload) => {
     playNotificationSound()
-    const hint = p.tableId ? ` (table ${p.tableId})` : ''
+    const hint = p.tableId ? ` (table ${p.tableNumber})` : ''
     toast.warning(`${TOAST_MESSAGES[SERVER_EVENTS.ORDER_CALL_WAITER]}${hint}`, {
       position: 'top-right',
     })
@@ -172,7 +176,7 @@ export function subscribeOrderNotifications(
     // (TableSessionsService.refreshLifecycle), so the table's currentSessionId is now
     // stale — without this, admin-table.tsx keeps showing "Close table" for a session
     // the backend already closed, and clicking it 404s with "Active session not found".
-    void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tables() })
+    void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
     getHandlers()?.['order:paid']?.(p)
   }
   const onPaymentFailed = (p: PaymentFailedPayload) => {
@@ -195,9 +199,21 @@ export function subscribeOrderNotifications(
   const onStatusChanged = (p: OrderStatusChangedPayload) => {
     getHandlers()?.['order:status-changed']?.(p)
   }
+  // order:created already fired for this same order (ON_PREMISE guest orders emit both) — this
+  // is the dedicated "needs your action" signal on top of that, so it always toasts/sounds
+  // regardless of isSelfMutated, same as order:call-waiter.
+  const onPendingConfirmation = (p: OrderPendingConfirmationPayload) => {
+    playNotificationSound()
+    toast.warning(TOAST_MESSAGES[SERVER_EVENTS.ORDER_PENDING_CONFIRMATION], {
+      position: 'top-right',
+    })
+    invalidateOrders()
+    getHandlers()?.['order-pending-confirmation']?.(p)
+  }
 
   socket.on('connect', join)
   socket.on(SERVER_EVENTS.ORDER_STATUS_CHANGED, onStatusChanged)
+  socket.on(SERVER_EVENTS.ORDER_PENDING_CONFIRMATION, onPendingConfirmation)
   socket.on(SERVER_EVENTS.ORDER_CREATED, onCreated)
   socket.on(SERVER_EVENTS.ORDER_CONFIRMED, onConfirmed)
   socket.on(SERVER_EVENTS.ORDER_PREPARING, onPreparing)
@@ -231,6 +247,7 @@ export function subscribeOrderNotifications(
     socket.off(SERVER_EVENTS.ORDER_PAYMENT_FAILED, onPaymentFailed)
     socket.off(SERVER_EVENTS.ORDER_REFUNDED, onRefunded)
     socket.off(SERVER_EVENTS.ORDER_STATUS_CHANGED, onStatusChanged)
+    socket.off(SERVER_EVENTS.ORDER_PENDING_CONFIRMATION, onPendingConfirmation)
   }
 }
 

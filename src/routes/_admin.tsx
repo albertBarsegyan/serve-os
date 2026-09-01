@@ -78,12 +78,18 @@ export const Route = createFileRoute('/_admin')({
   head: () => ({ meta: noIndexMeta }),
   beforeLoad: ({ context, location }) => {
     if (!context.authUser) throw redirect({ to: '/auth/sign-in' })
-    if (
-      context.authUser.type === 'owner' &&
-      !context.authUser.hasBusiness &&
-      location.pathname !== adminRoutePathname.SETUP_BUSINESS
-    ) {
-      throw redirect({ to: adminRoutePathname.SETUP_BUSINESS })
+    if (context.authUser.type === 'owner' && !context.authUser.hasBusiness) {
+      if (location.pathname !== adminRoutePathname.SETUP_BUSINESS) {
+        throw redirect({ to: adminRoutePathname.SETUP_BUSINESS })
+      }
+      return
+    }
+    // Owner has businesses but no valid one selected — root's beforeLoad already
+    // nulled out a stale/foreign business_id cookie, so this also covers "deleted
+    // the currently active business" and "signed in as someone else in this
+    // browser" without falling through to a silently empty dashboard.
+    if (context.authUser.type === 'owner' && !context.selectedBusinessId) {
+      throw redirect({ to: adminRoutePathname.SELECT_BUSINESS })
     }
   },
 })

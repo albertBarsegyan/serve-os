@@ -2,10 +2,10 @@ import type { QueryClient } from '@tanstack/react-query'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import type { Socket } from 'socket.io-client'
+import { getLocalStorageItem, removeLocalStorageItem } from '#/shared/libs/utils/storage.utils'
 import {
   CLIENT_EVENTS,
   type OrderStatusChangedPayload,
-  type PaymentRecordedPayload,
   SERVER_EVENTS,
   type SessionClosedPayload,
 } from './events'
@@ -36,16 +36,12 @@ export function subscribeSessionRealtime(
     void queryClient.invalidateQueries({ queryKey: ['session', token] })
   }
 
-  function onPaymentRecorded(payload: PaymentRecordedPayload) {
-    void queryClient.invalidateQueries({ queryKey: ['order', payload.orderId] })
-  }
-
   function onSessionClosed(_payload: SessionClosedPayload) {
     void queryClient.invalidateQueries({ queryKey: ['session', token] })
     // Table session has ended (e.g. the order was fully paid) — drop the stored
     // credential so a stale/closed token never gets reused for a future visit.
-    if (localStorage.getItem('customer_session_token') === token) {
-      localStorage.removeItem('customer_session_token')
+    if (getLocalStorageItem('customer_session_token') === token) {
+      removeLocalStorageItem('customer_session_token')
     }
     // No reason to stay a member of a room the backend has already torn down.
     leave()
@@ -53,7 +49,6 @@ export function subscribeSessionRealtime(
 
   socket.on('connect', join)
   socket.on(SERVER_EVENTS.ORDER_STATUS_CHANGED, onStatusChanged)
-  socket.on(SERVER_EVENTS.PAYMENT_RECORDED, onPaymentRecorded)
   socket.on(SERVER_EVENTS.SESSION_CLOSED, onSessionClosed)
 
   if (socket.connected) {
@@ -66,7 +61,6 @@ export function subscribeSessionRealtime(
     leave()
     socket.off('connect', join)
     socket.off(SERVER_EVENTS.ORDER_STATUS_CHANGED, onStatusChanged)
-    socket.off(SERVER_EVENTS.PAYMENT_RECORDED, onPaymentRecorded)
     socket.off(SERVER_EVENTS.SESSION_CLOSED, onSessionClosed)
   }
 }

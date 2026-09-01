@@ -1,3 +1,4 @@
+import { isRedirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 
@@ -7,7 +8,7 @@ import { signUpRequestSchema } from '#/features/auth/lib/schemas/sign-up.schema.
 import { serverApiInstance } from '#/shared/api/server-instance.ts'
 import { forwardCookies } from '#/shared/libs/utils/cookie.server'
 
-const AUTH_COOKIES = ['access_token', 'staff_access_token']
+const AUTH_COOKIES = ['access_token', 'staff_access_token', 'refresh_token']
 
 function hasAuthCookie(): boolean {
   const cookies = getRequest()?.headers.get('cookie') ?? ''
@@ -26,7 +27,13 @@ export const getAuthUserServerFn = createServerFn({ method: 'GET' }).handler(
       forwardCookies(response)
 
       return await response.json()
-    } catch {
+    } catch (error) {
+      // A thrown redirect (server-instance's unrecoverable-401 handler) must
+      // propagate to the router, not be swallowed into a false "logged out"
+      // result — otherwise TanStack Query caches { user: null } as a *successful*
+      // response for staleTime, masking the redirect and sticking around even
+      // after the user is re-authenticated via a separate (client-side) refresh.
+      if (isRedirect(error)) throw error
       return { user: null }
     }
   },

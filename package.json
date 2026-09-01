@@ -36,14 +36,14 @@
     "@hookform/resolvers": "^5.2.2",
     "@tabler/icons-react": "^3.44.0",
     "@tailwindcss/vite": "^4.1.18",
-    "@tanstack/react-devtools": "latest",
-    "@tanstack/react-query": "latest",
-    "@tanstack/react-query-devtools": "latest",
-    "@tanstack/react-router": "latest",
-    "@tanstack/react-router-devtools": "latest",
-    "@tanstack/react-router-ssr-query": "latest",
-    "@tanstack/react-start": "^1.168.18",
-    "@tanstack/router-plugin": "^1.168.13",
+    "@tanstack/react-devtools": "0.10.12",
+    "@tanstack/react-query": "5.102.8",
+    "@tanstack/react-query-devtools": "5.102.8",
+    "@tanstack/react-router": "1.170.32",
+    "@tanstack/react-router-devtools": "1.167.1",
+    "@tanstack/react-router-ssr-query": "1.167.2",
+    "@tanstack/react-start": "^1.168.49",
+    "@tanstack/router-plugin": "^1.168.35",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "ky": "^2.0.2",
@@ -69,7 +69,7 @@
     "@biomejs/biome": "2.4.5",
     "@inlang/paraglide-js": "^2.13.1",
     "@tailwindcss/typography": "^0.5.16",
-    "@tanstack/devtools-vite": "latest",
+    "@tanstack/devtools-vite": "0.8.5",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^22.10.2",
@@ -87,5 +87,5 @@
     "vitest": "^3.0.5",
     "workbox-window": "^7.4.1"
   },
-  "packageManager": "pnpm@11.2.2"
+  "packageManager": "pnpm@11.25.0+sha512.5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
 }

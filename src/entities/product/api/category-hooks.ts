@@ -4,7 +4,7 @@ import { getCategoriesServerFn, getCategoryServerFn } from '#/shared/api/product
 
 export function useGetCategories(businessId: string) {
   return useQuery({
-    queryKey: platformQueryKeys.menuCategories(false),
+    queryKey: platformQueryKeys.menuCategories(businessId, false),
     queryFn: () => getCategoriesServerFn(),
     enabled: !!businessId,
   })
@@ -12,7 +12,7 @@ export function useGetCategories(businessId: string) {
 
 export function useGetCategory(businessId: string, categoryId: string) {
   return useQuery({
-    queryKey: platformQueryKeys.categoryById(categoryId),
+    queryKey: platformQueryKeys.categoryById(businessId, categoryId),
     queryFn: () => getCategoryServerFn({ data: { categoryId } }),
     enabled: !!businessId && !!categoryId,
   })

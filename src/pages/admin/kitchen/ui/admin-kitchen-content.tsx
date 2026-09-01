@@ -78,7 +78,7 @@ export function AdminKitchenContent() {
     isError,
     error,
     refetch,
-  } = useQuery(kitchenActiveOrdersQueryOptions())
+  } = useQuery(kitchenActiveOrdersQueryOptions(businessId))
 
   const isDraggingRef = useRef(false)
   const [displayOrders, setDisplayOrders] = useState<Order[]>(queryOrders)
@@ -94,11 +94,11 @@ export function AdminKitchenContent() {
   const advance = useCallback(
     (orderId: string, status: AdvanceStatus) => {
       mutate(
-        { orderId, data: { status } },
+        { orderId, data: { status }, businessId },
         { onError: (err) => showError(getResponseErrorMessage(err)) },
       )
     },
-    [mutate],
+    [mutate, businessId],
   )
 
   const pendingOrderId =

@@ -42,7 +42,9 @@ export function AdminPaymentsContent() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState<PageLimit>(20)
-  const currency = useActiveBusiness()?.currency ?? 'USD'
+  const activeBusiness = useActiveBusiness()
+  const currency = activeBusiness?.currency ?? 'USD'
+  const businessId = activeBusiness?.id ?? ''
 
   const {
     data: pagedPayments,
@@ -50,7 +52,7 @@ export function AdminPaymentsContent() {
     isError,
     error,
     refetch,
-  } = useQuery(pagedPaymentsQueryOptions(page, limit))
+  } = useQuery(pagedPaymentsQueryOptions(businessId, page, limit))
 
   const confirmMutation = useConfirmPaymentMutation()
 

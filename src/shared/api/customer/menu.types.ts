@@ -4,6 +4,7 @@ export interface CustomerModifierOption {
   priceAdjustment: number
   position: number
   isActive: boolean
+  priceType: 'fixed' | 'adjustment'
 }
 
 export interface CustomerModifierGroup {

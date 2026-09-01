@@ -72,7 +72,13 @@ function WaiterWorkspace() {
   const currency = activeBusiness?.currency ?? 'USD'
   const businessId = activeBusiness?.id ?? ''
 
-  const { data: orders = [], isPending, isError, error, refetch } = useQuery(ordersQueryOptions())
+  const {
+    data: orders = [],
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery(ordersQueryOptions(businessId))
 
   // Same shared socket/room every other admin screen uses — the base hook already
   // toasts + invalidates on order:ready, so the waiter list refreshes in real time.
@@ -97,7 +103,7 @@ function WaiterWorkspace() {
       if (status === 'CONFIRMED') {
         await confirmMutation.mutateAsync(orderId)
       } else {
-        await updateMutation.mutateAsync({ orderId, data: { status } })
+        await updateMutation.mutateAsync({ orderId, data: { status }, businessId })
       }
       showSuccess(m.admin_waiter_order_updated())
     } catch (err) {

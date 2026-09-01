@@ -34,9 +34,9 @@ export function AdminDashboardPage() {
     hasPermission(StaffPermission.REPORTS_VIEW)
   const canViewStaff = isOwner() || hasPermission(StaffPermission.STAFF_MANAGE)
 
-  const { data: orders = [], isPending: ordersLoading } = useQuery(ordersQueryOptions())
+  const { data: orders = [], isPending: ordersLoading } = useQuery(ordersQueryOptions(businessId))
   const { data: payments = [], isPending: paymentsLoading } = useQuery({
-    ...paymentsQueryOptions(),
+    ...paymentsQueryOptions(businessId),
     enabled: canViewPayments,
   })
   const { data: staff = [] } = useQuery({ ...staffQueryOptions(businessId), enabled: canViewStaff })

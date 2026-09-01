@@ -1,5 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouter } from '@tanstack/react-router'
 import type {
+  BusinessPaymentMethodResponse,
   BusinessResponse,
   CreateBusinessRequest,
   UpdateBusinessRequest,
@@ -50,6 +52,7 @@ type NavigateFn = () => void | Promise<void>
 
 export function useSelectBusinessMutation({ navigate }: { navigate: NavigateFn }) {
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   return useMutation({
     mutationFn: (businessId: string) => selectBusinessServerFn({ data: businessId }),
@@ -58,6 +61,14 @@ export function useSelectBusinessMutation({ navigate }: { navigate: NavigateFn }
       await queryClient.invalidateQueries({ queryKey: ['business'] })
       await queryClient.invalidateQueries({ queryKey: platformQueryKeys.root })
       await queryClient.invalidateQueries({ queryKey: ['customer-menu'] })
+      // Best-effort refresh of the router's cached beforeLoad context (root resolves
+      // `selectedBusinessId` from the cookie and caches it on the match) — useful for
+      // callers that stay on the same page, like the in-place BusinessSwitcher. Some
+      // routes' own beforeLoad can throw a redirect once this context turns fresh
+      // (e.g. /select-business redirecting to the dashboard once a business is
+      // selected), so this can reject — that's fine, we navigate explicitly next
+      // regardless of what happens here.
+      await router.invalidate().catch(() => undefined)
       await navigate()
     },
   })
@@ -74,25 +85,30 @@ export function useBusinessSwitcher({ navigate }: { navigate: NavigateFn }) {
   }
 }
 
-export function useBusinessesQuery({ enabled = false } = {}) {
-  return useQuery({
-    queryKey: ['businesses'],
+export const businessesQueryOptions = () =>
+  queryOptions({
+    queryKey: ['businesses'] as const,
     queryFn: listBusinessesServerFn,
-    enabled: enabled,
   })
+
+export function useBusinessesQuery({ enabled = false } = {}) {
+  return useQuery({ ...businessesQueryOptions(), enabled })
 }
 
 export function usePaymentMethodsQuery({
   businessId,
   enabled = false,
+  select,
 }: {
   businessId?: string
   enabled?: boolean
+  select?: (data: BusinessPaymentMethodResponse[]) => BusinessPaymentMethodResponse[]
 }) {
   return useQuery({
     queryKey: ['payment-methods', businessId],
     queryFn: () => listPaymentMethodsServerFn({ data: { businessId: businessId ?? '' } }),
     enabled: enabled && Boolean(businessId),
+    select: select ?? undefined,
   })
 }
 

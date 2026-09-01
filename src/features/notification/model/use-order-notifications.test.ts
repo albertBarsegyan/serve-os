@@ -49,9 +49,9 @@ describe('subscribeOrderNotifications', () => {
   })
 
   it('invalidates the orders list, detail, and kitchen-orders queries on a lifecycle event', () => {
-    const listKey = platformQueryKeys.orders()
-    const detailKey = platformQueryKeys.orderById('order-1')
-    const kitchenKey = platformQueryKeys.kitchenOrders()
+    const listKey = platformQueryKeys.orders('business-1')
+    const detailKey = platformQueryKeys.orderById('business-1', 'order-1')
+    const kitchenKey = platformQueryKeys.kitchenOrders('business-1')
 
     queryClient.setQueryData(listKey, [{ id: 'order-1', status: 'CONFIRMED' }])
     queryClient.setQueryData(detailKey, { id: 'order-1', status: 'CONFIRMED' })
@@ -86,7 +86,7 @@ describe('subscribeOrderNotifications', () => {
   })
 
   it('resyncs (invalidates) on join/reconnect for kitchen/business rooms, not just on new events', () => {
-    const listKey = platformQueryKeys.orders()
+    const listKey = platformQueryKeys.orders('business-1')
     queryClient.setQueryData(listKey, [{ id: 'order-1', status: 'CONFIRMED' }])
     socket.connected = true
 
@@ -129,8 +129,8 @@ describe('subscribeOrderNotifications', () => {
   })
 
   it('invalidates orders and payments queries on order:payment-failed', () => {
-    const ordersKey = platformQueryKeys.orders()
-    const paymentsKey = platformQueryKeys.payments()
+    const ordersKey = platformQueryKeys.orders('business-1')
+    const paymentsKey = platformQueryKeys.payments('business-1')
     const received: unknown[] = []
 
     queryClient.setQueryData(ordersKey, [])
@@ -164,8 +164,8 @@ describe('subscribeOrderNotifications', () => {
   })
 
   it('invalidates orders and payments queries on order:refunded', () => {
-    const ordersKey = platformQueryKeys.orders()
-    const paymentsKey = platformQueryKeys.payments()
+    const ordersKey = platformQueryKeys.orders('business-1')
+    const paymentsKey = platformQueryKeys.payments('business-1')
     const received: unknown[] = []
 
     queryClient.setQueryData(ordersKey, [])
@@ -209,7 +209,7 @@ describe('subscribeOrderNotifications', () => {
 
     unsubscribe()
 
-    const listKey = platformQueryKeys.orders()
+    const listKey = platformQueryKeys.orders('business-1')
     queryClient.setQueryData(listKey, [{ id: 'order-1', status: 'CONFIRMED' }])
     for (const q of queryClient.getQueryCache().getAll()) q.setState({ isInvalidated: false })
 

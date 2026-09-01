@@ -2,6 +2,7 @@ import { Check, Clock, MapPin } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useOrderNotifications } from '#/features/notification'
+import { useTipOrderForm } from '#/features/order/tip-order/model/use-tip-order-form'
 import { m } from '#/paraglide/messages'
 import { cancelCustomerOrder } from '#/shared/api/customer/customer-api'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
@@ -42,6 +43,28 @@ export function resolveResyncStatus(p: OrderStatusChangedPayload): CustomerOrder
   return null
 }
 
+/**
+ * Whether a resync/reconnect payload should be allowed to patch the stored tip.
+ *
+ * The backend always reports a real number for tipAmount (0 by default), and a resync
+ * fires on every socket connect — including the very first one, right after mount, before
+ * the guest has touched anything. Patching unconditionally there would turn tipAmount from
+ * undefined ("never asked") into 0 ("explicit no-tip") and hide the picker before it's ever
+ * seen. Only reconcile when either a real tip already exists upstream (incoming.tipAmount >
+ * 0, e.g. added from another device) or one is already recorded locally (currentTipAmount
+ * !== undefined, keeping it in sync going forward) — and only from a payload no older than
+ * what's already applied, so a stale resync can't regress a newer tip.
+ */
+export function shouldReconcileTip(
+  currentTipAmount: number | undefined,
+  currentTipUpdatedAt: string | undefined,
+  incoming: { tipAmount: number; updatedAt: string },
+): boolean {
+  const hasSomethingToReconcile = incoming.tipAmount > 0 || currentTipAmount !== undefined
+  const isFresh = !currentTipUpdatedAt || incoming.updatedAt > currentTipUpdatedAt
+  return hasSomethingToReconcile && isFresh
+}
+
 export interface OrderRecord {
   orderId: string
   items: Array<{ name: string; qty: number; price: number }>
@@ -49,6 +72,11 @@ export interface OrderRecord {
   tableNumber: string
   placedAt: number
   paymentMethod: string
+  /** Undefined = never asked yet; 0 = an explicit "no tip" was submitted. */
+  tipAmount?: number
+  /** Order.updatedAt as of the last applied tipAmount — guards a reconcile payload
+   * that's older than what's already showing from applying out of order. */
+  tipUpdatedAt?: string
 }
 
 // NOTE: built by functions (not module-level constants) so labels/hints re-evaluate
@@ -94,6 +122,13 @@ interface OrderViewProps {
   order: OrderRecord
   sessionToken: string
   onBackToMenu: () => void
+  /**
+   * Patches fields into the parent's OrderRecord (state + sessionStorage) — this view has
+   * no TanStack Query of its own to invalidate. TODO: this whole ad-hoc
+   * state/sessionStorage/socket sync setup should migrate to TanStack Query; tracked as
+   * separate work, not part of this change.
+   */
+  onOrderUpdate: (patch: Partial<OrderRecord>) => void
 }
 
 interface TerminalScreenProps {
@@ -171,7 +206,12 @@ function TerminalScreen({
   )
 }
 
-export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderViewProps>) {
+export function OrderView({
+  order,
+  sessionToken,
+  onBackToMenu,
+  onOrderUpdate,
+}: Readonly<OrderViewProps>) {
   const [currentStatus, setCurrentStatus] = useState<CustomerOrderStatus>('placed')
   const [isCancelling, setIsCancelling] = useState(false)
   const callWaiterCooldownRef = useRef(false)
@@ -187,6 +227,12 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
         if (p.orderId !== order.orderId) return
         const resolved = resolveResyncStatus(p)
         if (resolved) setCurrentStatus(resolved)
+
+        // Reconcile the stored tip on every (re)connect rather than trusting sessionStorage —
+        // see shouldReconcileTip for why this isn't a blind patch.
+        if (shouldReconcileTip(order.tipAmount, order.tipUpdatedAt, p)) {
+          onOrderUpdate({ tipAmount: p.tipAmount, tipUpdatedAt: p.updatedAt })
+        }
       },
       'order:confirmed': (p) => {
         if (p.orderId === order.orderId) setCurrentStatus('confirmed')
@@ -256,6 +302,25 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
   const isServed = currentStatus === 'served'
   const isPayment = currentStatus === 'payment'
   const isPaid = currentStatus === 'paid'
+
+  // 'served' and 'payment' both correspond to backend OrderStatus.DELIVERED (the only
+  // status the guest tip endpoint accepts) — see resolveResyncStatus. Once tipAmount is
+  // defined (including an explicit 0), the picker is replaced by the confirmation below.
+  const canTip = (isServed || isPayment) && order.tipAmount === undefined
+
+  const tipForm = useTipOrderForm({
+    sessionToken,
+    subtotal: order.total,
+    onSuccess: (result) => {
+      // Patch using the value RETURNED BY THE SERVER, not the submitted input — the server
+      // may have rounded or clamped it, and showing the typed value then correcting it
+      // flickers on a money display. tipUpdatedAt uses local time (the server response
+      // carries no updatedAt) so a same-instant reconcile from order:status-changed doesn't
+      // redundantly re-apply the value this device just wrote.
+      onOrderUpdate({ tipAmount: result.tipAmount, tipUpdatedAt: new Date().toISOString() })
+    },
+  })
+
   const currentIdx = STATUS_ORDER.indexOf(currentStatus)
   const elapsedMin = Math.floor(elapsed / 60000)
   const elapsedSec = Math.floor((elapsed % 60000) / 1000)
@@ -499,6 +564,153 @@ export function OrderView({ order, sessionToken, onBackToMenu }: Readonly<OrderV
 
       {/* Action buttons */}
       <div style={{ padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {canTip && (
+          <div
+            style={{
+              background: C.card,
+              border: `1px solid ${C.border}`,
+              borderRadius: C.r16,
+              padding: 16,
+            }}
+          >
+            <h3 style={{ color: C.white, fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>
+              {m.customer_tip_title()}
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {tipForm.presetAmounts.map(({ percentage: p, amount }) => {
+                const active = tipForm.mode === 'percentage' && tipForm.percentage === p
+                return (
+                  <button
+                    key={p}
+                    type='button'
+                    onClick={() => tipForm.selectMode('percentage', p)}
+                    style={{
+                      padding: '10px 6px',
+                      borderRadius: C.r12,
+                      border: `1px solid ${active ? C.amber : C.border}`,
+                      background: active ? 'rgba(249,115,22,0.10)' : 'transparent',
+                      color: active ? C.amber : C.w60,
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
+                    <span>{p}%</span>
+                    <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.85 }}>
+                      {formatPrice(amount)}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button
+                type='button'
+                onClick={() => tipForm.selectMode('custom')}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: C.r12,
+                  border: `1px solid ${tipForm.mode === 'custom' ? C.amber : C.border}`,
+                  background: tipForm.mode === 'custom' ? 'rgba(249,115,22,0.10)' : 'transparent',
+                  color: tipForm.mode === 'custom' ? C.amber : C.w60,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                {m.customer_tip_custom_label()}
+              </button>
+              <button
+                type='button'
+                onClick={() => tipForm.selectMode('none')}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: C.r12,
+                  border: `1px solid ${tipForm.mode === 'none' ? C.w40 : C.border}`,
+                  background: tipForm.mode === 'none' ? C.w06 : 'transparent',
+                  color: tipForm.mode === 'none' ? C.white : C.w60,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                {m.customer_tip_no_tip()}
+              </button>
+            </div>
+
+            {tipForm.mode === 'custom' && (
+              <div style={{ marginTop: 10 }}>
+                <input
+                  type='text'
+                  inputMode='decimal'
+                  placeholder={m.customer_tip_custom_placeholder()}
+                  {...tipForm.register('customAmount')}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: C.r12,
+                    border: `1px solid ${tipForm.errors.customAmount ? C.red : C.border}`,
+                    background: 'transparent',
+                    color: C.white,
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            )}
+
+            {(tipForm.errors.customAmount || tipForm.errors.percentage) && (
+              <p style={{ color: C.red, fontSize: 12, margin: '8px 0 0' }}>
+                {tipForm.errors.customAmount?.message ?? tipForm.errors.percentage?.message}
+              </p>
+            )}
+
+            <button
+              type='button'
+              disabled={tipForm.isSubmitting}
+              onClick={tipForm.submit}
+              style={{
+                width: '100%',
+                marginTop: 12,
+                padding: '14px',
+                background: C.amberGrad,
+                borderRadius: C.r16,
+                border: 'none',
+                color: '#fff',
+                fontWeight: 800,
+                fontSize: 15,
+                cursor: tipForm.isSubmitting ? 'not-allowed' : 'pointer',
+                opacity: tipForm.isSubmitting ? 0.7 : 1,
+              }}
+            >
+              {tipForm.isSubmitting ? m.customer_tip_submitting() : m.customer_tip_submit()}
+            </button>
+          </div>
+        )}
+
+        {order.tipAmount !== undefined && (
+          <div
+            style={{
+              background: 'rgba(34,197,94,0.08)',
+              border: '1px solid rgba(34,197,94,0.22)',
+              borderRadius: C.r16,
+              padding: '12px 16px',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ color: C.green, fontSize: 13, fontWeight: 700, margin: 0 }}>
+              {m.customer_tip_added_confirmation({ amount: formatPrice(order.tipAmount) })}
+            </p>
+          </div>
+        )}
+
         <button
           type='button'
           onClick={handleCallWaiter}

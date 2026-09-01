@@ -4,10 +4,8 @@ import type { CartItem } from '#/features/cart/model/cart.store'
 import { cartItemTotal, cartItemUnitPrice } from '#/features/cart/model/cart.store'
 import { m } from '#/paraglide/messages'
 import type { CustomerProduct } from '#/shared/api/customer/menu.types'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
+import { cartSubtotal, formatPrice } from '#/shared/libs/utils/pricing.utils'
 import { C } from '../customer-theme'
-
-const GST_RATE = 0.05
 
 interface CartViewProps {
   items: CartItem[]
@@ -28,9 +26,7 @@ export function CartView({
   onUpdateQty,
   onRemove,
 }: Readonly<CartViewProps>) {
-  const subtotal = useMemo(() => items.reduce((s, i) => s + cartItemTotal(i), 0), [items])
-  const gst = subtotal * GST_RATE
-  const grandTotal = subtotal + gst
+  const total = useMemo(() => cartSubtotal(items), [items])
 
   function getProductImage(productId: string): string | null {
     const p = products.find((pr) => pr.id === productId)
@@ -357,12 +353,7 @@ export function CartView({
             <h3 style={{ color: C.white, fontSize: 14, fontWeight: 700, margin: '0 0 14px' }}>
               {m.customer_price_details()}
             </h3>
-            <PriceRow label={m.customer_subtotal()} value={formatPrice(subtotal)} />
-            <PriceRow
-              label={m.customer_gst_percent({ percent: (GST_RATE * 100).toFixed(0) })}
-              value={formatPrice(gst)}
-              muted
-            />
+
             <div
               style={{
                 height: 1,
@@ -370,7 +361,7 @@ export function CartView({
                 margin: '12px 0',
               }}
             />
-            <PriceRow label={m.customer_grand_total()} value={formatPrice(grandTotal)} bold />
+            <PriceRow label={m.customer_grand_total()} value={formatPrice(total)} bold />
           </div>
         )}
       </div>
@@ -405,7 +396,7 @@ export function CartView({
               boxShadow: C.shadowAmber,
             }}
           >
-            {m.customer_order_now()} · {formatPrice(grandTotal)}
+            {m.customer_order_now()} · {formatPrice(total)}
           </button>
         </div>
       )}

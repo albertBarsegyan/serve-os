@@ -3,6 +3,8 @@ import { ChevronLeft, Minus, Plus, ShoppingCart, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '#/components/ui/button'
 import { Select } from '#/components/ui/select'
+import type { BusinessPaymentMethodResponse } from '#/features/business/api/business.types.ts'
+import { usePaymentMethodsQuery } from '#/features/business/model/business-hooks.ts'
 import type { TableEntity } from '#/features/platform/api/platform.types.ts'
 import { tablesQueryOptions } from '#/features/platform/lib/query-options'
 import { useCreateStaffOrderMutation } from '#/features/platform/model/platform-hooks'
@@ -290,6 +292,7 @@ function ProductDetailPanel({
 // ── Step 1: Order setup ───────────────────────────────────────────────────────
 
 function SetupStep({
+  businessId,
   orderType,
   onOrderTypeChange,
   tableId,
@@ -298,6 +301,7 @@ function SetupStep({
   onCustomerNameChange,
   onNext,
 }: Readonly<{
+  businessId: string
   orderType: OrderType
   onOrderTypeChange: (t: OrderType) => void
   tableId: string
@@ -306,7 +310,7 @@ function SetupStep({
   onCustomerNameChange: (n: string) => void
   onNext: () => void
 }>) {
-  const { data: tables = [], isPending: tablesLoading } = useQuery(tablesQueryOptions())
+  const { data: tables = [], isPending: tablesLoading } = useQuery(tablesQueryOptions(businessId))
   const activeTables = tables.filter((t) => t.isActive)
 
   const canContinue = orderType === 'TAKEAWAY' || (orderType === 'DINE_IN' && Boolean(tableId))
@@ -573,6 +577,7 @@ function ReviewStep({
   onSubmit,
   isSubmitting,
   currency,
+  activePaymentMethods,
 }: Readonly<{
   items: CartItem[]
   orderType: OrderType
@@ -588,6 +593,7 @@ function ReviewStep({
   onSubmit: () => void
   isSubmitting: boolean
   currency: string
+  activePaymentMethods: BusinessPaymentMethodResponse[]
 }>) {
   const total = useMemo(() => items.reduce((s, i) => s + itemTotal(i), 0), [items])
 
@@ -681,24 +687,18 @@ function ReviewStep({
         <div>
           <p className='mb-2 text-sm font-medium'>{m.staff_order_payment_method_label()}</p>
           <div className='grid grid-cols-3 gap-2'>
-            {(
-              [
-                { value: 'CASH', label: m.staff_order_payment_cash() },
-                { value: 'POS', label: m.staff_order_payment_card() },
-                { value: 'ONLINE', label: m.staff_order_payment_online() },
-              ] as const
-            ).map(({ value, label }) => (
+            {activePaymentMethods.map(({ method }) => (
               <button
-                key={value}
+                key={method}
                 type='button'
-                onClick={() => onPaymentMethodChange(value)}
+                onClick={() => onPaymentMethodChange(method)}
                 className={`rounded-xl border py-2.5 text-sm font-medium transition-all ${
-                  paymentMethod === value
+                  paymentMethod === method
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:bg-accent'
                 }`}
               >
-                {label}
+                {method}
               </button>
             ))}
           </div>
@@ -753,6 +753,11 @@ export function CreateStaffOrderDialog({
   const businessId = activeBusiness?.id ?? ''
   const currency = activeBusiness?.currency ?? 'USD'
 
+  const activePaymentMethods = usePaymentMethodsQuery({
+    businessId,
+    select: (data) => data.filter((item) => item.isActive),
+  })
+
   const [step, setStep] = useState<Step>('setup')
   const [orderType, setOrderType] = useState<OrderType>('DINE_IN')
   const [tableId, setTableId] = useState(() => selectedTableId)
@@ -761,7 +766,7 @@ export function CreateStaffOrderDialog({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH')
   const [cartItems, setCartItems] = useState<CartItem[]>([])
 
-  const { data: tables = [] } = useQuery(tablesQueryOptions())
+  const { data: tables = [] } = useQuery(tablesQueryOptions(businessId))
   const changedTable = tables.find((t) => t.id === tableId)
 
   const createOrderMutation = useCreateStaffOrderMutation()
@@ -829,10 +834,16 @@ export function CreateStaffOrderDialog({
   }
 
   return (
-    <Modal isOpen={open} onClose={handleClose} title={stepTitle[step]}>
+    <Modal
+      contentClassName='max-w-[1440px]'
+      isOpen={open}
+      onClose={handleClose}
+      title={stepTitle[step]}
+    >
       <div className='min-h-105'>
         {step === 'setup' && (
           <SetupStep
+            businessId={businessId}
             orderType={orderType}
             onOrderTypeChange={(t) => {
               setOrderType(t)
@@ -873,6 +884,7 @@ export function CreateStaffOrderDialog({
             onSubmit={() => void handleSubmit()}
             isSubmitting={createOrderMutation.isPending}
             currency={currency}
+            activePaymentMethods={activePaymentMethods.data ?? []}
           />
         )}
       </div>
