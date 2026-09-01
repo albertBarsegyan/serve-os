@@ -1,8 +1,8 @@
 import {
-  configure,
-  getAllCitiesOfCountry,
   getCountries as _getCountries,
   getCountryNameByCode as _getCountryNameByCode,
+  configure,
+  getAllCitiesOfCountry,
 } from '@countrystatecity/countries-browser'
 
 // Use locally-served data instead of the default jsDelivr CDN.
