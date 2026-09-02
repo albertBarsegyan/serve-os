@@ -988,7 +988,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List every active session for the business (staff/owner only) */
+        get: operations["TableSessionsController_list"];
         put?: never;
         /** Create or rejoin a guest session by QR code */
         post: operations["TableSessionsController_create"];
@@ -1049,6 +1050,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{sessionToken}/recent-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Guest fallback: recover the session's most recent order */
+        get: operations["TableSessionsController_recentOrder"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{sessionToken}/tip": {
         parameters: {
             query?: never;
@@ -1094,6 +1112,40 @@ export interface paths {
         put?: never;
         /** Close table session when all orders are settled */
         post: operations["TableSessionsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{id}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Join another session at the same table into this one for combined billing */
+        post: operations["TableSessionsController_join"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{id}/split": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Detach a session from whatever billing group it was joined into */
+        post: operations["TableSessionsController_split"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1701,6 +1753,11 @@ export interface components {
             type: "DINE_IN" | "TAKEAWAY" | "DELIVERY";
             /** @example uuid-v4-table-id */
             tableId?: string;
+            /**
+             * @description Which of the table's (possibly several) active sessions to attach this order to. Omit only when the table has zero or exactly one active session.
+             * @example uuid-v4-session-id
+             */
+            sessionId?: string;
             items: components["schemas"]["CreateStaffOrderItemDto"][];
             /** @example Jane Smith */
             customerName?: string;
@@ -1781,6 +1838,13 @@ export interface components {
             tipAmount: number;
             /** @example b3f7e2d0-6b7a-4c3e-9e8a-1c2d3e4f5a6c */
             paymentId: string;
+        };
+        JoinSessionDto: {
+            /**
+             * @description The other session (same table) to merge into this one
+             * @example uuid-session-id
+             */
+            sourceSessionId: string;
         };
         CreatePaymentDto: {
             /** @example uuid-v4-order-id */
@@ -3596,10 +3660,29 @@ export interface operations {
             };
         };
     };
-    TableSessionsController_create: {
+    TableSessionsController_list: {
         parameters: {
             query?: never;
             header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TableSessionsController_create: {
+        parameters: {
+            query?: never;
+            header: {
+                "x-session-token": string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3620,7 +3703,9 @@ export interface operations {
     TableSessionsController_scan: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "x-session-token": string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3669,6 +3754,26 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TableSessionsController_recentOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionToken: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No order found for this session */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3737,6 +3842,48 @@ export interface operations {
         };
     };
     TableSessionsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TableSessionsController_join: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JoinSessionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TableSessionsController_split: {
         parameters: {
             query?: never;
             header?: never;

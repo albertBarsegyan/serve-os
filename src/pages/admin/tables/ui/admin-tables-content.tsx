@@ -7,13 +7,9 @@ import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { Button } from '#/components/ui/button'
 import { useOrderNotifications } from '#/features/notification'
-import type {
-  Order,
-  OrderStatus,
-  Payment,
-  TableEntity,
-} from '#/features/platform/api/platform.types.ts'
+import type { Order, Payment, TableEntity } from '#/features/platform/api/platform.types.ts'
 import {
+  activeSessionsQueryOptions,
   ordersQueryOptions,
   paymentsQueryOptions,
   tablesQueryOptions,
@@ -37,6 +33,7 @@ import { useTablePermissions } from '#/shared/libs/hooks/use-table-permissions.t
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
 import { Modal } from '#/shared/ui/modal'
+import type { SessionWithOrders } from './admin-table'
 import { AdminTable } from './admin-table'
 
 type CreateTableFormValues = z.infer<typeof createTableSchema>
@@ -286,37 +283,40 @@ export function AdminTablesContent() {
 
   const { data: allOrders = [] } = useQuery(ordersQueryOptions(businessId))
   const { data: allPayments = [] } = useQuery(paymentsQueryOptions(businessId))
+  const { data: activeSessions = [] } = useQuery(activeSessionsQueryOptions(businessId))
 
-  const [waiterCalledTableIds, setWaiterCalledTableIds] = useState<Set<string>>(new Set())
+  // Joins business:<businessId> and keeps orders/payments/sessions/tables in sync as
+  // socket events land — waiter-call state now lives on the session itself
+  // (SessionSummary.waiterCallActive), so no page-local tracking is needed here.
+  useOrderNotifications({ room: 'business', id: businessId })
 
-  useOrderNotifications({
-    room: 'business',
-    id: businessId,
-    handlers: {
-      'order:call-waiter': (payload) => {
-        const tid = payload.tableId
-        if (tid) {
-          setWaiterCalledTableIds((prev) => new Set([...prev, tid]))
-        }
-      },
-    },
-  })
-
-  const ACTIVE_STATUSES = useMemo(
-    () =>
-      new Set<OrderStatus>(['CREATED', 'CONFIRMED', 'IN_KITCHEN', 'READY', 'DELIVERED', 'CLOSED']),
-    [],
-  )
-
-  const activeOrderByTableId = useMemo(() => {
-    const map = new Map<string, Order>()
+  // A table can carry several concurrent sessions (separate guest parties) — group every
+  // active session, and every order placed into one, by tableId so each table's card gets
+  // one entry per session instead of collapsing to a single order table-wide.
+  const sessionsWithOrdersByTableId = useMemo(() => {
+    const ordersBySessionId = new Map<string, Order[]>()
     for (const order of allOrders) {
-      if (order.tableId && ACTIVE_STATUSES.has(order.status) && !map.has(order.tableId)) {
-        map.set(order.tableId, order)
+      if (!order.tableSessionId) continue
+      const list = ordersBySessionId.get(order.tableSessionId)
+      if (list) {
+        list.push(order)
+      } else {
+        ordersBySessionId.set(order.tableSessionId, [order])
+      }
+    }
+
+    const map = new Map<string, SessionWithOrders[]>()
+    for (const session of activeSessions) {
+      const entry: SessionWithOrders = { session, orders: ordersBySessionId.get(session.id) ?? [] }
+      const list = map.get(session.tableId)
+      if (list) {
+        list.push(entry)
+      } else {
+        map.set(session.tableId, [entry])
       }
     }
     return map
-  }, [allOrders, ACTIVE_STATUSES])
+  }, [allOrders, activeSessions])
 
   const pendingPaymentByOrderId = useMemo(() => {
     const map = new Map<string, Payment>()
@@ -421,43 +421,22 @@ export function AdminTablesContent() {
       {/* Table cards grid */}
       {!isPending && visibleTables.length > 0 && (
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-          {visibleTables.map((table) => {
-            const isSessionReserved = Boolean(table.currentSessionId)
-            const reservedLabel = isSessionReserved
-              ? m.admin_tables_guest_session()
-              : m.admin_tables_reserved_by_staff()
-            const activeOrder = activeOrderByTableId.get(table.id) ?? null
-            const pendingPayment = activeOrder
-              ? (pendingPaymentByOrderId.get(activeOrder.id) ?? null)
-              : null
-
-            return (
-              <AdminTable
-                key={table.id}
-                table={table}
-                activeOrder={activeOrder}
-                pendingPayment={pendingPayment}
-                perms={perms}
-                handleToggleStatus={handleToggleStatus}
-                handleToggleReservation={handleToggleReservation}
-                openEditTable={openEditTable}
-                setDeletingTable={setDeletingTable}
-                setSelectedTable={setSelectedTable}
-                setIsQrModalOpen={setIsQrModalOpen}
-                isBusy={isBusy}
-                isSessionReserved={isSessionReserved}
-                reservedLabel={reservedLabel}
-                waiterCalled={waiterCalledTableIds.has(table.id)}
-                onAcknowledgeWaiter={() => {
-                  setWaiterCalledTableIds((prev) => {
-                    const next = new Set(prev)
-                    next.delete(table.id)
-                    return next
-                  })
-                }}
-              />
-            )
-          })}
+          {visibleTables.map((table) => (
+            <AdminTable
+              key={table.id}
+              table={table}
+              sessions={sessionsWithOrdersByTableId.get(table.id) ?? []}
+              pendingPaymentByOrderId={pendingPaymentByOrderId}
+              perms={perms}
+              handleToggleStatus={handleToggleStatus}
+              handleToggleReservation={handleToggleReservation}
+              openEditTable={openEditTable}
+              setDeletingTable={setDeletingTable}
+              setSelectedTable={setSelectedTable}
+              setIsQrModalOpen={setIsQrModalOpen}
+              isBusy={isBusy}
+            />
+          ))}
         </div>
       )}
 

@@ -744,10 +744,14 @@ export function CreateStaffOrderDialog({
   open,
   onClose,
   selectedTableId,
+  sessionId,
 }: Readonly<{
   open: boolean
   onClose: () => void
   selectedTableId: TableEntity['id']
+  // Which of the table's (possibly several) active sessions to attach the order to.
+  // Omit only when the table has zero or exactly one active session.
+  sessionId?: string
 }>) {
   const activeBusiness = useActiveBusiness()
   const businessId = activeBusiness?.id ?? ''
@@ -807,6 +811,7 @@ export function CreateStaffOrderDialog({
       await createOrderMutation.mutateAsync({
         type: orderType,
         tableId: orderType === 'DINE_IN' ? tableId : undefined,
+        sessionId: orderType === 'DINE_IN' ? sessionId : undefined,
         items: cartItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,

@@ -4,18 +4,21 @@ import { menuQueryOptions } from '#/entities/menu/lib/menu-query-options'
 import { sessionQueryOptions } from '#/entities/session/lib/session-query-options'
 import type { CartModifier } from '#/features/cart/model/cart.store'
 import { cartItemTotal, useCartStore } from '#/features/cart/model/cart.store'
-import { useOrderNotifications, useSelfMutationSuppression } from '#/features/notification'
+import {
+  useMyOrders,
+  useOrderNotifications,
+  useSelfMutationSuppression,
+} from '#/features/notification'
 import type { CustomerPaymentMethod } from '#/features/platform/api/platform.types'
 import { m } from '#/paraglide/messages'
+import { fetchRecentOrderForSession } from '#/shared/api/customer/customer-api'
 import type { CustomerProduct } from '#/shared/api/customer/menu.types'
 import { showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { cartSubtotal } from '#/shared/libs/utils/pricing.utils'
 import {
   getLocalStorageItem,
-  getSessionStorageItem,
-  removeSessionStorageItem,
+  removeLocalStorageItem,
   setLocalStorageItem,
-  setSessionStorageItem,
 } from '#/shared/libs/utils/storage.utils'
 import { C } from './customer-theme'
 import { CartView } from './views/cart-view'
@@ -72,6 +75,21 @@ export function nextSharedOrderBanner(
   return { orderId, label }
 }
 
+// Order-tracking storage: keyed by orderId (stable across a table session churning to a
+// new id once the previous order settles) rather than sessionId, and kept in localStorage
+// (shared across tabs) rather than sessionStorage — a QR re-scan often opens in a new tab,
+// which would otherwise start with no memory of the order the guest just placed.
+function orderRecordKey(orderId: string): string {
+  return `c-order-${orderId}`
+}
+
+// tableId doesn't churn the way sessionId does, so it's a stable pointer to "the order
+// this device most recently tracked at this table" — used to find the record above
+// without already knowing its orderId.
+function orderPointerKey(tableId: string): string {
+  return `c-order-latest-${tableId}`
+}
+
 // ── Props ──────────────────────────────────────────────────────────────────────
 interface CustomerMenuContentProps {
   businessId: string
@@ -86,6 +104,7 @@ interface CustomerMenuContentProps {
 
 export function CustomerMenuContent({
   businessId,
+  tableId,
   sessionToken,
   sessionId,
   tableName,
@@ -120,18 +139,32 @@ export function CustomerMenuContent({
   const [orderRecord, setOrderRecord] = useState<OrderRecord | null>(null)
   const [sharedOrder, setSharedOrder] = useState<SharedOrderBanner | null>(null)
 
-  const { items, addItem, updateQuantity, removeItem, clearCart } = useCartStore()
+  const { items, addItem, updateQuantity, removeItem, clearCart, syncSession } = useCartStore()
+
+  // Keeps the persisted cart scoped to this table session — a reload/back-navigation/
+  // language-switch within the same session keeps the cart, but a genuinely different
+  // session (new table, or an old session that churned) starts with an empty one.
+  useEffect(() => {
+    syncSession(sessionId)
+  }, [sessionId, syncSession])
 
   // Suppresses the generic "New order received" toast for the device that placed the
   // order itself — see handleOrderSuccess, which marks its own order right after checkout.
   const { markSelfMutated, isSelfMutated } = useSelfMutationSuppression()
 
+  // Every guest at a table shares one session/room — without this, every order placed
+  // by anyone at the table plays a sound/toast on every other guest's phone too. The
+  // quiet sharedOrder banner below still reflects table-wide progress; this only gates
+  // the noisy default toast/sound.
+  const { markMyOrder, isMyOrder } = useMyOrders(sessionId)
+
   // Mounted here (not just inside OrderView) so a guest still browsing the menu/cart on
-  // their own phone learns live that someone else at the table just placed an order —
-  // the whole point of everyone at a table sharing one sessionToken/room.
+  // their own phone learns live that their own order (tracked via isMyOrder) progressed
+  // — other guests' orders still update the shared banner below, just silently.
   useOrderNotifications({
     room: 'session',
     id: sessionToken,
+    shouldNotify: isMyOrder,
     isSelfMutated,
     handlers: {
       'order:created': (p) => {
@@ -188,23 +221,46 @@ export function CustomerMenuContent({
   const cartCount = items.reduce((s, i) => s + i.quantity, 0)
   const cartTotal = cartSubtotal(items)
 
-  // Restore order progress from sessionStorage across refreshes. sessionId is the
-  // stable table-session identifier — unlike sessionToken it's not a bearer credential,
-  // so it's safe to use as a storage namespace without truncating it.
-  const ssKey = `c-order-${sessionId}`
-
+  // Restore order-tracking progress across refreshes, new tabs, and session churn (see
+  // orderRecordKey/orderPointerKey above). If this device has no local record at all —
+  // storage was cleared, or a QR re-scan opened a context that never had it — fall back
+  // to asking the backend for the still-active session's most recent order rather than
+  // leaving the guest stuck on the plain menu with an order already in flight.
   useEffect(() => {
-    const saved = getSessionStorageItem(ssKey)
-    if (saved) {
-      try {
-        const record = JSON.parse(saved) as OrderRecord
-        setOrderRecord(record)
-        setView('order')
-      } catch {
-        removeSessionStorageItem(ssKey)
+    let cancelled = false
+    const pointedOrderId = getLocalStorageItem(orderPointerKey(tableId))
+    if (pointedOrderId) {
+      const saved = getLocalStorageItem(orderRecordKey(pointedOrderId))
+      if (saved) {
+        try {
+          const record = JSON.parse(saved) as OrderRecord
+          setOrderRecord(record)
+          setView('order')
+          return
+        } catch {
+          removeLocalStorageItem(orderRecordKey(pointedOrderId))
+          removeLocalStorageItem(orderPointerKey(tableId))
+        }
       }
     }
-  }, [ssKey])
+
+    fetchRecentOrderForSession(sessionToken)
+      .then((record) => {
+        if (cancelled) return
+        setLocalStorageItem(orderRecordKey(record.orderId), JSON.stringify(record))
+        setLocalStorageItem(orderPointerKey(tableId), record.orderId)
+        setOrderRecord(record)
+        setView('order')
+      })
+      .catch(() => {
+        // No order for this session (404), or a transient network error — fall through
+        // to the plain menu grid, same as a guest who genuinely hasn't ordered yet.
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [tableId, sessionToken])
 
   function handleProductAdd(qty: number, modifiers: CartModifier[], notes: string) {
     if (!selectedProduct) return
@@ -247,8 +303,10 @@ export function CustomerMenuContent({
       placedAt: Date.now(),
       paymentMethod: 'ONLINE',
     }
-    setSessionStorageItem(ssKey, JSON.stringify(record))
+    setLocalStorageItem(orderRecordKey(orderId), JSON.stringify(record))
+    setLocalStorageItem(orderPointerKey(tableId), orderId)
     markSelfMutated(orderId)
+    markMyOrder(orderId)
     setOrderRecord(record)
     clearCart()
     setView('order')
@@ -275,18 +333,21 @@ export function CustomerMenuContent({
   }
 
   function handleBackToMenu() {
-    removeSessionStorageItem(ssKey)
+    if (orderRecord) {
+      removeLocalStorageItem(orderRecordKey(orderRecord.orderId))
+      removeLocalStorageItem(orderPointerKey(tableId))
+    }
     setOrderRecord(null)
     setView('menu')
   }
 
-  // Patches fields into orderRecord (state + sessionStorage) — OrderView has no query of
+  // Patches fields into orderRecord (state + localStorage) — OrderView has no query of
   // its own to invalidate; see the TODO on OrderViewProps.onOrderUpdate.
   function handleOrderUpdate(patch: Partial<OrderRecord>) {
     setOrderRecord((prev) => {
       if (!prev) return prev
       const next = { ...prev, ...patch }
-      setSessionStorageItem(ssKey, JSON.stringify(next))
+      setLocalStorageItem(orderRecordKey(next.orderId), JSON.stringify(next))
       return next
     })
   }

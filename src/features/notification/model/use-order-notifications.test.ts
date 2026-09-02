@@ -198,6 +198,59 @@ describe('subscribeOrderNotifications', () => {
     expect(received[0]).toMatchObject({ orderId: 'order-1', refundId: 'refund-123' })
   })
 
+  it('invalidates activeSessions on session:opened and session-closed', () => {
+    const activeSessionsKey = platformQueryKeys.activeSessions('business-1')
+    queryClient.setQueryData(activeSessionsKey, [])
+
+    unsubscribe = subscribeOrderNotifications(
+      socket as unknown as Socket,
+      queryClient,
+      'business',
+      'business-1',
+      () => undefined,
+    )
+    for (const q of queryClient.getQueryCache().getAll()) q.setState({ isInvalidated: false })
+
+    socket.serverEmit('session:opened', {
+      sessionId: 'session-1',
+      businessId: 'business-1',
+      tableId: 'table-1',
+      source: 'guest',
+      at: new Date().toISOString(),
+    })
+    expect(queryClient.getQueryState(activeSessionsKey)?.isInvalidated).toBe(true)
+
+    queryClient.getQueryCache().getAll()[0]?.setState({ isInvalidated: false })
+    socket.serverEmit('session-closed', { sessionId: 'session-1' })
+    expect(queryClient.getQueryState(activeSessionsKey)?.isInvalidated).toBe(true)
+  })
+
+  it('invalidates activeSessions and forwards the payload on order:waiter-acknowledged', () => {
+    const activeSessionsKey = platformQueryKeys.activeSessions('business-1')
+    queryClient.setQueryData(activeSessionsKey, [])
+    const received: unknown[] = []
+
+    unsubscribe = subscribeOrderNotifications(
+      socket as unknown as Socket,
+      queryClient,
+      'business',
+      'business-1',
+      () => ({ 'order:waiter-acknowledged': (p) => received.push(p) }),
+    )
+    for (const q of queryClient.getQueryCache().getAll()) q.setState({ isInvalidated: false })
+
+    socket.serverEmit('order:waiter-acknowledged', {
+      sessionId: 'session-1',
+      businessId: 'business-1',
+      tableId: 'table-1',
+      at: new Date().toISOString(),
+    })
+
+    expect(queryClient.getQueryState(activeSessionsKey)?.isInvalidated).toBe(true)
+    expect(received).toHaveLength(1)
+    expect(received[0]).toMatchObject({ sessionId: 'session-1' })
+  })
+
   it('unsubscribes all listeners on cleanup', () => {
     unsubscribe = subscribeOrderNotifications(
       socket as unknown as Socket,

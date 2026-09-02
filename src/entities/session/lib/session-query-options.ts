@@ -11,7 +11,7 @@ import { getSessionCurrentServerFn } from '#/entities/session/api/session-curren
 export const sessionQueryOptions = (token: string) =>
   queryOptions({
     queryKey: ['session', token] as const,
-    queryFn: getSessionCurrentServerFn,
+    queryFn: () => getSessionCurrentServerFn({ data: { token } }),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: Boolean(token),

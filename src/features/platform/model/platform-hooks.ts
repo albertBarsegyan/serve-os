@@ -33,6 +33,7 @@ import type {
 import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys.ts'
 import {
   acceptStaffInvite,
+  acknowledgeWaiterCall,
   addModifierToGroup,
   changePassword,
   closeSession,
@@ -52,6 +53,7 @@ import {
   deleteModifierGroup,
   deleteProduct,
   deleteTable,
+  joinSessions,
   loginStaffWithPassword,
   loginStaffWithPin,
   logoutStaff,
@@ -62,6 +64,7 @@ import {
   scanSession,
   setProductAvailability,
   setTableReservation,
+  splitSession,
   syncProductModifierGroups,
   toggleTableStatus,
   unlockStaff,
@@ -162,11 +165,55 @@ export function useCloseSessionMutation() {
 
   return useMutation({
     mutationFn: (sessionId: string) => closeSession(sessionId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.sessions() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
-    },
+    // Returning the invalidation promises (not `void`-ing them) makes mutateAsync only
+    // resolve once these queries have finished refetching — otherwise a caller's `await
+    // mutateAsync()` resolves while the old cached data (a still-active session) is still
+    // what every reader sees for one more render, which is what let a stale "Close session"
+    // button re-render enabled/showing the previous stage for a beat. See the identical
+    // comment on useUpdateOrderStatusMutation below for the general pattern.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.sessions() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.activeSessionsRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() }),
+      ]),
+  })
+}
+
+export function useJoinSessionsMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      targetSessionId,
+      sourceSessionId,
+    }: {
+      targetSessionId: string
+      sourceSessionId: string
+    }) => joinSessions(targetSessionId, { sourceSessionId }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.activeSessionsRoot() }),
+  })
+}
+
+export function useSplitSessionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (sessionId: string) => splitSession(sessionId),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.activeSessionsRoot() }),
+  })
+}
+
+export function useAcknowledgeWaiterMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (sessionId: string) => acknowledgeWaiterCall(sessionId),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: platformQueryKeys.activeSessionsRoot() }),
   })
 }
 
@@ -393,9 +440,15 @@ export function useCreateStaffOrderMutation() {
 
   return useMutation({
     mutationFn: (data: CreateStaffOrderRequest) => createStaffOrder(data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
-    },
+    // A staff order with no sessionId attaches to (or creates) the table's default session —
+    // activeSessionsRoot must refetch too, not just ordersRoot, or SessionCard keeps showing
+    // "no session" for a table that now has one. Returned (not void-ed) so the dialog's
+    // `await mutateAsync()` only resolves once both have actually refetched.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.activeSessionsRoot() }),
+      ]),
   })
 }
 
@@ -404,10 +457,11 @@ export function useConfirmOrderMutation() {
 
   return useMutation({
     mutationFn: (orderId: string) => confirmOrder(orderId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.kitchenOrders() })
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.kitchenOrders() }),
+      ]),
   })
 }
 
@@ -454,25 +508,34 @@ export function useUpdateOrderStatusMutation() {
         )
       }
     },
-    onSettled: (_data, _error, variables) => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
-      void queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.kitchenOrders(variables.businessId),
-      })
-    },
+    onSettled: (_data, _error, variables) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() }),
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.kitchenOrders(variables.businessId),
+        }),
+      ]),
   })
 }
 
+// Cash/POS submission (processStaffPayment on the backend) can transition the order straight
+// to CLOSED and auto-close its session in the same request — paymentsRoot/ordersRoot alone
+// left a closed session looking active in the cache (this is why the card used to need a
+// second interaction to show "paid": the mutation resolved, but the queries whose data
+// actually determines the derived status hadn't refetched yet).
 export function useProcessCashPaymentMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ orderId, data }: { orderId: string; data: ProcessPaymentRequest }) =>
       processCashPayment(orderId, data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.activeSessionsRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() }),
+      ]),
   })
 }
 
@@ -482,10 +545,13 @@ export function useProcessPosPaymentMutation() {
   return useMutation({
     mutationFn: ({ orderId, data }: { orderId: string; data: ProcessPaymentRequest }) =>
       processPosPayment(orderId, data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.activeSessionsRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() }),
+      ]),
   })
 }
 
@@ -501,16 +567,23 @@ export function useCreatePaymentMutation() {
   })
 }
 
+// Confirming the cashier's pending payment transitions DELIVERED → CLOSED and auto-closes the
+// session (TableSessionsService.refreshLifecycle) in the same request — see the comment on
+// useProcessCashPaymentMutation above for why activeSessionsRoot/tablesRoot must be invalidated
+// here directly rather than relying solely on the session-closed socket echo to arrive later.
 export function useConfirmPaymentMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ paymentId, data }: { paymentId: string; data: ConfirmPaymentRequest }) =>
       confirmPayment(paymentId, data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() })
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() })
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.paymentsRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.ordersRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.activeSessionsRoot() }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.tablesRoot() }),
+      ]),
   })
 }
 

@@ -22,6 +22,12 @@ export const platformQueryKeys = {
   sessions: () => [...platformQueryKeys.root, 'sessions'] as const,
   sessionBill: (sessionId: string) => [...platformQueryKeys.sessions(), sessionId, 'bill'] as const,
 
+  // Staff/admin view of every active session across the business — distinct from the
+  // guest-scoped `sessions()` root above, which has no businessId to key off of.
+  activeSessionsRoot: (businessId?: string) => scopedRoot('active-sessions', businessId),
+  activeSessions: (businessId: string) =>
+    [...platformQueryKeys.activeSessionsRoot(businessId), 'list'] as const,
+
   menuCategoriesRoot: (businessId?: string) => scopedRoot('menu-categories', businessId),
   menuCategories: (businessId: string, includeProducts: boolean) =>
     [
