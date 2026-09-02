@@ -241,6 +241,10 @@ export interface Order {
   id: string
   businessId: string
   tableId: string | null
+  // Which table session (of possibly several concurrent ones at the same table) this
+  // order was actually placed into — the admin Tables view groups orders by this to show
+  // one card per guest party rather than collapsing a table to a single order.
+  tableSessionId: string | null
   waiterId: string | null
   status: OrderStatus
   type: OrderType
@@ -256,6 +260,31 @@ export interface Order {
   updatedAt: string
   // Populated when orders are fetched with table relation (e.g. kitchen endpoint)
   table?: { id: string; number: number } | null
+}
+
+// ── Table sessions (admin) ───────────────────────────────────────────────────
+// A table can carry several of these concurrently (separate guest parties) — see
+// TableSession.mergedIntoSessionId on the backend for how staff combine them for billing.
+export interface SessionSummary {
+  id: string
+  tableId: string
+  businessId: string
+  customerName: string | null
+  customerPhone: string | null
+  openedAt: string
+  expiresAt: string | null
+  // Points at the session this one is billed together with, or null if it stands on its
+  // own (or is itself a billing-group root other sessions point into).
+  mergedIntoSessionId: string | null
+  // Persisted waiter-call state (set by the guest's call-waiter socket message, cleared by
+  // POST /sessions/:id/waiter-acknowledge) — the source of truth for every staff device,
+  // not just the one that raised or cleared it.
+  waiterCallActive: boolean
+  waiterCallAt: string | null
+}
+
+export interface JoinSessionRequest {
+  sourceSessionId: string
 }
 
 // Matches backend CreateOrderFromQrDto — public QR flow
@@ -286,6 +315,9 @@ export interface CreateStaffOrderItemRequest {
 export interface CreateStaffOrderRequest {
   type: OrderType
   tableId?: string
+  // Which of the table's (possibly several) active sessions to attach this order to.
+  // Omit only when the table has zero or exactly one active session.
+  sessionId?: string
   items: CreateStaffOrderItemRequest[]
   customerName?: string
   notes?: string

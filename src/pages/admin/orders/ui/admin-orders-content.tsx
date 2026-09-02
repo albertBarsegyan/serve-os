@@ -1,25 +1,16 @@
-import { useQuery } from '@tanstack/react-query'
-import { getRouteApi } from '@tanstack/react-router'
-import { ClipboardList, Eye, Loader2, Plus, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader } from '#/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/components/ui/table'
-import { useOrderNotifications, useSelfMutationSuppression } from '#/features/notification'
-import { CreateStaffOrderDialog } from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
-import type { Order, OrderStatus } from '#/features/platform/api/platform.types.ts'
-import {
-  orderByIdQueryOptions,
-  pagedOrdersQueryOptions,
-} from '#/features/platform/lib/query-options.ts'
+import {useQuery} from '@tanstack/react-query'
+import {getRouteApi} from '@tanstack/react-router'
+import {ClipboardList, Eye, Loader2, Plus, Search} from 'lucide-react'
+import {useMemo, useState} from 'react'
+import {Badge} from '#/components/ui/badge'
+import {Button} from '#/components/ui/button'
+import {Card, CardContent, CardHeader} from '#/components/ui/card'
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '#/components/ui/table'
+import {useOrderNotifications, useSelfMutationSuppression} from '#/features/notification'
+import {CreateStaffOrderDialog} from '#/features/order/create-staff-order/ui/CreateStaffOrderDialog'
+import {canCancelOrder} from '#/features/order/lib/can-cancel-order'
+import type {Order, OrderStatus} from '#/features/platform/api/platform.types.ts'
+import {orderByIdQueryOptions, pagedOrdersQueryOptions,} from '#/features/platform/lib/query-options.ts'
 import {
   useConfirmOrderMutation,
   useProcessCashPaymentMutation,
@@ -27,18 +18,18 @@ import {
   useRefundOrderMutation,
   useUpdateOrderStatusMutation,
 } from '#/features/platform/model/platform-hooks.ts'
-import { cn } from '#/lib/utils'
-import { m } from '#/paraglide/messages'
-import { listOrders } from '#/shared/api/platform/platform-api.ts'
-import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
-import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
-import { StaffPermission } from '#/shared/libs/permissions/index.ts'
-import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
-import { downloadCsv, toCsv } from '#/shared/libs/utils/csv.utils.ts'
-import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
-import { formatPrice } from '#/shared/libs/utils/price.utils'
-import { Modal } from '#/shared/ui/modal'
-import { PaginationControls } from '#/shared/ui/pagination-controls'
+import {cn} from '#/lib/utils'
+import {m} from '#/paraglide/messages'
+import {listOrders} from '#/shared/api/platform/platform-api.ts'
+import {showError, showSuccess} from '#/shared/libs/hooks/toast.ts'
+import {useActiveBusiness} from '#/shared/libs/hooks/use-active-business.ts'
+import {StaffPermission} from '#/shared/libs/permissions/index.ts'
+import {usePermissions} from '#/shared/libs/permissions/use-permissions.ts'
+import {downloadCsv, toCsv} from '#/shared/libs/utils/csv.utils.ts'
+import {getResponseErrorMessage} from '#/shared/libs/utils/http.utils.ts'
+import {formatPrice} from '#/shared/libs/utils/price.utils'
+import {Modal} from '#/shared/ui/modal'
+import {PaginationControls} from '#/shared/ui/pagination-controls'
 
 const routeApi = getRouteApi('/_admin/orders')
 
@@ -98,7 +89,7 @@ function OrderDetailModal({
   currency: string
   markSelfMutated: (orderId: string) => void
 }>) {
-  const { isOwner, hasPermission } = usePermissions()
+  const { isOwner, hasPermission, staffRole } = usePermissions()
 
   const { data: order, isPending, isError } = useQuery(orderByIdQueryOptions(businessId, orderId))
 
@@ -115,9 +106,7 @@ function OrderDetailModal({
 
   const canTakePayment = isOwner() || hasPermission(StaffPermission.PAYMENT_TAKE)
   const canCancel =
-    (isOwner() || hasPermission(StaffPermission.ORDER_CANCEL)) &&
-    order != null &&
-    (['CREATED', 'CONFIRMED', 'IN_KITCHEN'] as OrderStatus[]).includes(order.status)
+    order != null && canCancelOrder(order.status, { isOwner: isOwner(), staffRole: staffRole() })
   const canRefund =
     (isOwner() || hasPermission(StaffPermission.PAYMENT_REFUND)) && order?.status === 'CLOSED'
 
@@ -256,9 +245,15 @@ function OrderDetailModal({
             </div>
           </div>
 
+          {Boolean(order.notes) && (
+            <div className='flex items-center text-lg justify-between rounded-xl text-green-300 bg-muted px-4 py-3'>
+              {m.admin_orders_note({ notes: order.notes ?? '' })}
+            </div>
+          )}
+
           <div className='flex items-center justify-between rounded-xl bg-muted px-4 py-3'>
-            <span className='text-sm font-semibold'>{m.admin_orders_total_label()}</span>
-            <span className='font-mono font-bold'>
+            <span className='text-[24px] font-semibold'>{m.admin_orders_total_label()}</span>
+            <span className='font-mono font-bold text-[24px]'>
               {formatPrice(Number(order.totalAmount), currency)}
             </span>
           </div>
@@ -597,6 +592,8 @@ export function AdminOrdersContent() {
                 <TableHead>{m.admin_orders_table_head_status()}</TableHead>
                 <TableHead>{m.admin_orders_table_head_items()}</TableHead>
                 <TableHead>{m.admin_orders_table_head_total()}</TableHead>
+                {/*<TableHead>{m.admin_orders_table_head_total()}</TableHead>*/}
+                <TableHead>Notes</TableHead>
                 <TableHead className='pr-8 text-right'>
                   {m.admin_orders_table_head_actions()}
                 </TableHead>
@@ -655,6 +652,8 @@ export function AdminOrdersContent() {
                   <TableCell className='font-bold'>
                     {formatPrice(Number(order.totalAmount), currency)}
                   </TableCell>
+                  <TableCell>{order.notes}</TableCell>
+
                   <TableCell className='w-60 min-w-60 pr-8 text-right'>
                     <div className='flex justify-end gap-2'>
                       <Button

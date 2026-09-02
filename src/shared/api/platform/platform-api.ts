@@ -15,6 +15,7 @@ import type {
   CreateStaffWithPasswordRequest,
   CreateStaffWithPinRequest,
   CreateTableRequest,
+  JoinSessionRequest,
   MenuCategory,
   Modifier,
   ModifierGroup,
@@ -28,6 +29,7 @@ import type {
   ScanSessionRequest,
   ScanSessionResponse,
   SessionBill,
+  SessionSummary,
   SetTableReservationRequest,
   StaffLoginWithPasswordRequest,
   StaffLoginWithPinRequest,
@@ -109,6 +111,27 @@ export function closeSession(sessionId: string): Promise<void> {
 
 export function getSessionBill(sessionId: string): Promise<SessionBill> {
   return clientApiInstance.get(`sessions/${sessionId}/bill`).json<SessionBill>()
+}
+
+export function listActiveSessions(): Promise<SessionSummary[]> {
+  return clientApiInstance.get('sessions').json<ListResponse<SessionSummary>>().then(unwrapList)
+}
+
+export function joinSessions(
+  targetSessionId: string,
+  data: JoinSessionRequest,
+): Promise<SessionSummary> {
+  return clientApiInstance
+    .post(`sessions/${targetSessionId}/join`, { json: data })
+    .json<SessionSummary>()
+}
+
+export function splitSession(sessionId: string): Promise<SessionSummary> {
+  return clientApiInstance.post(`sessions/${sessionId}/split`).json<SessionSummary>()
+}
+
+export function acknowledgeWaiterCall(sessionId: string): Promise<SessionSummary> {
+  return clientApiInstance.post(`sessions/${sessionId}/waiter-acknowledge`).json<SessionSummary>()
 }
 
 // --- Menu Categories ---

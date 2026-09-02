@@ -219,6 +219,9 @@ export function OrderView({
   useOrderNotifications({
     room: 'session',
     id: sessionToken,
+    // Every guest at a table shares one session room — only alert for the order this
+    // screen is actually tracking, not a table-mate's order landing in the same room.
+    shouldNotify: (orderId) => orderId === order.orderId,
     handlers: {
       // Fired right after join (including reconnect/page-reload) with the session's
       // current active order — without this, a reload would keep showing 'placed'

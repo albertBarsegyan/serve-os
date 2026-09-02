@@ -1,4 +1,5 @@
 export { playNotificationSound } from './lib/play-sound'
+export { useMyOrders } from './model/use-my-orders'
 export {
   type OrderNotificationHandlers,
   type UseOrderNotificationsOptions,

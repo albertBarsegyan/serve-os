@@ -8,6 +8,7 @@ import {
   getSessionBill,
   getStaffById,
   getTableById,
+  listActiveSessions,
   listMenuCategories,
   listModifierGroups,
   listModifiers,
@@ -43,6 +44,14 @@ export function sessionBillQueryOptions(sessionId: string) {
     queryKey: platformQueryKeys.sessionBill(sessionId),
     queryFn: () => getSessionBill(sessionId),
     enabled: Boolean(sessionId),
+  })
+}
+
+export function activeSessionsQueryOptions(businessId: string) {
+  return queryOptions({
+    queryKey: platformQueryKeys.activeSessions(businessId),
+    queryFn: listActiveSessions,
+    enabled: Boolean(businessId),
   })
 }
 

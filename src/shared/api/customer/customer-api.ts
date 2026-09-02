@@ -52,6 +52,24 @@ export function cancelCustomerOrder(orderId: string, sessionToken: string): Prom
     .json<void>()
 }
 
+export interface RecentOrderResponse {
+  orderId: string
+  items: Array<{ name: string; qty: number; price: number }>
+  total: number
+  tableNumber: string
+  placedAt: number
+  paymentMethod: string
+}
+
+/**
+ * Guest fallback used when the client's own order-tracking record is missing (storage
+ * cleared, or a QR re-scan landed in a context that never had it) — rebuilds a receipt
+ * from the still-active session's most recent order. 404s when the session has no order.
+ */
+export function fetchRecentOrderForSession(sessionToken: string): Promise<RecentOrderResponse> {
+  return clientApiInstance.get(`sessions/${sessionToken}/recent-order`).json<RecentOrderResponse>()
+}
+
 export function createCustomerPayment(
   orderId: string,
   method: 'CASH' | 'POS' | 'ONLINE',

@@ -35,10 +35,16 @@ export const SERVER_EVENTS = {
   ORDER_SERVED: 'order:served',
   ORDER_CANCELLED: 'order:cancelled',
   ORDER_CALL_WAITER: 'order:call-waiter',
+  ORDER_WAITER_ACKNOWLEDGED: 'order:waiter-acknowledged',
   ORDER_PAYMENT_OPEN: 'order:payment-open',
   ORDER_PAID: 'order:paid',
   ORDER_PAYMENT_FAILED: 'order:payment-failed',
   ORDER_REFUNDED: 'order:refunded',
+  ORDER_TIP_UPDATED: 'order:tip-updated',
+  // Session lifecycle events — business room (staff), same as the order:* feed above
+  SESSION_OPENED: 'session:opened',
+  SESSION_JOINED: 'session:joined',
+  SESSION_SPLIT: 'session:split',
   // Venue TV display feed (sanitized — no PII/payment fields, see DisplayOrderPayload)
   DISPLAY_ORDER_UPDATED: 'display:order-updated',
   DISPLAY_ORDER_REMOVED: 'display:order-removed',
@@ -78,6 +84,39 @@ export interface OrderPendingConfirmationPayload {
 
 export interface SessionClosedPayload {
   sessionId: string
+}
+
+/** Emitted for session:opened — a new guest party seated (or a staff order opened one). */
+export interface SessionOpenedPayload {
+  sessionId: string
+  businessId: string
+  tableId: string
+  source: 'guest' | 'staff'
+  at: string
+}
+
+/** Emitted for session:joined / session:split. */
+export interface SessionLifecyclePayload {
+  sessionId: string
+  businessId: string
+  tableId: string
+  at: string
+}
+
+/** Emitted for order:waiter-acknowledged — clears the call raised by order:call-waiter. */
+export interface WaiterAcknowledgedPayload {
+  sessionId: string
+  businessId: string
+  tableId: string
+  at: string
+}
+
+/** business:<id> only — staff dashboards, not the kitchen display. */
+export interface OrderTipUpdatedPayload {
+  orderId: string
+  businessId: string
+  tipAmount: number
+  updatedAt: string
 }
 
 // ── New lifecycle payload types ───────────────────────────────────────────────

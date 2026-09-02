@@ -10,7 +10,7 @@ export async function playNotificationSound() {
   try {
     await audio.play()
   } catch {
-    // Ignore or log
+    // Most commonly autoplay was never unlocked by a user gesture — see initializeAudio.
   }
 }
 
