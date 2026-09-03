@@ -31,8 +31,10 @@ import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useSelectedBusinessId } from '#/shared/libs/hooks/use-active-business.ts'
 import { useTablePermissions } from '#/shared/libs/hooks/use-table-permissions.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
+import { useSocketConnectionStatus } from '#/shared/realtime/use-socket-connection-status'
 import { ConfirmDeleteModal } from '#/shared/ui/confirm-delete-modal'
 import { Modal } from '#/shared/ui/modal'
+import { RealtimeStatusIndicator } from '#/shared/ui/realtime-status-indicator'
 import type { SessionWithOrders } from './admin-table'
 import { AdminTable } from './admin-table'
 
@@ -289,6 +291,7 @@ export function AdminTablesContent() {
   // socket events land — waiter-call state now lives on the session itself
   // (SessionSummary.waiterCallActive), so no page-local tracking is needed here.
   useOrderNotifications({ room: 'business', id: businessId })
+  const isRealtimeConnected = useSocketConnectionStatus(!!businessId)
 
   // A table can carry several concurrent sessions (separate guest parties) — group every
   // active session, and every order placed into one, by tableId so each table's card gets
@@ -336,11 +339,14 @@ export function AdminTablesContent() {
           <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_tables_heading()}</h1>
           <p className='text-muted-foreground'>{m.admin_tables_subheading()}</p>
         </div>
-        {perms.canCreate && (
-          <Button size='sm' className='rounded-full' onClick={() => setIsCreateOpen(true)}>
-            <Plus className='mr-2 h-4 w-4' /> {m.admin_tables_add_table()}
-          </Button>
-        )}
+        <div className='flex items-center gap-3'>
+          <RealtimeStatusIndicator isConnected={isRealtimeConnected} />
+          {perms.canCreate && (
+            <Button size='sm' className='rounded-full' onClick={() => setIsCreateOpen(true)}>
+              <Plus className='mr-2 h-4 w-4' /> {m.admin_tables_add_table()}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter + search bar */}

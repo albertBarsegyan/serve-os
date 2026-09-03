@@ -20,6 +20,7 @@ import {
   removeLocalStorageItem,
   setLocalStorageItem,
 } from '#/shared/libs/utils/storage.utils'
+import { useSocketConnectionStatus } from '#/shared/realtime/use-socket-connection-status'
 import { C } from './customer-theme'
 import { CartView } from './views/cart-view'
 import { MenuView } from './views/menu-view'
@@ -157,6 +158,11 @@ export function CustomerMenuContent({
   // quiet sharedOrder banner below still reflects table-wide progress; this only gates
   // the noisy default toast/sound.
   const { markMyOrder, isMyOrder } = useMyOrders(sessionId)
+
+  // Without this, a dropped socket (network blip, backgrounded tab) looks identical
+  // to a fully up-to-date page — order status, session-closed, and table-mate order
+  // updates just silently stop arriving until it reconnects.
+  const isRealtimeConnected = useSocketConnectionStatus(!!sessionToken)
 
   // Mounted here (not just inside OrderView) so a guest still browsing the menu/cart on
   // their own phone learns live that their own order (tracked via isMyOrder) progressed
@@ -517,6 +523,20 @@ export function CustomerMenuContent({
 
   return (
     <div className='c-app' data-theme={theme} style={{ background: C.bg }}>
+      {!isRealtimeConnected && (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '6px 12px',
+            background: 'rgba(0,0,0,0.55)',
+            color: C.white,
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          {m.shared_realtime_reconnecting()}
+        </div>
+      )}
       {sharedOrder && (view === 'menu' || view === 'product' || view === 'cart') && (
         <div
           style={{

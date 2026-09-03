@@ -38,8 +38,10 @@ import { usePermissions } from '#/shared/libs/permissions/use-permissions.ts'
 import { downloadCsv, toCsv } from '#/shared/libs/utils/csv.utils.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
+import { useSocketConnectionStatus } from '#/shared/realtime/use-socket-connection-status'
 import { Modal } from '#/shared/ui/modal'
 import { PaginationControls } from '#/shared/ui/pagination-controls'
+import { RealtimeStatusIndicator } from '#/shared/ui/realtime-status-indicator'
 
 const routeApi = getRouteApi('/_admin/orders')
 
@@ -376,6 +378,7 @@ export function AdminOrdersContent() {
   const { markSelfMutated, isSelfMutated } = useSelfMutationSuppression()
 
   useOrderNotifications({ room: 'business', id: businessId, isSelfMutated })
+  const isRealtimeConnected = useSocketConnectionStatus(!!businessId)
 
   const updateSearch = (patch: Partial<typeof search>) => {
     void navigate({
@@ -525,6 +528,7 @@ export function AdminOrdersContent() {
           <p className='text-muted-foreground'>{m.admin_orders_subtitle()}</p>
         </div>
         <div className='flex items-center gap-3'>
+          <RealtimeStatusIndicator isConnected={isRealtimeConnected} />
           <Button
             disabled={!pagedOrders?.total || isExporting}
             size='sm'
