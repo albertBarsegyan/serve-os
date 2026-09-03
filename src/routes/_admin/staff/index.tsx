@@ -26,7 +26,9 @@ import { showError, showSuccess } from '#/shared/libs/hooks/toast.ts'
 import { useActiveBusiness } from '#/shared/libs/hooks/use-active-business.ts'
 import { getResponseErrorMessage } from '#/shared/libs/utils/http.utils.ts'
 import { formatPrice } from '#/shared/libs/utils/price.utils'
+import { useSocketConnectionStatus } from '#/shared/realtime/use-socket-connection-status'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
+import { RealtimeStatusIndicator } from '#/shared/ui/realtime-status-indicator'
 
 export const Route = createFileRoute('/_admin/staff/')({
   component: WaiterWorkspace,
@@ -83,6 +85,7 @@ function WaiterWorkspace() {
   // Same shared socket/room every other admin screen uses — the base hook already
   // toasts + invalidates on order:ready, so the waiter list refreshes in real time.
   useOrderNotifications({ room: 'business', id: businessId })
+  const isRealtimeConnected = useSocketConnectionStatus(!!businessId)
 
   const confirmMutation = useConfirmOrderMutation()
   const updateMutation = useUpdateOrderStatusMutation()
@@ -118,6 +121,7 @@ function WaiterWorkspace() {
           <h1 className='text-3xl font-semibold tracking-tight'>{m.admin_waiter_heading()}</h1>
           <p className='text-muted-foreground'>{m.admin_waiter_subtitle()}</p>
         </div>
+        <RealtimeStatusIndicator isConnected={isRealtimeConnected} />
       </div>
 
       {isError && (

@@ -1,13 +1,19 @@
 import { QueryClient } from '@tanstack/react-query'
 import type { Socket } from 'socket.io-client'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { toast } from 'sonner'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { platformQueryKeys } from '#/features/platform/lib/constants/platform-query-keys'
 import { subscribeOrderNotifications } from './use-order-notifications'
+
+vi.mock('sonner', () => ({
+  toast: { info: vi.fn(), success: vi.fn(), warning: vi.fn(), error: vi.fn() },
+}))
 
 // Minimal fake socket.io-client Socket: just enough of the on/off/emit/connected surface
 // that subscribeOrderNotifications touches.
 class FakeSocket {
   connected = false
+  emitted: Array<{ event: string; args: unknown[] }> = []
   private listeners = new Map<string, Set<(...args: unknown[]) => void>>()
 
   on(event: string, handler: (...args: unknown[]) => void) {
@@ -19,8 +25,8 @@ class FakeSocket {
     this.listeners.get(event)?.delete(handler)
   }
 
-  emit(_event: string, ..._args: unknown[]) {
-    // client -> server emits (join-kitchen etc.) are no-ops in this fake
+  emit(event: string, ...args: unknown[]) {
+    this.emitted.push({ event, args })
   }
 
   connect() {
@@ -30,6 +36,14 @@ class FakeSocket {
   // Test helper: simulate the server pushing an event down to this client.
   serverEmit(event: string, payload?: unknown) {
     for (const handler of [...(this.listeners.get(event) ?? [])]) handler(payload)
+  }
+
+  // Test helper: simulate the server acking the most recent emit of `event` (e.g.
+  // join-kitchen) — mirrors how the gateway's join handlers return {event, data}.
+  ackLastEmit(event: string, ack: unknown) {
+    const entry = [...this.emitted].reverse().find((e) => e.event === event)
+    const callback = entry?.args[entry.args.length - 1]
+    if (typeof callback === 'function') callback(ack)
   }
 }
 
@@ -41,6 +55,7 @@ describe('subscribeOrderNotifications', () => {
   beforeEach(() => {
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     socket = new FakeSocket()
+    vi.clearAllMocks()
   })
 
   afterEach(() => {
@@ -249,6 +264,44 @@ describe('subscribeOrderNotifications', () => {
     expect(queryClient.getQueryState(activeSessionsKey)?.isInvalidated).toBe(true)
     expect(received).toHaveLength(1)
     expect(received[0]).toMatchObject({ sessionId: 'session-1' })
+  })
+
+  it('toasts once (not on every retry) when a business/kitchen join is rejected', () => {
+    socket.connected = true
+
+    unsubscribe = subscribeOrderNotifications(
+      socket as unknown as Socket,
+      queryClient,
+      'business',
+      'business-1',
+      () => undefined,
+    )
+
+    socket.ackLastEmit('join-business', { event: 'error', data: 'Unauthorized' })
+    socket.ackLastEmit('join-business', { event: 'error', data: 'Unauthorized' })
+
+    expect(toast.error).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not toast on a rejected session-room join, and routes to a custom onJoinError', () => {
+    socket.connected = true
+    const received: string[] = []
+
+    unsubscribe = subscribeOrderNotifications(
+      socket as unknown as Socket,
+      queryClient,
+      'session',
+      'token-1',
+      () => undefined,
+      undefined,
+      undefined,
+      () => (message) => received.push(message),
+    )
+
+    socket.ackLastEmit('join-session', { event: 'error', data: 'Unauthorized' })
+
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(received).toEqual(['Unauthorized'])
   })
 
   it('unsubscribes all listeners on cleanup', () => {

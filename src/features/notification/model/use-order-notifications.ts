@@ -7,7 +7,6 @@ import { platformQueryKeys } from '#/features/platform/lib/constants/platform-qu
 import { m } from '#/paraglide/messages'
 import {
   type CallWaiterPayload,
-  CLIENT_EVENTS,
   type OrderEventPayload,
   type OrderPaidPayload,
   type OrderPendingConfirmationPayload,
@@ -22,7 +21,7 @@ import {
   type SessionOpenedPayload,
   type WaiterAcknowledgedPayload,
 } from '#/shared/realtime/events'
-import { getSocket } from '#/shared/realtime/socket'
+import { getSocket, joinRoom } from '#/shared/realtime/socket'
 import { playNotificationSound } from '../lib/play-sound'
 
 export type OrderNotificationHandlers = Partial<{
@@ -70,6 +69,15 @@ export interface UseOrderNotificationsOptions {
    * order in their room).
    */
   shouldNotify?: (orderId: string) => boolean
+  /**
+   * Called when the server rejects this room's join (stale/invalid auth, or a
+   * permission that no longer applies) — without this, a rejected join reached no
+   * one and the page just sat there believing it was live while receiving nothing.
+   * Defaults to a one-time toast for kitchen/business rooms (staff should know their
+   * board has gone stale); session-room callers get their own recovery via
+   * useSessionRealtime, so the default there is a console warning only.
+   */
+  onJoinError?: (message: string) => void
 }
 
 // Client-only module (guarded by `typeof window` below) — safe to resolve messages eagerly here.
@@ -101,6 +109,7 @@ export function subscribeOrderNotifications(
   getHandlers: () => OrderNotificationHandlers | undefined,
   getIsSelfMutated?: () => ((orderId: string) => boolean) | undefined,
   getShouldNotify?: () => ((orderId: string) => boolean) | undefined,
+  getOnJoinError?: () => ((message: string) => void) | undefined,
 ): () => void {
   function isSelfMutated(orderId: string): boolean {
     return getIsSelfMutated?.()?.(orderId) ?? false
@@ -115,31 +124,35 @@ export function subscribeOrderNotifications(
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.kitchenOrders() })
   }
 
-  function join() {
-    if (room === 'kitchen') {
-      socket.emit(CLIENT_EVENTS.JOIN_KITCHEN, id)
-    } else if (room === 'business') {
-      socket.emit(CLIENT_EVENTS.JOIN_BUSINESS, id)
-    } else {
-      socket.emit(CLIENT_EVENTS.JOIN_SESSION, id)
+  // Toasting on every failed reconnect attempt (a permanently stale/revoked auth
+  // keeps retrying on every reconnect) would spam the user — only ever once per mount.
+  let hasWarnedJoinError = false
+  function onJoinError(message: string) {
+    const custom = getOnJoinError?.()
+    if (custom) {
+      custom(message)
+      return
     }
+    // session-room callers (the customer app) get their own recovery via
+    // useSessionRealtime — this default is for kitchen/business (staff) rooms only.
+    if (room === 'session' || hasWarnedJoinError) return
+    hasWarnedJoinError = true
+    toast.error(m.notification_realtime_join_error(), { position: 'top-right' })
+  }
+
+  // Reference-counted: another hook (e.g. a nested order-detail view, or
+  // useSessionRealtime) may join this same room on this same socket, so releasing
+  // here only actually leaves once every such subscriber has released — without
+  // this, one of them unmounting would kick every other still-mounted subscriber out
+  // of the room too. Re-joined automatically on every reconnect for as long as any
+  // subscriber is still registered.
+  const releaseRoom = joinRoom(socket, room, id, onJoinError)
+
+  function onConnect() {
     // A (re)connect may have missed broadcasts entirely while disconnected — resync
     // the order lists rather than trusting no transitions happened in the gap.
     // The session room gets its own resync via the order:status-changed handler below.
     if (room !== 'session') invalidateOrders()
-  }
-
-  // Runs on unmount and whenever `room`/`id` changes (e.g. an owner switching their active
-  // business) — without this the socket stays a member of the old room forever, since it's a
-  // page-lifetime singleton, and keeps receiving another tenant's live order/payment feed.
-  function leave() {
-    if (room === 'kitchen') {
-      socket.emit(CLIENT_EVENTS.LEAVE_KITCHEN, id)
-    } else if (room === 'business') {
-      socket.emit(CLIENT_EVENTS.LEAVE_BUSINESS, id)
-    } else {
-      socket.emit(CLIENT_EVENTS.LEAVE_SESSION, id)
-    }
   }
 
   function handleLifecycleEvent(eventName: string, payload: OrderEventPayload) {
@@ -273,7 +286,7 @@ export function subscribeOrderNotifications(
     getHandlers()?.['order-pending-confirmation']?.(p)
   }
 
-  socket.on('connect', join)
+  socket.on('connect', onConnect)
   socket.on(SERVER_EVENTS.ORDER_STATUS_CHANGED, onStatusChanged)
   socket.on(SERVER_EVENTS.ORDER_PENDING_CONFIRMATION, onPendingConfirmation)
   socket.on(SERVER_EVENTS.ORDER_CREATED, onCreated)
@@ -295,14 +308,14 @@ export function subscribeOrderNotifications(
   socket.on(SERVER_EVENTS.SESSION_CLOSED, onSessionClosed)
 
   if (socket.connected) {
-    join()
+    onConnect()
   } else {
     socket.connect()
   }
 
   return () => {
-    leave()
-    socket.off('connect', join)
+    releaseRoom()
+    socket.off('connect', onConnect)
     socket.off(SERVER_EVENTS.ORDER_CREATED, onCreated)
     socket.off(SERVER_EVENTS.ORDER_CONFIRMED, onConfirmed)
     socket.off(SERVER_EVENTS.ORDER_PREPARING, onPreparing)
@@ -331,17 +344,20 @@ export function useOrderNotifications({
   handlers,
   isSelfMutated,
   shouldNotify,
+  onJoinError,
 }: UseOrderNotificationsOptions): void {
   const queryClient = useQueryClient()
 
-  // Keep handlers/isSelfMutated/shouldNotify in refs so the effect never needs to
-  // re-run when they change
+  // Keep handlers/isSelfMutated/shouldNotify/onJoinError in refs so the effect never
+  // needs to re-run when they change
   const handlersRef = useRef(handlers)
   handlersRef.current = handlers
   const isSelfMutatedRef = useRef(isSelfMutated)
   isSelfMutatedRef.current = isSelfMutated
   const shouldNotifyRef = useRef(shouldNotify)
   shouldNotifyRef.current = shouldNotify
+  const onJoinErrorRef = useRef(onJoinError)
+  onJoinErrorRef.current = onJoinError
 
   useEffect(() => {
     if (typeof window === 'undefined' || !id) return
@@ -355,6 +371,7 @@ export function useOrderNotifications({
       () => handlersRef.current,
       () => isSelfMutatedRef.current,
       () => shouldNotifyRef.current,
+      () => onJoinErrorRef.current,
     )
   }, [room, id, queryClient])
 }
