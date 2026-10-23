@@ -59,7 +59,7 @@ import { ErrorBoundary } from '#/shared/ui/error-boundary.tsx'
 import { Logo } from '#/shared/ui/logo.tsx'
 import { Modal } from '#/shared/ui/modal'
 
-function AdminErrorComponent({ error }: Readonly<{ error: Error }>) {
+function AdminErrorComponent({ error }: Readonly<{ error: unknown }>) {
   return (
     <div className='flex min-h-screen flex-col bg-background'>
       <header className='flex h-20 items-center border-b border-border bg-card px-8'>

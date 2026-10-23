@@ -5,7 +5,8 @@ import { Button } from '#/components/ui/button'
 import { m } from '#/paraglide/messages'
 
 interface ErrorBoundaryProps {
-  error: Error
+  // TanStack Router types boundary errors as `unknown` — anything can be thrown
+  error: unknown
   reset?: () => void
   isNotFound?: boolean
 }
@@ -50,8 +51,9 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
   }
 
   const isDev = import.meta.env.DEV
-  const errorMessage = error?.message || m.shared_error_unexpected_default()
-  const errorStack = error?.stack || ''
+  const errorDetails = error as { message?: string; stack?: string } | null | undefined
+  const errorMessage = errorDetails?.message || m.shared_error_unexpected_default()
+  const errorStack = errorDetails?.stack || ''
 
   return (
     <div className='min-h-screen flex items-center justify-center bg-background px-4'>
@@ -107,7 +109,7 @@ export function ErrorBoundary({ error, reset, isNotFound = false }: Readonly<Err
 }
 
 interface ErrorFallbackProps {
-  error: Error
+  error: unknown
   isNotFound?: boolean
 }
 

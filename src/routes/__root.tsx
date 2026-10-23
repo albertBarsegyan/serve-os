@@ -111,7 +111,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   notFoundComponent: NotFoundContent,
 })
 
-function RootErrorComponent({ error }: Readonly<{ error: Error }>) {
+function RootErrorComponent({ error }: Readonly<{ error: unknown }>) {
   return (
     <html lang={getLocale()} suppressHydrationWarning>
       <head>

@@ -6,7 +6,7 @@ import { noIndexMeta } from '#/shared/libs/seo/meta.ts'
 import { ErrorBoundary } from '#/shared/ui/error-boundary'
 import { Logo } from '#/shared/ui/logo.tsx'
 
-function AuthErrorComponent({ error }: Readonly<{ error: Error }>) {
+function AuthErrorComponent({ error }: Readonly<{ error: unknown }>) {
   return (
     <div className='flex min-h-screen flex-col justify-center bg-background py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
