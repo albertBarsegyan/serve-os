@@ -4,8 +4,8 @@ FROM node:22-bookworm-slim AS base
 WORKDIR /app
 ENV CI=true
 
-# Enable pnpm via corepack
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Enable pnpm via corepack (pinned — keep in sync with "packageManager" in package.json)
+RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
 
 
 # -----------------------
