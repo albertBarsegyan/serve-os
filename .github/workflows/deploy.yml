@@ -76,23 +76,39 @@ jobs:
             echo "SITE_URL=${{ secrets.SITE_URL }}"
             echo "VITE_WEB3FORMS_ACCESS_KEY=${{ secrets.VITE_WEB3FORMS_ACCESS_KEY }}"
             echo "VITE_WEB3FORMS_ENDPOINT=${{ secrets.VITE_WEB3FORMS_ENDPOINT }}"
+            echo "APP_IMAGE_TAG=${{ github.sha }}"
           } > .env
+
+      - name: Install WireGuard
+        run: sudo apt-get update && sudo apt-get install -y wireguard-tools
+
+      - name: Connect to VPS tunnel
+        env:
+          WG_CONFIG: ${{ secrets.WG_CONFIG }}
+        run: |
+          printf '%s\n' "$WG_CONFIG" | sudo tee /etc/wireguard/wg0.conf > /dev/null
+          sudo chmod 600 /etc/wireguard/wg0.conf
+          sudo wg-quick up wg0
 
       - name: Copy files to server
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: 10.8.0.1
+          port: 22
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
           source: "docker-compose.prod.yml,.env"
           target: /opt/serve-os/
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: 10.8.0.1
+          port: 22
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
           # GHCR_TOKEN is forwarded as an env var to the remote script so it
           # never appears in plain text in the workflow logs.
           envs: GHCR_TOKEN
@@ -106,3 +122,7 @@ jobs:
             docker image prune -f
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Disconnect tunnel
+        if: always()
+        run: sudo wg-quick down wg0 || true
