@@ -123,7 +123,7 @@ jobs:
             docker compose -f docker-compose.prod.yml --env-file .env pull
             docker compose -f docker-compose.prod.yml --env-file .env up -d
             docker image prune -f
-            REMOTE_SCRIPT
+          REMOTE_SCRIPT
           } | ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile=~/.ssh/known_hosts \
